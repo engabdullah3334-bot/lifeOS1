@@ -1,0 +1,36 @@
+            <!-- Dashboard View -->
+            <section id="dashboard" class="content-view active">
+                <div class="welcome-banner">
+                    <h2>Good afternoon.</h2>
+                    <p>Focus is key. Here is your overview.</p>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="widget task-widget">
+                        <div class="widget-header">
+                            <h3>Today's Focus</h3>
+                            <button class="icon-btn" onclick="document.getElementById('open-task-modal-btn').click()">+</button>
+                        </div>
+                        <div class="widget-content" id="dashboard-tasks-list">
+                            <!-- Dynamic Content -->
+                            <p style="color:#666; font-size:13px; padding:10px;">Loading tasks...</p>
+                        </div>
+                    </div>
+
+                    <div class="widget stats-widget">
+                        <h3>Productivity</h3>
+                        <div class="stat-bar">
+                            <div class="fill" id="productivity-fill" style="width: 0%"></div>
+                        </div>
+                        <p class="stat-text" id="productivity-text">0% Daily Goal</p>
+                    </div>
+
+                    <div class="widget quick-note-widget">
+                        <div class="widget-header">
+                            <h3>Quick Note</h3>
+                            <button class="icon-btn" id="save-quick-note" style="font-size:12px;">Save</button>
+                        </div>
+                        <textarea id="quick-note-area" placeholder="Capture a thought..."></textarea>
+                    </div>
+                </div>
+            </section>

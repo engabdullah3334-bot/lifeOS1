@@ -1,0 +1,39 @@
+/* 
+  LifeOS Theme Configuration 
+  Edit this file to change the look and feel of the entire system.
+*/
+
+:root {
+    /* --- Main Colors --- */
+    --bg-main: #130d0d;          /* Main Background */
+    --bg-secondary: #0f0f10;     /* Panels, Sidebar, Cards */
+    --bg-tertiary: #1c1c1e;      /* Hover states, Inputs */
+    
+    /* --- Text Colors --- */
+    --text-primary: #ededed;
+    --text-secondary: #8e8e93;
+    --text-muted: #636366;
+
+    /* --- Accents --- */
+    --accent-color: #ffffff;     /* High Contrast Elements */
+    --accent-subtle: #3a3a3c;    /* Borders, Separators */
+    
+    /* --- Semantic Colors --- */
+    --success: #30d158;
+    --warning: #ffd60a;
+    --danger: #ff453a;
+    --info: #0a84ff;
+
+    /* --- Dimensions --- */
+    --sidebar-width: 260px;
+    --header-height: 70px;
+    
+    /* --- Typography --- */
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    
+    /* --- Spacing & Radius --- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}

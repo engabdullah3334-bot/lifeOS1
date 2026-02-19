@@ -1,0 +1,221 @@
+            <!-- Writing View -->
+            <section id="writing" class="content-view" style="display: none;">
+                <div class="writing-layout">
+                    <!-- Folder Column -->
+                    <div class="sf-column folders-col" id="folders-sidebar">
+                        <div class="col-header">
+                            <h3>Folders</h3>
+                            <div>
+                                <button class="add-btn" id="new-folder-btn" title="New Folder">+</button>
+                                <button class="toggle-sidebar-btn" id="toggle-folders" title="Hide Folders">◀</button>
+                            </div>
+                        </div>
+                        <ul class="folder-list" id="folder-list">
+                            <!-- Dynamic Folders -->
+                        </ul>
+                    </div>
+
+                    <!-- File Column -->
+                    <div class="sf-column files-col" id="files-sidebar" style="visibility: hidden;">
+                        <div class="col-header">
+                            <h3>Files</h3>
+                            <div>
+                                <button class="add-btn" id="new-note-btn" title="New Note">+</button>
+                                <button class="toggle-sidebar-btn" id="toggle-files" title="Hide Files">◀</button>
+                            </div>
+                        </div>
+                        <ul class="file-list" id="file-list">
+                            <!-- Dynamic Files -->
+                        </ul>
+                    </div>
+                    
+                    <!-- Restore Buttons Container (Moved outside editor) -->
+                    <div class="restore-actions" style="position: absolute; top: 15px; right: 20px; z-index: 100;">
+                        <button class="restore-sidebar-btn" id="restore-folders" style="display:none; background: #1a1f35; border: 1px solid #2d3348; color: #a1a6c8; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-right: 5px;" title="Show Folders">📁</button>
+                        <button class="restore-sidebar-btn" id="restore-files" style="display:none; background: #1a1f35; border: 1px solid #2d3348; color: #a1a6c8; padding: 5px 10px; border-radius: 6px; cursor: pointer;" title="Show Files">📄</button>
+                    </div>
+
+                    <!-- Editor Column -->
+                    <div class="sf-column editor-col" id="editor-column" style="visibility: hidden;">
+                        <div class="editor-header">
+                            <input type="text" class="note-title-input" placeholder="Note Title...">
+                            <div class="header-actions">
+                                <button class="icon-btn" id="rename-note-btn" title="Rename Note">✎</button>
+                                <span class="save-status">Saved</span>
+                                <button class="close-note-btn" id="close-note-btn" title="Close Note">&times;</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Rich Text Toolbar -->
+                        <div class="rich-toolbar" id="rich-toolbar">
+                            <!-- Text Formatting Group -->
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" data-command="bold" title="Bold (Ctrl+B)">
+                                    <strong>B</strong>
+                                </button>
+                                <button class="toolbar-btn" data-command="italic" title="Italic (Ctrl+I)">
+                                    <em>I</em>
+                                </button>
+                                <button class="toolbar-btn" data-command="underline" title="Underline (Ctrl+U)">
+                                    <u>U</u>
+                                </button>
+                                <button class="toolbar-btn" data-command="strikeThrough" title="Strikethrough">
+                                    <s>S</s>
+                                </button>
+                                <!-- Font Color -->
+                                <div style="position: relative; display: flex;">
+                                    <button class="toolbar-btn" id="font-color-btn" title="Text Color">
+                                        <span style="border-bottom: 3px solid currentColor; padding-bottom: 0px;">A</span>
+                                    </button>
+                                    <input type="color" id="font-color-picker" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;" value="#f2f4ff">
+                                </div>
+                            </div>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Alignment Group -->
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" data-command="justifyLeft" title="Align Left">
+                                    ☰
+                                </button>
+                                <button class="toolbar-btn" data-command="justifyCenter" title="Align Center">
+                                    ☷
+                                </button>
+                                <button class="toolbar-btn" data-command="justifyRight" title="Align Right">
+                                    ☰
+                                </button>
+                                <button class="toolbar-btn" data-command="justifyFull" title="Justify">
+                                    ☰
+                                </button>
+                            </div>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Text Direction -->
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" id="toggle-text-direction" title="Toggle Text Direction (LTR/RTL)">
+                                    ⇄
+                                </button>
+                            </div>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Heading Group -->
+                            <div class="toolbar-group">
+                                <select class="toolbar-select" id="format-block">
+                                    <option value="p">Normal</option>
+                                    <option value="h1">Heading 1</option>
+                                    <option value="h2">Heading 2</option>
+                                    <option value="h3">Heading 3</option>
+                                    <option value="pre">Code Block</option>
+                                </select>
+                            </div>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Font Family Group -->
+                            <div class="toolbar-group">
+                                <select class="toolbar-select" id="font-family" style="min-width: 120px;">
+                                    <option value="inherit">Default Font</option>
+                                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                                    <option value="'Times New Roman', serif">Times New Roman</option>
+                                    <option value="'Courier New', monospace">Courier New</option>
+                                    <option value="'Georgia', serif">Georgia</option>
+                                    <option value="'Verdana', sans-serif">Verdana</option>
+                                    <option value="'Impact', sans-serif">Impact</option>
+                                </select>
+                            </div>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- Font Size Group -->
+                            <div class="toolbar-group">
+                                <select class="toolbar-select" id="font-size">
+                                    <option value="1">10px</option>
+                                    <option value="2">13px</option>
+                                    <option value="3" selected>16px</option>
+                                    <option value="4">18px</option>
+                                    <option value="5">24px</option>
+                                    <option value="6">32px</option>
+                                    <option value="7">48px</option>
+                                </select>
+                            </div>
+                            
+                            <div class="toolbar-separator"></div>
+                            
+                            <!-- View & Focus Mode -->
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" id="toggle-view-mode" title="Toggle List/Thumbnail View">
+                                    ⊞
+                                </button>
+                                <button class="toolbar-btn" id="toggle-focus-mode" title="Focus Mode (Fullscreen)">
+                                    ⛶
+                                </button>
+                            </div>
+
+                            <div class="toolbar-separator"></div>
+
+                            <!-- Background Settings -->
+                             <div class="toolbar-group">
+                                <button class="toolbar-btn" id="toggle-bg-settings" title="Background Settings">
+                                    🎨
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Background Settings Panel -->
+                        <div class="bg-settings-panel" id="bg-settings-panel" style="display: none;">
+                            <div class="bg-panel-header">
+                                <h4>Background Settings</h4>
+                                <button class="close-panel-btn" id="close-bg-settings">×</button>
+                            </div>
+                            
+                            <div class="bg-section">
+                                <label>Solid Colors</label>
+                                <div class="color-presets">
+                                    <button class="color-dot" data-bg="#0b0f1a" title="Default Dark"></button>
+                                    <button class="color-dot" data-bg="#000000" title="Pure Black"></button>
+                                    <button class="color-dot" data-bg="#1a1a1a" title="Charcoal"></button>
+                                    <button class="color-dot" data-bg="#0f172a" title="Slate Blue"></button>
+                                    <button class="color-dot" data-bg="#1e1e1e" title="VS Code Dark"></button>
+                                    <input type="color" id="custom-bg-color" class="color-input" title="Custom Color">
+                                </div>
+                            </div>
+                            
+                             <div class="bg-section">
+                                <label>Gradients</label>
+                                <div class="gradient-presets">
+                                    <button class="gradient-preview" data-bg="linear-gradient(135deg, #0f0c29, #302b63, #24243e)" title="Deep Space"></button>
+                                    <button class="gradient-preview" data-bg="linear-gradient(to right, #232526, #414345)" title="Midnight City"></button>
+                                    <button class="gradient-preview" data-bg="linear-gradient(to bottom, #000000, #434343)" title="Dark Grey"></button>
+                                </div>
+                            </div>
+
+                            <div class="bg-section">
+                                <label>Custom Image</label>
+                                <div class="image-upload-area">
+                                    <button class="btn-secondary" id="upload-bg-btn">Upload Image</button>
+                                    <input type="file" id="bg-image-input" accept="image/*" style="display: none;">
+                                    <button class="btn-text" id="remove-bg-image">Remove Image</button>
+                                </div>
+                                <div class="overlay-control" style="margin-top: 10px;">
+                                    <label>Overlay Opacity</label>
+                                    <input type="range" id="bg-overlay-opacity" min="0" max="1" step="0.1" value="0.7">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Editor Container for backgrounds -->
+                        <div class="editor-container">
+                             <!-- Editor Overlay for Images -->
+                            <div class="editor-bg-overlay"></div>
+                            
+                            <!-- Rich Text Editor -->
+                            <div class="rich-editor" contenteditable="true" spellcheck="true" id="rich-editor">
+                                <p>Start writing...</p>
+                            </div>
+                        </div>
+                    </div> <!-- End editor-container -->
+                    </div>
+                </div>
+            </section>

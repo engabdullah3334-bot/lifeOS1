@@ -1,0 +1,30 @@
+{
+  "app_name": "LifeOS Integrated",
+  "version": "1.0.0",
+  "modules": {
+    "tasks": {
+      "enabled": true,
+      "title": "Tasks",
+      "icon": "✓"
+    },
+    "writing": {
+      "enabled": true,
+      "title": "Writing Space",
+      "icon": "✎"
+    },
+    "ai": {
+      "enabled": true,
+      "title": "Assistant",
+      "icon": "✦"
+    }
+  },
+  "ui": {
+    "dashboard_layout": ["tasks_widget", "stats_widget", "quick_note_widget"],
+    "default_view": "dashboard",
+    "show_welcome": true
+  },
+  "database": {
+    "shared_path": "database/tasks.json",
+    "notes_path": "database/notes"
+  }
+}

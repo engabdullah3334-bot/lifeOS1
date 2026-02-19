@@ -1,0 +1,178 @@
+            <!-- Tasks View -->
+            <section id="tasks" class="content-view" style="display: none;">
+                <div class="section-header">
+                    <div class="header-left">
+                        <h2>All Tasks</h2>
+                        <span class="count-badge" id="task-count">0 Active</span>
+                    </div>
+                    <div class="header-actions">
+                        <div class="filter-tabs" id="task-filters">
+                            <button class="active" data-filter="all">All</button>
+                            <button data-filter="work">Work</button>
+                            <button data-filter="personal">Personal</button>
+                        </div>
+                        <div class="view-toggles">
+                            <button class="icon-btn active" id="view-list-btn" title="List View">📋</button>
+                            <button class="icon-btn" id="view-calendar-btn" title="Calendar View">📅</button>
+                        </div>
+                        <button class="primary-btn" id="open-task-modal-btn">+ New Task</button>
+                    </div>
+                </div>
+
+                <div class="tasks-container">
+                    <!-- Week Strip (Sat-Fri) -->
+                    <div class="week-strip-container" id="week-strip-container">
+                        <div class="week-header">
+                            <button class="icon-btn" id="prev-week-btn">❮</button>
+                            <h3 id="current-week-label">February 2024</h3>
+                            <button class="icon-btn" id="next-week-btn">❯</button>
+                        </div>
+                        <div class="week-days-grid" id="week-strip-grid">
+                            <!-- JS will render days here -->
+                        </div>
+                    </div>
+
+                    <!-- List View -->
+                    <div class="task-list-area" id="tasks-list">
+                        <!-- Tasks Rendered Here -->
+                    </div>
+
+                    <!-- Calendar View -->
+                    <div class="calendar-view-area" id="tasks-calendar-area" style="display: none;">
+                        <div class="calendar-controls">
+                            <div class="calendar-nav">
+                                <button class="icon-btn" id="prev-period">❮</button>
+                                <h3 id="current-period-label">February 2024</h3>
+                                <button class="icon-btn" id="next-period">❯</button>
+                                <button class="text-btn" id="today-btn">Today</button>
+                            </div>
+                            <select id="calendar-mode" class="toolbar-select">
+                                <option value="month">Month</option>
+                                <option value="week">Week</option>
+                            </select>
+                        </div>
+                        <div class="calendar-grid" id="tasks-calendar-grid">
+                            <!-- Calendar Rendered Here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- New Task Modal -->
+            <div id="task-modal" class="modal-overlay" style="display: none;">
+                <div class="modal-content">
+                    <h3>Create New Task</h3>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="new-task-title" placeholder="What needs to be done?">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="new-task-priority">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="new-task-desc" rows="3" placeholder="Add details..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" id="new-task-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Due Date</label>
+                            <input type="date" id="new-task-date">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Recurrence</label>
+                        <select id="new-task-recurrence">
+                            <option value="none" selected>None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="custom-recurrence-group" style="display: none;">
+                        <label>Repeat every (days)</label>
+                        <input type="number" id="new-task-custom-interval" min="1" value="1">
+                    </div>
+                    <div class="modal-actions">
+                        <button class="text-btn" id="cancel-create-task">Cancel</button>
+                        <button class="primary-btn" id="save-new-task">Create Task</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Details Modal (The "File" View) -->
+            <div id="task-details-modal" class="modal-overlay" style="display: none;">
+                <div class="modal-content task-file-modal">
+                    <div class="modal-header">
+                        <div class="task-file-header">
+                            <span class="file-badge" id="detail-priority-badge">Medium</span>
+                            <span class="file-badge" id="detail-category-badge">General</span>
+                            <span class="file-badge recurrence-badge" id="detail-recurrence-badge" style="display:none;">🔁 Daily</span>
+                        </div>
+                        <div class="header-actions-modal">
+                            <button class="icon-btn" id="edit-task-btn" title="Edit Task">✏️</button>
+                            <button class="close-modal-btn" id="close-details-modal">×</button>
+                        </div>
+                    </div>
+                    
+                        <div class="task-file-body" id="task-detail-view-mode">
+                        <h2 id="detail-title">Task Title</h2>
+                        
+                        <!-- Date Box Removed by User Request -->
+
+                        <div class="task-desc-section">
+                            <h3>Description</h3>
+                            <p id="detail-description">No description provided.</p>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode (Initially Hidden) -->
+                    <div class="task-file-body" id="task-detail-edit-mode" style="display: none;">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="edit-task-title">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Start</label>
+                                <input type="date" id="edit-task-start">
+                            </div>
+                            <div class="form-group">
+                                <label>Due</label>
+                                <input type="date" id="edit-task-due">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="edit-task-desc" rows="3"></textarea>
+                        </div>
+                         <div class="form-group">
+                            <label>Recurrence</label>
+                            <select id="edit-task-recurrence">
+                                <option value="none">None</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions" id="detail-actions-view">
+                        <button class="text-btn delete-btn-text" id="detail-delete-btn">Delete</button>
+                        <button class="primary-btn" id="detail-complete-btn">Complete Task</button>
+                    </div>
+
+                    <div class="modal-actions" id="detail-actions-edit" style="display: none;">
+                        <button class="text-btn" id="cancel-edit-btn">Cancel</button>
+                        <button class="primary-btn" id="save-edit-btn">Save Changes</button>
+                    </div>
+                </div>
+            </div>
