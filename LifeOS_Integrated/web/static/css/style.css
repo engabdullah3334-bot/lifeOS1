@@ -15,14 +15,20 @@
   --text-secondary: #a1a6c8;
   --text-muted: #6f7499;
 
-  /* Neon Gradient */
+  /* Accent - can be overridden by Settings */
+  --accent-primary: #4d7cff;
+
+  /* Neon Gradient - uses accent for consistency */
   --accent-gradient: linear-gradient(
     135deg,
     #27f5ff,
-    #4d7cff,
+    var(--accent-primary, #4d7cff),
     #9b4dff
   );
   --accent-glow: rgba(79, 124, 255, 0.35);
+
+  /* UI opacity - cards/panels transparency (1 = fully opaque) */
+  --ui-opacity: 1;
 
   /* Status */
   --success: #30d158;
@@ -69,6 +75,7 @@ body {
   font-family: var(--font-body);
   font-size: 15px;
   overflow: hidden;
+  color-scheme: dark;
 }
 
 /* ========== APP CONTAINER ========== */
@@ -124,6 +131,24 @@ body {
   box-shadow: 0 0 22px var(--accent-glow);
 }
 
+/* Settings button in sidebar */
+.bottom-settings {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-top: auto;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.bottom-settings:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
 /* ========== MAIN CONTENT ========== */
 .main-content {
   flex: 1;
@@ -142,6 +167,33 @@ body {
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-color);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.logout-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255,77,77,0.15);
+  border: 1px solid rgba(255,77,77,0.3);
+  color: #ff6b6b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(255,77,77,0.25);
 }
 
 /* ========== CONTENT VIEW ========== */
@@ -185,6 +237,7 @@ body {
   border-radius: var(--radius-md);
   padding: 24px;
   box-shadow: var(--shadow-soft);
+  opacity: var(--ui-opacity, 1);
 }
 
 /* ========== BUTTONS ========== */

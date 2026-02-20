@@ -32,6 +32,15 @@ class DatabaseConfig:
         return os.path.join(BASE_DIR, rel_path)
 
     @classmethod
+    def get_projects_db_path(cls):
+        cfg = cls.load_config()
+        # Derive projects path from shared_path directory
+        tasks_path = cfg.get('database', {}).get('shared_path', 'database/tasks.json')
+        db_dir = os.path.dirname(tasks_path)
+        rel_path = os.path.join(db_dir, 'projects.json')
+        return os.path.join(BASE_DIR, rel_path)
+
+    @classmethod
     def get_notes_path(cls):
         cfg = cls.load_config()
         rel_path = cfg.get('database', {}).get('notes_path', 'database/notes')

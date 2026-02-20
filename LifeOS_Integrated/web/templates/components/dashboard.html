@@ -1,7 +1,36 @@
             <!-- Dashboard View -->
-            <section id="dashboard" class="content-view active">
+            <section id="dashboard" class="content-view dashboard-view active">
+                <!-- Status Header Card -->
+                <div class="dashboard-status-card">
+                    <div class="status-card-brand">
+                        <div class="status-logo">
+                            <span class="logo-icon">◇</span>
+                        </div>
+                        <div class="status-brand-text">
+                            <h1 class="status-app-name">LifeOS</h1>
+                            <p class="status-tagline">Focus. Create. Achieve.</p>
+                        </div>
+                    </div>
+                    <div class="status-card-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="dash-stat-completed">0</span>
+                            <span class="stat-label">Tasks Done</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="dash-stat-time">0m</span>
+                            <span class="stat-label">Time Today</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item">
+                            <span class="stat-value stat-status" id="dash-stat-status">Ready</span>
+                            <span class="stat-label">Status</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="welcome-banner">
-                    <h2>Good afternoon.</h2>
+                    <h2 id="dashboard-greeting">Good afternoon.</h2>
                     <p>Focus is key. Here is your overview.</p>
                 </div>
                 
@@ -9,18 +38,17 @@
                     <div class="widget task-widget">
                         <div class="widget-header">
                             <h3>Today's Focus</h3>
-                            <button class="icon-btn" onclick="document.getElementById('open-task-modal-btn').click()">+</button>
+                            <button class="widget-add-btn" onclick="document.getElementById('ts-new-task-btn')?.click()" title="Add Task">+</button>
                         </div>
                         <div class="widget-content" id="dashboard-tasks-list">
-                            <!-- Dynamic Content -->
-                            <p style="color:#666; font-size:13px; padding:10px;">Loading tasks...</p>
+                            <p class="dash-loading">Loading tasks...</p>
                         </div>
                     </div>
 
                     <div class="widget stats-widget">
                         <h3>Productivity</h3>
                         <div class="stat-bar">
-                            <div class="fill" id="productivity-fill" style="width: 0%"></div>
+                            <div class="stat-bar-fill" id="productivity-fill" style="width: 0%"></div>
                         </div>
                         <p class="stat-text" id="productivity-text">0% Daily Goal</p>
                     </div>
@@ -28,9 +56,9 @@
                     <div class="widget quick-note-widget">
                         <div class="widget-header">
                             <h3>Quick Note</h3>
-                            <button class="icon-btn" id="save-quick-note" style="font-size:12px;">Save</button>
+                            <button class="widget-save-btn" id="save-quick-note" title="Save">Save</button>
                         </div>
-                        <textarea id="quick-note-area" placeholder="Capture a thought..."></textarea>
+                        <textarea id="quick-note-area" placeholder="Capture a thought..." rows="4"></textarea>
                     </div>
                 </div>
             </section>

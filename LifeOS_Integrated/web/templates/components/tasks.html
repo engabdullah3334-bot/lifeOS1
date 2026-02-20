@@ -1,178 +1,346 @@
-            <!-- Tasks View -->
-            <section id="tasks" class="content-view" style="display: none;">
-                <div class="section-header">
-                    <div class="header-left">
-                        <h2>All Tasks</h2>
-                        <span class="count-badge" id="task-count">0 Active</span>
-                    </div>
-                    <div class="header-actions">
-                        <div class="filter-tabs" id="task-filters">
-                            <button class="active" data-filter="all">All</button>
-                            <button data-filter="work">Work</button>
-                            <button data-filter="personal">Personal</button>
-                        </div>
-                        <div class="view-toggles">
-                            <button class="icon-btn active" id="view-list-btn" title="List View">📋</button>
-                            <button class="icon-btn" id="view-calendar-btn" title="Calendar View">📅</button>
-                        </div>
-                        <button class="primary-btn" id="open-task-modal-btn">+ New Task</button>
-                    </div>
+<!-- ============================================================
+     LifeOS — Task Management System (Full Rebuild)
+     Views: Projects | Daily | Monthly
+     ============================================================ -->
+<section id="tasks" class="content-view ts-view" style="display: none;">
+
+    <!-- ── Top Toolbar ─────────────────────────────────────── -->
+    <div class="ts-toolbar">
+        <!-- View Tabs -->
+        <div class="ts-view-tabs" id="ts-view-tabs">
+            <button class="ts-tab active" data-view="projects">
+                <span class="ts-tab-icon">🗂️</span> Projects
+            </button>
+            <button class="ts-tab" data-view="daily">
+                <span class="ts-tab-icon">📅</span> Daily
+            </button>
+            <button class="ts-tab" data-view="monthly">
+                <span class="ts-tab-icon">🗓️</span> Monthly
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="ts-search-wrap">
+            <span class="ts-search-icon">🔍</span>
+            <input type="text" id="ts-search" class="ts-search" placeholder="Search tasks…">
+        </div>
+
+        <!-- Right Controls -->
+        <div class="ts-toolbar-right">
+            <!-- Sort -->
+            <select id="ts-sort" class="ts-select">
+                <option value="order">Default</option>
+                <option value="priority">Priority</option>
+                <option value="date">Date</option>
+                <option value="status">Status</option>
+            </select>
+
+            <!-- Filter -->
+            <select id="ts-filter-status" class="ts-select">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
+            </select>
+
+            <!-- Theme Toggle -->
+            <button class="ts-icon-btn" id="ts-theme-toggle" title="Toggle Theme">🌙</button>
+
+            <!-- Stats Panel -->
+            <button class="ts-icon-btn" id="ts-stats-btn" title="Productivity Stats">📊</button>
+
+            <!-- New Project -->
+            <button class="ts-btn ts-btn-outline" id="ts-new-project-btn">+ Project</button>
+
+            <!-- New Task -->
+            <button class="ts-btn ts-btn-primary" id="ts-new-task-btn">+ Task</button>
+        </div>
+    </div>
+
+    <!-- ── Main Content Area ────────────────────────────────── -->
+    <div class="ts-main">
+
+        <!-- ░░ PROJECTS VIEW ░░ -->
+        <div class="ts-panel" id="ts-panel-projects">
+            <div id="ts-projects-container">
+                <!-- Rendered by JS: projectsView.js -->
+            </div>
+            <div class="ts-empty" id="ts-projects-empty" style="display:none;">
+                <div class="ts-empty-icon">🗂️</div>
+                <h3>No projects yet</h3>
+                <p>Create your first project to get started</p>
+                <button class="ts-btn ts-btn-primary" id="ts-empty-add-project">Create Project</button>
+            </div>
+        </div>
+
+        <!-- ░░ DAILY VIEW ░░ -->
+        <div class="ts-panel" id="ts-panel-daily" style="display:none;">
+            <!-- Week Strip -->
+            <div class="ts-week-strip" id="ts-week-strip">
+                <button class="ts-icon-btn" id="ts-week-prev">◀</button>
+                <div class="ts-week-grid" id="ts-week-grid"></div>
+                <button class="ts-icon-btn" id="ts-week-next">▶</button>
+            </div>
+            <!-- Daily Task List -->
+            <div class="ts-daily-header">
+                <h3 id="ts-daily-title">Today's Tasks</h3>
+                <span class="ts-badge" id="ts-daily-count">0</span>
+            </div>
+            <div id="ts-daily-list" class="ts-daily-list">
+                <!-- Rendered by JS: dailyView.js -->
+            </div>
+            <div class="ts-empty" id="ts-daily-empty" style="display:none;">
+                <div class="ts-empty-icon">✅</div>
+                <h3>All clear!</h3>
+                <p>No tasks scheduled for this day</p>
+            </div>
+        </div>
+
+        <!-- ░░ MONTHLY VIEW ░░ -->
+        <div class="ts-panel" id="ts-panel-monthly" style="display:none;">
+            <div class="ts-cal-controls">
+                <div class="ts-cal-nav">
+                    <button class="ts-icon-btn" id="ts-cal-prev">◀</button>
+                    <h3 id="ts-cal-label">February 2026</h3>
+                    <button class="ts-icon-btn" id="ts-cal-next">▶</button>
+                    <button class="ts-btn ts-btn-ghost" id="ts-cal-today">Today</button>
+                </div>
+                <select id="ts-cal-mode" class="ts-select">
+                    <option value="month">Month</option>
+                    <option value="week">Week</option>
+                </select>
+            </div>
+            <!-- Day Headers -->
+            <div class="ts-cal-day-headers" id="ts-cal-day-headers">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+                <span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <!-- Calendar Grid -->
+            <div class="ts-cal-grid" id="ts-cal-grid">
+                <!-- Rendered by JS: monthlyView.js -->
+            </div>
+        </div>
+
+    </div><!-- /ts-main -->
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- ── Create / Edit Task Modal ────────────────────────────── -->
+<div id="ts-task-modal" class="ts-modal-overlay" style="display:none;">
+    <div class="ts-modal ts-modal-lg">
+        <div class="ts-modal-header">
+            <h3 id="ts-task-modal-title">New Task</h3>
+            <button class="ts-modal-close" data-close="ts-task-modal">✕</button>
+        </div>
+        <div class="ts-modal-body">
+            <div class="ts-form-grid">
+                <!-- Title -->
+                <div class="ts-form-group ts-span-2">
+                    <label>Title <span class="ts-required">*</span></label>
+                    <input type="text" id="ts-task-title" class="ts-input"
+                           placeholder="What needs to be done?" autocomplete="off">
                 </div>
 
-                <div class="tasks-container">
-                    <!-- Week Strip (Sat-Fri) -->
-                    <div class="week-strip-container" id="week-strip-container">
-                        <div class="week-header">
-                            <button class="icon-btn" id="prev-week-btn">❮</button>
-                            <h3 id="current-week-label">February 2024</h3>
-                            <button class="icon-btn" id="next-week-btn">❯</button>
-                        </div>
-                        <div class="week-days-grid" id="week-strip-grid">
-                            <!-- JS will render days here -->
-                        </div>
-                    </div>
-
-                    <!-- List View -->
-                    <div class="task-list-area" id="tasks-list">
-                        <!-- Tasks Rendered Here -->
-                    </div>
-
-                    <!-- Calendar View -->
-                    <div class="calendar-view-area" id="tasks-calendar-area" style="display: none;">
-                        <div class="calendar-controls">
-                            <div class="calendar-nav">
-                                <button class="icon-btn" id="prev-period">❮</button>
-                                <h3 id="current-period-label">February 2024</h3>
-                                <button class="icon-btn" id="next-period">❯</button>
-                                <button class="text-btn" id="today-btn">Today</button>
-                            </div>
-                            <select id="calendar-mode" class="toolbar-select">
-                                <option value="month">Month</option>
-                                <option value="week">Week</option>
-                            </select>
-                        </div>
-                        <div class="calendar-grid" id="tasks-calendar-grid">
-                            <!-- Calendar Rendered Here -->
-                        </div>
-                    </div>
+                <!-- Description -->
+                <div class="ts-form-group ts-span-2">
+                    <label>Description</label>
+                    <textarea id="ts-task-desc" class="ts-input ts-textarea"
+                              rows="3" placeholder="Add more details…"></textarea>
                 </div>
-            </section>
 
-            <!-- New Task Modal -->
-            <div id="task-modal" class="modal-overlay" style="display: none;">
-                <div class="modal-content">
-                    <h3>Create New Task</h3>
-                    <div class="form-group">
-                        <label>Title</label>
-                        <input type="text" id="new-task-title" placeholder="What needs to be done?">
-                    </div>
-                    <div class="form-group">
-                        <label>Priority</label>
-                        <select id="new-task-priority">
-                            <option value="high">High</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="low">Low</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="new-task-desc" rows="3" placeholder="Add details..."></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Start Date</label>
-                            <input type="date" id="new-task-start-date">
-                        </div>
-                        <div class="form-group">
-                            <label>Due Date</label>
-                            <input type="date" id="new-task-date">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Recurrence</label>
-                        <select id="new-task-recurrence">
-                            <option value="none" selected>None</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="custom-recurrence-group" style="display: none;">
-                        <label>Repeat every (days)</label>
-                        <input type="number" id="new-task-custom-interval" min="1" value="1">
-                    </div>
-                    <div class="modal-actions">
-                        <button class="text-btn" id="cancel-create-task">Cancel</button>
-                        <button class="primary-btn" id="save-new-task">Create Task</button>
-                    </div>
+                <!-- Project -->
+                <div class="ts-form-group">
+                    <label>Project</label>
+                    <select id="ts-task-project" class="ts-input">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <!-- Priority -->
+                <div class="ts-form-group">
+                    <label>Priority</label>
+                    <select id="ts-task-priority" class="ts-input">
+                        <option value="low">🔵 Low</option>
+                        <option value="medium" selected>🟡 Medium</option>
+                        <option value="high">🟠 High</option>
+                        <option value="critical">🔴 Critical</option>
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div class="ts-form-group">
+                    <label>Status</label>
+                    <select id="ts-task-status" class="ts-input">
+                        <option value="pending">⏳ Pending</option>
+                        <option value="in_progress">🔄 In Progress</option>
+                        <option value="completed">✅ Completed</option>
+                        <option value="archived">📦 Archived</option>
+                    </select>
+                </div>
+
+                <!-- Execution Day -->
+                <div class="ts-form-group">
+                    <label>Execution Day</label>
+                    <input type="date" id="ts-task-exec-day" class="ts-input">
+                </div>
+
+                <!-- Start Date -->
+                <div class="ts-form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="ts-task-start" class="ts-input">
+                </div>
+
+                <!-- End Date -->
+                <div class="ts-form-group">
+                    <label>End Date</label>
+                    <input type="date" id="ts-task-end" class="ts-input">
+                </div>
+
+                <!-- Reminder -->
+                <div class="ts-form-group">
+                    <label>Reminder</label>
+                    <input type="datetime-local" id="ts-task-reminder" class="ts-input">
+                </div>
+
+                <!-- Tags -->
+                <div class="ts-form-group ts-span-2">
+                    <label>Tags</label>
+                    <input type="text" id="ts-task-tags" class="ts-input"
+                           placeholder="work, design, urgent (comma-separated)">
+                </div>
+
+                <!-- Notes -->
+                <div class="ts-form-group ts-span-2">
+                    <label>Notes</label>
+                    <textarea id="ts-task-notes" class="ts-input ts-textarea"
+                              rows="2" placeholder="Personal notes…"></textarea>
                 </div>
             </div>
+        </div>
+        <div class="ts-modal-footer">
+            <button class="ts-btn ts-btn-ghost" data-close="ts-task-modal">Cancel</button>
+            <button class="ts-btn ts-btn-primary" id="ts-task-save-btn">Create Task</button>
+        </div>
+        <input type="hidden" id="ts-task-editing-id" value="">
+    </div>
+</div>
 
-            <!-- Task Details Modal (The "File" View) -->
-            <div id="task-details-modal" class="modal-overlay" style="display: none;">
-                <div class="modal-content task-file-modal">
-                    <div class="modal-header">
-                        <div class="task-file-header">
-                            <span class="file-badge" id="detail-priority-badge">Medium</span>
-                            <span class="file-badge" id="detail-category-badge">General</span>
-                            <span class="file-badge recurrence-badge" id="detail-recurrence-badge" style="display:none;">🔁 Daily</span>
-                        </div>
-                        <div class="header-actions-modal">
-                            <button class="icon-btn" id="edit-task-btn" title="Edit Task">✏️</button>
-                            <button class="close-modal-btn" id="close-details-modal">×</button>
-                        </div>
-                    </div>
-                    
-                        <div class="task-file-body" id="task-detail-view-mode">
-                        <h2 id="detail-title">Task Title</h2>
-                        
-                        <!-- Date Box Removed by User Request -->
 
-                        <div class="task-desc-section">
-                            <h3>Description</h3>
-                            <p id="detail-description">No description provided.</p>
-                        </div>
+<!-- ── Create / Edit Project Modal ─────────────────────────── -->
+<div id="ts-project-modal" class="ts-modal-overlay" style="display:none;">
+    <div class="ts-modal">
+        <div class="ts-modal-header">
+            <h3 id="ts-project-modal-title">New Project</h3>
+            <button class="ts-modal-close" data-close="ts-project-modal">✕</button>
+        </div>
+        <div class="ts-modal-body">
+            <!-- Name -->
+            <div class="ts-form-group">
+                <label>Project Name <span class="ts-required">*</span></label>
+                <input type="text" id="ts-proj-name" class="ts-input"
+                       placeholder="My Project" autocomplete="off">
+            </div>
+            <!-- Icon + Color Row -->
+            <div class="ts-form-row">
+                <div class="ts-form-group">
+                    <label>Icon</label>
+                    <input type="text" id="ts-proj-icon" class="ts-input ts-icon-input"
+                           placeholder="📁" maxlength="2" value="📁">
+                </div>
+                <div class="ts-form-group">
+                    <label>Color</label>
+                    <div class="ts-color-picker" id="ts-proj-color-picker">
+                        <div class="ts-color-swatch active" data-color="#6366f1" style="background:#6366f1;"></div>
+                        <div class="ts-color-swatch" data-color="#8b5cf6" style="background:#8b5cf6;"></div>
+                        <div class="ts-color-swatch" data-color="#ec4899" style="background:#ec4899;"></div>
+                        <div class="ts-color-swatch" data-color="#ef4444" style="background:#ef4444;"></div>
+                        <div class="ts-color-swatch" data-color="#f97316" style="background:#f97316;"></div>
+                        <div class="ts-color-swatch" data-color="#eab308" style="background:#eab308;"></div>
+                        <div class="ts-color-swatch" data-color="#22c55e" style="background:#22c55e;"></div>
+                        <div class="ts-color-swatch" data-color="#06b6d4" style="background:#06b6d4;"></div>
                     </div>
-
-                    <!-- Edit Mode (Initially Hidden) -->
-                    <div class="task-file-body" id="task-detail-edit-mode" style="display: none;">
-                        <div class="form-group">
-                            <label>Title</label>
-                            <input type="text" id="edit-task-title">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Start</label>
-                                <input type="date" id="edit-task-start">
-                            </div>
-                            <div class="form-group">
-                                <label>Due</label>
-                                <input type="date" id="edit-task-due">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea id="edit-task-desc" rows="3"></textarea>
-                        </div>
-                         <div class="form-group">
-                            <label>Recurrence</label>
-                            <select id="edit-task-recurrence">
-                                <option value="none">None</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="modal-actions" id="detail-actions-view">
-                        <button class="text-btn delete-btn-text" id="detail-delete-btn">Delete</button>
-                        <button class="primary-btn" id="detail-complete-btn">Complete Task</button>
-                    </div>
-
-                    <div class="modal-actions" id="detail-actions-edit" style="display: none;">
-                        <button class="text-btn" id="cancel-edit-btn">Cancel</button>
-                        <button class="primary-btn" id="save-edit-btn">Save Changes</button>
-                    </div>
+                    <input type="hidden" id="ts-proj-color" value="#6366f1">
                 </div>
             </div>
+            <!-- Description -->
+            <div class="ts-form-group">
+                <label>Description</label>
+                <textarea id="ts-proj-desc" class="ts-input ts-textarea"
+                          rows="2" placeholder="What is this project about?"></textarea>
+            </div>
+        </div>
+        <div class="ts-modal-footer">
+            <button class="ts-btn ts-btn-ghost" data-close="ts-project-modal">Cancel</button>
+            <button class="ts-btn ts-btn-primary" id="ts-proj-save-btn">Create Project</button>
+        </div>
+        <input type="hidden" id="ts-proj-editing-id" value="">
+    </div>
+</div>
+
+
+<!-- ── Confirm Delete Modal ─────────────────────────────────── -->
+<div id="ts-confirm-modal" class="ts-modal-overlay" style="display:none;">
+    <div class="ts-modal ts-modal-sm">
+        <div class="ts-modal-body ts-confirm-body">
+            <div class="ts-confirm-icon">🗑️</div>
+            <h3 id="ts-confirm-title">Delete Task?</h3>
+            <p id="ts-confirm-msg">This action cannot be undone.</p>
+        </div>
+        <div class="ts-modal-footer">
+            <button class="ts-btn ts-btn-ghost" data-close="ts-confirm-modal">Cancel</button>
+            <button class="ts-btn ts-btn-danger" id="ts-confirm-ok-btn">Delete</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ── Stats Panel Modal ────────────────────────────────────── -->
+<div id="ts-stats-modal" class="ts-modal-overlay" style="display:none;">
+    <div class="ts-modal ts-modal-lg">
+        <div class="ts-modal-header">
+            <h3>📊 Productivity Stats</h3>
+            <button class="ts-modal-close" data-close="ts-stats-modal">✕</button>
+        </div>
+        <div class="ts-modal-body">
+            <div class="ts-stats-grid">
+                <div class="ts-stat-card">
+                    <div class="ts-stat-value" id="ts-stat-total">0</div>
+                    <div class="ts-stat-label">Total Tasks</div>
+                </div>
+                <div class="ts-stat-card">
+                    <div class="ts-stat-value ts-stat-green" id="ts-stat-done">0</div>
+                    <div class="ts-stat-label">Completed</div>
+                </div>
+                <div class="ts-stat-card">
+                    <div class="ts-stat-value ts-stat-amber" id="ts-stat-pending">0</div>
+                    <div class="ts-stat-label">Pending</div>
+                </div>
+                <div class="ts-stat-card">
+                    <div class="ts-stat-value ts-stat-blue" id="ts-stat-progress-pct">0%</div>
+                    <div class="ts-stat-label">Completion Rate</div>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="ts-overall-progress">
+                <div class="ts-progress-label">Overall Progress</div>
+                <div class="ts-progress-bar">
+                    <div class="ts-progress-fill" id="ts-overall-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <!-- Priority Breakdown -->
+            <div class="ts-priority-breakdown">
+                <h4>By Priority</h4>
+                <div class="ts-priority-bars" id="ts-priority-breakdown"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ── Toast Notification Container ───────────────────────── -->
+<div id="ts-toast-container" class="ts-toast-container"></div>

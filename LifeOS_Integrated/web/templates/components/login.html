@@ -1,0 +1,31 @@
+<!-- Login Screen - shown when user is not authenticated -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo">◇</div>
+      <h1 class="login-title">LifeOS</h1>
+      <p class="login-subtitle">Focus. Create. Achieve.</p>
+    </div>
+
+    <form id="login-form" class="login-form" novalidate>
+      <div class="login-field">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" name="username" placeholder="Enter username" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+      </div>
+      <div class="login-options">
+        <label class="login-remember">
+          <input type="checkbox" id="login-remember" name="remember">
+          <span>Remember me</span>
+        </label>
+      </div>
+      <p id="login-error" class="login-error" role="alert"></p>
+      <button type="submit" class="login-btn" id="login-submit">Sign In</button>
+    </form>
+
+    <p class="login-hint">Demo: admin / admin123</p>
+  </div>
+</div>

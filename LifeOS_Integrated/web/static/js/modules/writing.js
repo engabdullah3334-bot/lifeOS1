@@ -4,6 +4,75 @@
 // State Helpers
 // We rely on window.state.notesStructure from state.js
 
+// Per-file formatting isolation — each file has its own toolbar/formatting instance
+const getFileId = (file) => file ? `${file.folder || ''}/${file.name || ''}` : null;
+
+const DEFAULT_FORMATTING = {
+  formatBlock: 'p',
+  fontSize: '3',
+  fontFamily: 'inherit',
+  fontColor: '#f2f4ff',
+  editorBackground: null,  // null = use default
+  overlayOpacity: '0'
+};
+
+const DEFAULT_EDITOR_BG = { type: 'color', value: '#0b0f1a' };
+
+let noteFormattingCache = {};
+
+function resetToolbarToDefaults() {
+  const formatBlock = document.getElementById('format-block');
+  const fontSize = document.getElementById('font-size');
+  const fontFamily = document.getElementById('font-family');
+  const fontColorPicker = document.getElementById('font-color-picker');
+  if (formatBlock) formatBlock.value = DEFAULT_FORMATTING.formatBlock;
+  if (fontSize) fontSize.value = DEFAULT_FORMATTING.fontSize;
+  if (fontFamily) fontFamily.value = DEFAULT_FORMATTING.fontFamily;
+  if (fontColorPicker) fontColorPicker.value = DEFAULT_FORMATTING.fontColor;
+}
+
+function restoreToolbarFromCache(file) {
+  const fileId = getFileId(file);
+  if (!fileId) {
+    resetToolbarToDefaults();
+    resetEditorBackground();
+    return;
+  }
+  const cached = noteFormattingCache[fileId] || DEFAULT_FORMATTING;
+  const formatBlock = document.getElementById('format-block');
+  const fontSize = document.getElementById('font-size');
+  const fontFamily = document.getElementById('font-family');
+  const fontColorPicker = document.getElementById('font-color-picker');
+  if (formatBlock && cached.formatBlock) formatBlock.value = cached.formatBlock;
+  if (fontSize && cached.fontSize) fontSize.value = cached.fontSize;
+  if (fontFamily && cached.fontFamily) fontFamily.value = cached.fontFamily;
+  if (fontColorPicker && cached.fontColor) fontColorPicker.value = cached.fontColor;
+
+  // Restore per-file editor background
+  restoreEditorBackground(file);
+}
+
+function saveCurrentFileFormattingToCache() {
+  const file = window.state?.currentNote;
+  if (!file) return;
+  const fileId = getFileId(file);
+  if (!fileId) return;
+  const formatBlock = document.getElementById('format-block');
+  const fontSize = document.getElementById('font-size');
+  const fontFamily = document.getElementById('font-family');
+  const fontColorPicker = document.getElementById('font-color-picker');
+  const overlayInput = document.getElementById('bg-overlay-opacity');
+  noteFormattingCache[fileId] = {
+    ...(noteFormattingCache[fileId] || {}),
+    formatBlock: formatBlock?.value || DEFAULT_FORMATTING.formatBlock,
+    fontSize: fontSize?.value || DEFAULT_FORMATTING.fontSize,
+    fontFamily: fontFamily?.value || DEFAULT_FORMATTING.fontFamily,
+    fontColor: fontColorPicker?.value || DEFAULT_FORMATTING.fontColor,
+    editorBackground: noteFormattingCache[fileId]?.editorBackground ?? null,
+    overlayOpacity: overlayInput?.value ?? noteFormattingCache[fileId]?.overlayOpacity ?? DEFAULT_FORMATTING.overlayOpacity
+  };
+}
+
 // Fetch and Render Structure
 async function fetchNotesStructure() {
     try {
@@ -140,6 +209,12 @@ function renderFiles(files) {
 
 async function openNote(file) {
     if(!file) return;
+
+    // Save current note first to avoid losing changes and formatting bleed
+    if (window.state.currentNote && (window.state.currentNote.name !== file.name || window.state.currentNote.folder !== file.folder)) {
+        saveCurrentFileFormattingToCache();
+        await saveCurrentNote();
+    }
     
     // UI Updates
     const emptyState = document.getElementById('editor-empty-state'); // Should be removed in HTML but check just in case
@@ -177,6 +252,9 @@ async function openNote(file) {
         if(editor) editor.innerHTML = data.content || '<p>Start writing...</p>';
         if(titleInput) titleInput.value = file.name.replace(/\.[^/.]+$/, "");
         
+        // Restore per-file toolbar state — isolate formatting to this file only
+        restoreToolbarFromCache(file);
+        
         const saveStatus = document.querySelector('.save-status');
         if(saveStatus) {
             saveStatus.textContent = "Saved";
@@ -193,7 +271,10 @@ async function openNote(file) {
 }
 
 function closeNote() {
+    saveCurrentFileFormattingToCache();
     window.state.currentNote = null;
+    resetToolbarToDefaults();
+    resetEditorBackground();
     const emptyState = document.getElementById('editor-empty-state');
     const closeBtn = document.getElementById('close-note-btn');
     const editor = document.querySelector('.rich-editor');
@@ -404,52 +485,62 @@ function initializeRichTextEditor() {
     toolbarButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
+            if (!window.state.currentNote) return;
             document.execCommand(btn.dataset.command, false, null);
             updateToolbarState();
+            saveCurrentFileFormattingToCache();
         });
     });
     
     const formatBlock = document.getElementById('format-block');
     if(formatBlock) formatBlock.addEventListener('change', (e) => {
+        if (!window.state.currentNote) return;
         document.execCommand('formatBlock', false, e.target.value);
         updateToolbarState();
+        saveCurrentFileFormattingToCache();
     });
     
     const fontSize = document.getElementById('font-size');
     if(fontSize) fontSize.addEventListener('change', (e) => {
+        if (!window.state.currentNote) return;
         document.execCommand('fontSize', false, e.target.value);
         updateToolbarState();
+        saveCurrentFileFormattingToCache();
     });
 
-    // --- NEW: Font Family ---
     const fontFamily = document.getElementById('font-family');
     if(fontFamily) fontFamily.addEventListener('change', (e) => {
+        if (!window.state.currentNote) return;
         document.execCommand('fontName', false, e.target.value);
         updateToolbarState();
+    // --- NEW: Font Family ---
+        saveCurrentFileFormattingToCache();
     });
 
-    // --- NEW: Font Color ---
     const fontColorBtn = document.getElementById('font-color-btn');
     const fontColorPicker = document.getElementById('font-color-picker');
     if(fontColorBtn && fontColorPicker) {
         fontColorBtn.addEventListener('click', () => fontColorPicker.click());
+    // --- NEW: Font Color ---
         fontColorPicker.addEventListener('input', (e) => {
+            if (!window.state.currentNote) return;
             document.execCommand('foreColor', false, e.target.value);
+            saveCurrentFileFormattingToCache();
         });
     }
 
-    // --- NEW: Reset Style on Enter ---
+    // --- Reset Style on Enter: use per-file defaults ---
     const editor = document.querySelector('.rich-editor');
+                // Allow default Enter behavior (new paragraph)
     if(editor) {
         editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                // Allow default Enter behavior (new paragraph)
-                setTimeout(() => {
                     // Reset styles for the new line
+            if (e.key === 'Enter' && !e.shiftKey) {
+                setTimeout(() => {
                     document.execCommand('removeFormat', false, null);
-                    document.execCommand('foreColor', false, '#f2f4ff'); // Reset to default text color
-                    document.execCommand('fontName', false, 'inherit');
-                    document.execCommand('fontSize', false, '3'); // Default size
+                    document.execCommand('foreColor', false, DEFAULT_FORMATTING.fontColor);
+                    document.execCommand('fontName', false, DEFAULT_FORMATTING.fontFamily);
+                    document.execCommand('fontSize', false, DEFAULT_FORMATTING.fontSize);
                 }, 0);
             }
         });
@@ -475,9 +566,6 @@ function initializeBackgroundSettings() {
             panel.style.display = 'none';
         });
     }
-
-    // Apply Saved Settings
-    loadBackgroundSettings();
 
     // Solid Colors
     document.querySelectorAll('.color-dot').forEach(btn => {
@@ -519,50 +607,85 @@ function initializeBackgroundSettings() {
         });
     }
 
-    // Overlay Opacity
+    // Overlay Opacity — per-file, saved to cache
     const opacityInput = document.getElementById('bg-overlay-opacity');
     if(opacityInput) {
         opacityInput.addEventListener('input', (e) => {
-             document.documentElement.style.setProperty('--overlay-opacity', e.target.value);
-             localStorage.setItem('editor-overlay', e.target.value);
+             const val = e.target.value;
+             document.documentElement.style.setProperty('--overlay-opacity', val);
+             const file = window.state?.currentNote;
+             if (file) {
+                 const fileId = getFileId(file);
+                 if (fileId) {
+                     noteFormattingCache[fileId] = noteFormattingCache[fileId] || {};
+                     noteFormattingCache[fileId].overlayOpacity = val;
+                 }
+             }
         });
     }
 }
 
+function applyEditorBackgroundToContainer(settings) {
+  const container = document.querySelector('.editor-container');
+  if (!container) return;
+  if (!settings || !settings.type) {
+    container.style.background = '';
+    container.style.backgroundImage = '';
+    container.style.backgroundSize = '';
+    container.style.backgroundPosition = '';
+    return;
+  }
+  if (settings.type === 'color' || settings.type === 'gradient') {
+    container.style.background = settings.value;
+    container.style.backgroundImage = settings.value;
+  } else if (settings.type === 'image') {
+    container.style.backgroundImage = settings.value;
+    container.style.backgroundSize = 'cover';
+    container.style.backgroundPosition = 'center';
+  }
+}
+
 function setEditorBackground(settings) {
-    const container = document.querySelector('.editor-container');
-    if(!container) return;
+  const container = document.querySelector('.editor-container');
+  if (!container) return;
 
-    if(settings.type === 'color' || settings.type === 'gradient') {
-        container.style.background = settings.value;
-        container.style.backgroundImage = settings.value; // ensure standard handling
-    } else if (settings.type === 'image') {
-        container.style.backgroundImage = settings.value;
-        container.style.backgroundSize = 'cover';
-        container.style.backgroundPosition = 'center';
+  applyEditorBackgroundToContainer(settings);
+
+  // Save to current file's cache only (per-file isolation)
+  const file = window.state?.currentNote;
+  if (file) {
+    const fileId = getFileId(file);
+    if (fileId) {
+      noteFormattingCache[fileId] = noteFormattingCache[fileId] || {};
+      noteFormattingCache[fileId].editorBackground = settings;
     }
-    
-    // Save to local storage
-    localStorage.setItem('editor-bg-settings', JSON.stringify(settings));
+  }
 }
 
-function loadBackgroundSettings() {
-    const saved = localStorage.getItem('editor-bg-settings');
-    const savedOpacity = localStorage.getItem('editor-overlay');
-    
-    if(saved) {
-        try {
-            const settings = JSON.parse(saved);
-            setEditorBackground(settings);
-        } catch(e) { console.error('Error loading bg settings', e); }
-    }
-    
-    if(savedOpacity) {
-        document.documentElement.style.setProperty('--overlay-opacity', savedOpacity);
-        const input = document.getElementById('bg-overlay-opacity');
-        if(input) input.value = savedOpacity;
-    }
+function restoreEditorBackground(file) {
+  const fileId = getFileId(file);
+  const overlayInput = document.getElementById('bg-overlay-opacity');
+  if (!fileId) {
+    resetEditorBackground();
+    return;
+  }
+  const cached = noteFormattingCache[fileId];
+  const bg = cached?.editorBackground ?? null;
+  const opacity = cached?.overlayOpacity ?? DEFAULT_FORMATTING.overlayOpacity;
+
+  applyEditorBackgroundToContainer(bg);
+  document.documentElement.style.setProperty('--overlay-opacity', opacity);
+  if (overlayInput) overlayInput.value = opacity;
 }
+
+function resetEditorBackground() {
+  applyEditorBackgroundToContainer(null);
+  document.documentElement.style.setProperty('--overlay-opacity', DEFAULT_FORMATTING.overlayOpacity);
+  const overlayInput = document.getElementById('bg-overlay-opacity');
+  if (overlayInput) overlayInput.value = DEFAULT_FORMATTING.overlayOpacity;
+}
+
+// loadBackgroundSettings removed — backgrounds are now per-file in noteFormattingCache
 
 function updateToolbarState() {
     const editor = document.querySelector('.rich-editor');
@@ -576,30 +699,50 @@ function updateToolbarState() {
 
 // --- Quick Note ---
 async function loadQuickNote() {
-    try {
-        const res = await fetch(`${window.API_URL}/notes/content?folder=System&filename=QuickNote`);
-        if(res.ok) {
-            const data = await res.json();
-            const noteArea = document.getElementById('quick-note-area');
-            if(noteArea) noteArea.value = data.content || "";
-        }
-    } catch(e) { console.log("No quick note found yet"); }
-
+    // Textarea stays empty for new captures; previous notes are stored in file
     const saveBtn = document.getElementById('save-quick-note');
     if(saveBtn) saveBtn.addEventListener('click', saveQuickNote);
 }
 
 async function saveQuickNote() {
-    const content = document.getElementById('quick-note-area').value;
+    const noteArea = document.getElementById('quick-note-area');
+    const content = (noteArea?.value || '').trim();
+    if (!content) return;
+
     const btn = document.getElementById('save-quick-note');
-    btn.textContent = "...";
-    await fetch(`${window.API_URL}/notes`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({folder: "System", filename: "QuickNote", content})
-    });
-    btn.textContent = "Saved";
-    setTimeout(() => btn.textContent = "Save", 2000);
+    const origText = btn?.textContent || 'Save';
+    if (btn) btn.textContent = '...';
+
+    try {
+        let finalContent = content;
+        try {
+            const res = await fetch(`${window.API_URL}/notes/content?folder=System&filename=QuickNote`);
+            if (res.ok) {
+                const data = await res.json();
+                const existing = (data.content || '').trim();
+                if (existing) {
+                    const sep = '\n\n---\n';
+                    const timestamp = new Date().toLocaleString();
+                    finalContent = existing + sep + `[${timestamp}] ` + content;
+                }
+            }
+        } catch (_) { /* no existing note */ }
+
+        await fetch(`${window.API_URL}/notes`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({folder: "System", filename: "QuickNote", content: finalContent})
+        });
+
+        noteArea.value = '';
+        if (btn) {
+            btn.textContent = 'Saved';
+            setTimeout(() => { btn.textContent = origText; }, 1800);
+        }
+    } catch (e) {
+        console.error('Quick note save failed:', e);
+        if (btn) btn.textContent = origText;
+    }
 }
 
 // --- Advanced Features (Focus, RTL, Views) ---

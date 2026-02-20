@@ -1,0 +1,415 @@
+/* =============================================================
+   LifeOS — Dashboard Module (Modern & Premium)
+   Status Card, Focus Tasks, Quick Notes, Responsive UI
+   ============================================================= */
+
+/* ─── Dashboard View ───────────────────────────────────────── */
+.dashboard-view {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 28px 36px 40px;
+  animation: dashFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dashFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Status Header Card ───────────────────────────────────── */
+.dashboard-status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 24px 32px;
+  opacity: var(--ui-opacity, 1);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.03);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.dashboard-status-card:hover {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+/* Brand (Logo + Name) */
+.status-card-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-logo {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #27f5ff, #4d7cff, #9b4dff);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(79,124,255,0.35);
+  transition: transform 0.2s ease;
+}
+
+.status-logo:hover {
+  transform: scale(1.05);
+}
+
+.status-logo .logo-icon {
+  font-size: 24px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.status-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.status-app-name {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #27f5ff, #9b4dff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.status-tagline {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Stats Row */
+.status-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.stat-value.stat-status {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--success);
+  text-transform: capitalize;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 1px;
+}
+
+/* ─── Welcome Banner ───────────────────────────────────────── */
+.welcome-banner {
+  padding: 8px 0;
+}
+
+.welcome-banner h2 {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.welcome-banner p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* ─── Dashboard Grid ───────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+.task-widget {
+  grid-row: span 2;
+}
+
+/* ─── Widget Base ───────────────────────────────────────────── */
+.widget {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: var(--ui-opacity, 1);
+}
+
+.widget:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.widget-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+.widget-add-btn,
+.widget-save-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  color: #a5b4fc;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.widget-add-btn:hover,
+.widget-save-btn:hover {
+  background: rgba(99,102,241,0.3);
+  border-color: rgba(99,102,241,0.5);
+  transform: scale(1.08);
+}
+
+.widget-save-btn {
+  width: auto;
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.widget-content {
+  min-height: 80px;
+}
+
+/* ─── Focus Tasks List ─────────────────────────────────────── */
+.mini-task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  border-left: 3px solid rgba(99,102,241,0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mini-task-item:hover {
+  background: rgba(255,255,255,0.07);
+  transform: translateX(4px);
+  border-left-color: rgba(99,102,241,0.8);
+}
+
+.mini-task-item.p-critical { border-left-color: #ef4444; }
+.mini-task-item.p-high     { border-left-color: #f97316; }
+.mini-task-item.p-medium   { border-left-color: #eab308; }
+.mini-task-item.p-low      { border-left-color: #3b82f6; }
+
+.mini-task-check {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.mini-task-item:hover .mini-task-check {
+  border-color: var(--success);
+  background: rgba(48,209,88,0.15);
+}
+
+.mini-task-title {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.mini-task-priority {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.06);
+}
+
+.dash-empty-msg,
+.dash-loading {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 16px 0;
+  line-height: 1.5;
+}
+
+/* ─── Stats Widget ──────────────────────────────────────────── */
+.stats-widget h3 {
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stat-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #27f5ff, #4d7cff, #9b4dff);
+  border-radius: 10px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ─── Quick Note Widget ─────────────────────────────────────── */
+.quick-note-widget textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-body);
+  resize: vertical;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.quick-note-widget textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.quick-note-widget textarea:focus {
+  border-color: rgba(99,102,241,0.4);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .dashboard-status-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .status-card-stats {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .task-widget {
+    grid-row: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-view {
+    padding: 20px 20px 28px;
+  }
+
+  .dashboard-status-card {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .status-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .status-app-name {
+    font-size: 20px;
+  }
+
+  .status-card-stats {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .stat-divider {
+    display: none;
+  }
+
+  .stat-item {
+    min-width: 70px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .widget {
+    padding: 16px 18px;
+  }
+
+  .mini-task-item {
+    padding: 10px 12px;
+  }
+}

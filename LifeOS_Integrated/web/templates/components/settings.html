@@ -1,0 +1,106 @@
+<!-- Settings Panel - Side drawer with smooth transitions -->
+<div id="settings-panel" class="settings-panel" aria-hidden="true">
+  <div class="settings-overlay" id="settings-overlay"></div>
+  <aside class="settings-drawer" role="dialog" aria-label="Settings">
+    <div class="settings-header">
+      <h2 class="settings-title">
+        <span class="settings-icon" aria-hidden="true">⚙</span>
+        Settings
+      </h2>
+      <button type="button" class="settings-close" id="settings-close" aria-label="Close Settings">×</button>
+    </div>
+
+    <div class="settings-body">
+      <!-- Appearance -->
+      <section class="settings-section">
+        <h3 class="settings-section-title">
+          <span class="section-icon">🎨</span>
+          Appearance
+        </h3>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <span class="settings-item-label">Theme</span>
+            <span class="settings-item-desc">Dark or Light mode</span>
+          </div>
+          <div class="settings-toggle-wrap">
+            <button type="button" class="settings-toggle" id="setting-theme-toggle" role="switch" aria-checked="true" title="Toggle Dark/Light mode">
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+              <span class="toggle-label">Dark</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <span class="settings-item-label">Primary Color</span>
+            <span class="settings-item-desc">Accent for buttons & highlights</span>
+          </div>
+          <input type="color" class="settings-color-picker" id="setting-primary-color" value="#4d7cff" title="Primary color">
+        </div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <span class="settings-item-label">Background</span>
+            <span class="settings-item-desc">Solid color or preset</span>
+          </div>
+          <div class="settings-bg-options">
+            <button type="button" class="settings-bg-btn active" data-bg="gradient" title="Gradient">Gradient</button>
+            <button type="button" class="settings-bg-btn" data-bg="solid" title="Solid color">Solid</button>
+            <button type="button" class="settings-bg-btn" data-bg="image" title="Custom image">Image</button>
+          </div>
+          <input type="color" class="settings-color-picker mt-1" id="setting-bg-color" value="#0b0f1a" style="display:none" title="Background color">
+          <input type="file" accept="image/*" class="settings-file-input" id="setting-bg-image" style="display:none" title="Upload background image">
+        </div>
+      </section>
+
+      <!-- UI Controls -->
+      <section class="settings-section">
+        <h3 class="settings-section-title">
+          <span class="section-icon">🔧</span>
+          UI Controls
+        </h3>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <span class="settings-item-label">Show Stats Bar</span>
+            <span class="settings-item-desc">Dashboard statistics header</span>
+          </div>
+          <label class="settings-switch">
+            <input type="checkbox" class="settings-checkbox" id="setting-show-stats" checked>
+            <span class="settings-switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <span class="settings-item-label">Sound Notifications</span>
+            <span class="settings-item-desc">Audio alerts for tasks</span>
+          </div>
+          <label class="settings-switch">
+            <input type="checkbox" class="settings-checkbox" id="setting-sound-enabled" checked>
+            <span class="settings-switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <span class="settings-item-label">UI Opacity</span>
+            <span class="settings-item-desc">Transparency of cards & panels</span>
+          </div>
+          <div class="settings-range-wrap">
+            <input type="range" class="settings-range" id="setting-ui-opacity" min="0.7" max="1" step="0.05" value="1">
+            <span class="settings-range-value" id="setting-opacity-value">100%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="settings-section">
+        <button type="button" class="settings-reset-btn" id="settings-reset">Reset to Default</button>
+      </section>
+    </div>
+  </aside>
+</div>

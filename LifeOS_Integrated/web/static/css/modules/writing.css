@@ -304,11 +304,18 @@
 }
 
 .toolbar-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     background: rgba(20, 20, 22, 0.95);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a6c8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
     color: var(--text-primary);
-    padding: 7px 14px;
-    border-radius: 7px;
+    padding: 7px 32px 7px 14px;
     font-size: 13px;
     font-family: var(--font-body);
     font-weight: 500;
@@ -316,16 +323,23 @@
     outline: none;
     transition: all 0.2s ease;
     min-width: 100px;
+    color-scheme: dark;
 }
 
 .toolbar-select option {
-    background: rgba(30, 30, 32, 0.98);
+    background: #1a1f2e;
     color: var(--text-primary);
-    padding: 8px 12px;
+    padding: 10px 14px;
 }
 
-.toolbar-select option:hover {
-    background: rgba(64, 150, 255, 0.15);
+.toolbar-select option:hover,
+.toolbar-select option:focus {
+    background: rgba(64, 150, 255, 0.2);
+}
+
+.toolbar-select option:checked {
+    background: rgba(64, 150, 255, 0.35);
+    color: #69b1ff;
 }
 
 .toolbar-select:hover {

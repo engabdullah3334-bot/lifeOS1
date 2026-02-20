@@ -6,20 +6,32 @@
     <title>Life Manager</title>
     
     <!-- Core Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
     
     <!-- Feature CSS Modules -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/dashboard.css') }}?v=5">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/login.css') }}?v=1">
 
-    
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- SortableJS (Drag & Drop) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+    <!-- Flatpickr (Date Picker) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
-    <div class="app-container">
+    {% include 'components/login.html' %}
+
+    <div class="app-container" id="app-container" style="display: none;">
         <!-- Sidebar Navigation -->
         {% include 'components/sidebar.html' %}
 
@@ -28,6 +40,8 @@
             <header class="top-bar">
                 <h1 id="page-title">Dashboard</h1>
                 <div class="user-profile">
+                    <span id="user-name" class="user-name"></span>
+                    <button type="button" id="btn-logout" class="logout-btn" title="Logout">Logout</button>
                     <div class="avatar"></div>
                 </div>
             </header>
@@ -36,26 +50,45 @@
             {% include 'components/dashboard.html' %}
             {% include 'components/tasks.html' %}
             {% include 'components/writing.html' %}
-
-            
         </main>
     </div>
 
-    <!-- Core & State -->
-    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=3"></script>
-    
-    <!-- Feature Modules -->
-    <script src="{{ url_for('static', filename='js/modules/tasks.js') }}?v=3"></script>
-    <script src="{{ url_for('static', filename='js/modules/writing.js') }}?v=3"></script>
+    {% include 'components/settings.html' %}
 
-    
-    <!-- Entry Point -->
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=3"></script>
+    <!-- ── Auth (must load first) ── -->
+    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=1"></script>
+
+    <!-- ── Legacy State (for writing module) ── -->
+    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=4"></script>
+
+<!-- ── Task System Modules (load in dependency order) ── -->
+<script src="{{ url_for('static', filename='js/modules/tasks/state.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/api.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/notifications.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/theme.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/taskManager.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/modal.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/dragDrop.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/projectsView.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/dailyView.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/monthlyView.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/index.js') }}?v=8"></script>
+
+<!-- ── Writing Module ── -->
+<script src="{{ url_for('static', filename='js/modules/writing.js') }}?v=8"></script>
+
+<!-- ── Dashboard Module ── -->
+<script src="{{ url_for('static', filename='js/modules/dashboard.js') }}?v=5"></script>
+
+<!-- ── Settings Module ── -->
+<script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=1"></script>
+
+<!-- ── App Entry Point ── -->
+<script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>
+
     <script>
-        // Ensure Dashboard is visible initially
+        // Show dashboard by default
         document.getElementById('dashboard').style.display = 'block';
-
-
     </script>
 </body>
 </html>
