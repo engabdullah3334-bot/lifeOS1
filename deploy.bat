@@ -1,3 +1,3 @@
 git add .
-git commit -m "1.0.0"
-git push
+git commit -m "1.0.1"
+git push origin main
