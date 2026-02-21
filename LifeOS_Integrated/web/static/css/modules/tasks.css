@@ -968,13 +968,15 @@ select.ts-input option:checked {
   position: fixed;
   inset: 0;
   background: var(--ts-overlay);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   animation: ts-overlay-in 0.2s var(--ts-ease);
+  overflow-y: auto;
 }
 
 @keyframes ts-overlay-in {
@@ -988,7 +990,8 @@ select.ts-input option:checked {
   border-radius: 20px;
   width: 100%;
   max-width: 520px;
-  max-height: 90vh;
+  max-height: min(90vh, calc(100vh - 32px));
+  margin: auto;
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 80px rgba(0,0,0,0.55);
@@ -1278,6 +1281,54 @@ select.ts-input option:checked {
 
 .ts-toast-undo:hover { background: var(--ts-bg-hover); }
 
+
+/* ─── Modals Mobile ───────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ts-modal-overlay {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 24px;
+  }
+
+  .ts-modal {
+    max-height: calc(100vh - 48px);
+  }
+
+  .ts-form-grid,
+  .ts-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ts-span-2 {
+    grid-column: span 1;
+  }
+}
+
+/* ─── Toasts: Bottom, Glassmorphism ──────────────────────── */
+.ts-toast-container {
+  left: 50%;
+  transform: translateX(-50%);
+  right: auto;
+  bottom: 20px;
+  max-width: calc(100vw - 32px);
+}
+
+.ts-toast {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@media (max-width: 480px) {
+  .ts-toast-container {
+    bottom: 16px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .ts-toast {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+}
 
 /* ════════════════════════════════════════
    RESPONSIVE

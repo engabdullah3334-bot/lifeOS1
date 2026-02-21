@@ -1,12 +1,22 @@
 import os
+import json
+from datetime import datetime
 from flask import Flask, render_template, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, get_jwt_identity
 from pymongo import MongoClient
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return super().default(o)
 # استيراد الـ Blueprints
 from routes.auth import auth_bp
 from routes.tasks import tasks_bp
 from routes.writing import writing_bp
+from routes.settings import settings_bp
 
 # 1. إعداد المسارات
 base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -16,7 +26,7 @@ template_path = os.path.join(base_dir, 'web', 'templates')
 app = Flask(__name__,
             static_folder=static_path,
             template_folder=template_path)
-
+app.json_encoder = CustomJSONEncoder
 app.debug = True
 CORS(app)
 
@@ -38,6 +48,7 @@ app.config["db"] = db
 app.register_blueprint(auth_bp, url_prefix="/api")
 app.register_blueprint(tasks_bp, url_prefix="/api")
 app.register_blueprint(writing_bp, url_prefix="/api")
+app.register_blueprint(settings_bp, url_prefix="/api")
 
 # 4. الروابط الأساسية
 @app.route('/')

@@ -1,0 +1,162 @@
+/* =============================================================
+   LifeOS — Responsive & Mobile-First Design
+   Hamburger Menu, Glassmorphism, Mobile Layouts
+   ============================================================= */
+
+/* ─── Breakpoints ─────────────────────────────────────────── */
+/* Mobile: < 768px | Tablet: 768–1024px | Desktop: > 1024px */
+
+/* ─── Hamburger Button (visible on mobile only) ───────────── */
+.hamburger-btn {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.hamburger-btn:active {
+  transform: scale(0.95);
+}
+
+/* ─── Sidebar Overlay (mobile) ─────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+}
+
+/* ─── Sidebar Glassmorphism (mobile drawer) ───────────────── */
+.sidebar {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Top Bar Mobile ───────────────────────────────────────── */
+.top-bar {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ─── Content View Mobile Padding ───────────────────────────── */
+.content-view {
+  padding: 20px 16px;
+}
+
+/* ════════════════════════════════════════
+   TABLET: 768px – 1024px
+═══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .content-view {
+    padding: 24px 20px;
+  }
+
+  .top-bar {
+    padding: 0 24px;
+  }
+}
+
+/* ════════════════════════════════════════
+   MOBILE: < 768px
+═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    pointer-events: none;
+  }
+
+  .sidebar-overlay.active {
+    pointer-events: all;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 150;
+    transform: translateX(-100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+    background: linear-gradient(180deg, rgba(15,20,48,0.98), rgba(11,15,26,0.98));
+    backdrop-filter: blur(20px);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  .top-bar {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .top-bar h1 {
+    font-size: 18px;
+  }
+
+  .user-profile {
+    gap: 8px;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .logout-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .content-view {
+    padding: 16px 12px;
+  }
+}
+
+/* ════════════════════════════════════════
+   SMALL MOBILE: < 480px
+═══════════════════════════════════════ */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .top-bar h1 {
+    font-size: 16px;
+  }
+
+  .content-view {
+    padding: 12px 8px;
+  }
+}

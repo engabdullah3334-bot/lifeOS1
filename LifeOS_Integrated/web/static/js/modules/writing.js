@@ -20,6 +20,16 @@
   window.state.currentProject = null;
   window.state.currentNote = null;
   window.state.projectsStructure = {};
+  window.state.writingSearch = '';
+
+  function parseTagsStr(str) {
+    if (!str || typeof str !== 'string') return [];
+    return str.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  function tagsToStr(tags) {
+    return Array.isArray(tags) ? tags.join(', ') : '';
+  }
 
   const DEFAULT_FORMATTING = {
     formatBlock: 'p',
@@ -92,7 +102,7 @@
       const editBtn = li.querySelector('.edit-project-btn');
       if (editBtn) editBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!isSystem) editProject(project.project_id, project.name);
+        if (!isSystem) openProjectModal(project);
       });
 
       const archiveBtn = li.querySelector('.archive-project-btn');
@@ -109,6 +119,7 @@
 
       list.appendChild(li);
     });
+    initSortableWriting();
   }
 
   function selectProject(projectId) {
@@ -123,45 +134,207 @@
     renderNotes(notes);
   }
 
+  function openProjectModal(project) {
+    const modal = document.getElementById('project-props-modal');
+    const form = document.getElementById('project-props-form');
+    const idEl = document.getElementById('project-props-id');
+    const nameEl = document.getElementById('project-props-name');
+    const tagsEl = document.getElementById('project-props-tags');
+    const descEl = document.getElementById('project-props-desc');
+    const titleEl = document.getElementById('project-props-title');
+    if (!modal || !form) return;
+
+    if (project) {
+      titleEl.textContent = 'Edit Project';
+      idEl.value = project.project_id;
+      nameEl.value = project.name || '';
+      tagsEl.value = tagsToStr(project.tags);
+      descEl.value = project.description || '';
+    } else {
+      titleEl.textContent = 'New Project';
+      idEl.value = '';
+      nameEl.value = '';
+      tagsEl.value = '';
+      descEl.value = '';
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    nameEl.focus();
+  }
+
+  function closeProjectModal() {
+    document.getElementById('project-props-modal')?.classList.remove('open');
+    document.getElementById('project-props-modal')?.setAttribute('aria-hidden', 'true');
+  }
+
   async function createProject() {
-    const name = prompt("New project name:");
-    if (!name || !name.trim()) return;
+    openProjectModal(null);
+  }
+
+  async function submitProjectProps(e) {
+    e.preventDefault();
+    const idEl = document.getElementById('project-props-id');
+    const nameEl = document.getElementById('project-props-name');
+    const tagsEl = document.getElementById('project-props-tags');
+    const descEl = document.getElementById('project-props-desc');
+    const name = nameEl?.value?.trim();
+    if (!name) return;
+
+    const payload = { name, tags: parseTagsStr(tagsEl?.value), description: descEl?.value?.trim() || '' };
+
+    if (idEl?.value) {
+      try {
+        const res = await _notesFetch(`${getBase()}/writing/projects/${idEl.value}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          closeProjectModal();
+          await fetchProjectsStructure();
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to update project');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
 
     try {
       const res = await _notesFetch(`${getBase()}/writing/projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() })
+        body: JSON.stringify(payload)
       });
-
       if (res.ok) {
+        closeProjectModal();
         await fetchProjectsStructure();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create project");
+        alert(err.error || 'Failed to create project');
       }
     } catch (e) {
       console.error(e);
-      alert("Server connection error");
     }
   }
 
-  async function editProject(projectId, currentName) {
-    const newName = prompt("Project name:", currentName);
-    if (!newName || !newName.trim() || newName === currentName) return;
+  function openNoteModal(note) {
+    const modal = document.getElementById('note-props-modal');
+    const form = document.getElementById('note-props-form');
+    const idEl = document.getElementById('note-props-id');
+    const nameEl = document.getElementById('note-props-name');
+    const tagsEl = document.getElementById('note-props-tags');
+    const descEl = document.getElementById('note-props-desc');
+    const statusEl = document.getElementById('note-props-status');
+    const projectNameEl = document.getElementById('note-props-project-name');
+    const moveSelect = document.getElementById('note-props-move-project');
+    if (!modal || !form) return;
 
+    const projects = Object.values(window.state.projectsStructure).map(i => i.project).filter(p => p.project_id !== SYSTEM_PROJECT_ID);
+    moveSelect.innerHTML = '<option value="">Move to project...</option>' + projects.map(p => `<option value="${p.project_id}">${p.name}</option>`).join('');
+
+    if (note) {
+      document.getElementById('note-props-title').textContent = 'Edit Note';
+      idEl.value = note.note_id;
+      nameEl.value = note.title || note.filename || '';
+      tagsEl.value = tagsToStr(note.tags);
+      descEl.value = note.description || '';
+      if (statusEl) statusEl.value = note.status || 'draft';
+      const proj = window.state.projectsStructure[note.project_id]?.project;
+      if (projectNameEl) projectNameEl.textContent = proj ? proj.name : (note.project_id || '—');
+      if (moveSelect) moveSelect.value = '';
+    } else {
+      document.getElementById('note-props-title').textContent = 'New Note';
+      idEl.value = '';
+      nameEl.value = '';
+      tagsEl.value = '';
+      descEl.value = '';
+      if (statusEl) statusEl.value = 'draft';
+      const proj = window.state.currentProject ? window.state.projectsStructure[window.state.currentProject]?.project : null;
+      if (projectNameEl) projectNameEl.textContent = proj ? proj.name : '—';
+      if (moveSelect) moveSelect.value = '';
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    nameEl.focus();
+  }
+
+  function closeNoteModal() {
+    document.getElementById('note-props-modal')?.classList.remove('open');
+    document.getElementById('note-props-modal')?.setAttribute('aria-hidden', 'true');
+  }
+
+  async function submitNoteProps(e) {
+    e.preventDefault();
+    const idEl = document.getElementById('note-props-id');
+    const nameEl = document.getElementById('note-props-name');
+    const tagsEl = document.getElementById('note-props-tags');
+    const descEl = document.getElementById('note-props-desc');
+    const statusEl = document.getElementById('note-props-status');
+    const moveSelect = document.getElementById('note-props-move-project');
+    const name = nameEl?.value?.trim();
+    if (!name) return;
+
+    if (idEl?.value) {
+      const payload = { title: name, tags: parseTagsStr(tagsEl?.value), description: descEl?.value?.trim() || '', status: statusEl?.value || 'draft' };
+      try {
+        const res = await _notesFetch(`${getBase()}/notes/${idEl.value}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const targetProjectId = moveSelect?.value;
+          if (targetProjectId) {
+            const moveRes = await _notesFetch(`${getBase()}/notes/${idEl.value}/move`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ project_id: targetProjectId })
+            });
+            if (!moveRes.ok) {
+              const err = await moveRes.json();
+              alert(err.error || 'Move failed');
+            }
+          }
+          closeNoteModal();
+          await fetchProjectsStructure();
+          if (window.state.currentProject) renderNotes(window.state.projectsStructure[window.state.currentProject]?.notes || []);
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to update note');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
+
+    if (!window.state.currentProject) {
+      alert('Select a project first');
+      return;
+    }
     try {
-      const res = await _notesFetch(`${getBase()}/writing/projects/${projectId}`, {
-        method: 'PUT',
+      const res = await _notesFetch(`${getBase()}/notes`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim() })
+        body: JSON.stringify({
+          project_id: window.state.currentProject,
+          title: name,
+          tags: parseTagsStr(tagsEl?.value),
+          description: descEl?.value?.trim() || '',
+          status: statusEl?.value || 'draft'
+        })
       });
-
       if (res.ok) {
+        closeNoteModal();
+        const newNote = await res.json();
         await fetchProjectsStructure();
+        openNote(newNote);
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to update project");
+        alert(err.error || 'Failed to create note');
       }
     } catch (e) {
       console.error(e);
@@ -224,18 +397,32 @@
     if (!list) return;
     list.innerHTML = '';
 
-    notes.forEach(note => {
+    const search = (window.state.writingSearch || '').toLowerCase();
+    (notes || []).forEach(note => {
+      const tags = note.tags || [];
+      const title = note.title || note.filename || 'Untitled';
+      if (search && !matchesSearch(title, tags) && !matchesSearch(note.description, tags)) return;
+
       const li = document.createElement('li');
       li.className = 'note-item group';
+      li.dataset.noteId = note.note_id;
       if (window.state.currentNote && window.state.currentNote.note_id === note.note_id) {
         li.classList.add('active');
       }
+
+      const status = note.status || 'draft';
+      const statusLabel = status === 'in_review' ? 'Review' : status === 'complete' ? 'Done' : 'Draft';
+      const tagsHtml = tags.length ? `<div class="note-tags-row">${tags.slice(0, 3).map(t => `<span class="writing-tag-chip">${t}</span>`).join('')}</div>` : '';
 
       li.innerHTML = `
         <div class="note-item-content" data-note-id="${note.note_id}">
           <span class="icon">📝</span>
           <div class="note-info">
-            <div class="note-title">${note.title || note.filename || 'Untitled'}</div>
+            <div class="note-title-row">
+              <span class="note-title">${title}</span>
+              <span class="note-status-badge ${status}">${statusLabel}</span>
+            </div>
+            ${tagsHtml}
           </div>
         </div>
         <div class="note-actions">
@@ -248,15 +435,7 @@
 
       li.querySelector('.edit-note-btn').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (window.state.currentNote && window.state.currentNote.note_id === note.note_id) {
-          const titleInput = document.querySelector('.note-title-input');
-          if (titleInput) {
-            titleInput.focus();
-            titleInput.select();
-          }
-        } else {
-          openNote(note);
-        }
+        openNoteModal(note);
       });
 
       li.querySelector('.delete-note-btn').addEventListener('click', (e) => {
@@ -266,6 +445,7 @@
 
       list.appendChild(li);
     });
+    initSortableWriting();
   }
 
   async function openNote(note) {
@@ -283,6 +463,7 @@
 
     if (closeBtn) closeBtn.style.display = 'flex';
     if (editorCol) editorCol.style.visibility = 'visible';
+    document.querySelector('.writing-layout')?.classList.add('note-open');
     if (editor) {
       editor.contentEditable = "true";
       editor.innerHTML = '<p class="loading-placeholder">Loading...</p>';
@@ -330,42 +511,19 @@
     }
     if (titleInput) titleInput.value = '';
     if (editorCol) editorCol.style.visibility = 'hidden';
+    document.querySelector('.writing-layout')?.classList.remove('note-open');
 
     if (window.state.currentProject) {
       renderNotes(window.state.projectsStructure[window.state.currentProject]?.notes || []);
     }
   }
 
-  async function createNote(title) {
+  function createNote() {
     if (!window.state.currentProject) {
       alert("Please select a project first!");
       return;
     }
-
-    if (!title) title = prompt("Note title:");
-    if (!title || !title.trim()) return;
-
-    try {
-      const res = await _notesFetch(`${getBase()}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: window.state.currentProject,
-          title: title.trim()
-        })
-      });
-
-      if (res.ok) {
-        const newNote = await res.json();
-        await fetchProjectsStructure();
-        openNote(newNote);
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to create note");
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    openNoteModal(null);
   }
 
   async function deleteNote(noteId) {
@@ -665,6 +823,24 @@
     const renameNoteBtn = document.getElementById('rename-note-btn');
     const deleteNoteBtn = document.getElementById('delete-note-btn');
 
+    document.getElementById('project-props-form')?.addEventListener('submit', submitProjectProps);
+    document.getElementById('project-props-close')?.addEventListener('click', closeProjectModal);
+    document.getElementById('project-props-cancel')?.addEventListener('click', closeProjectModal);
+    document.getElementById('note-props-form')?.addEventListener('submit', submitNoteProps);
+    document.getElementById('note-props-close')?.addEventListener('click', closeNoteModal);
+    document.getElementById('note-props-cancel')?.addEventListener('click', closeNoteModal);
+
+    const searchInput = document.getElementById('writing-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        window.state.writingSearch = (e.target.value || '').trim();
+        renderProjects();
+        if (window.state.currentProject) {
+          renderNotes(window.state.projectsStructure[window.state.currentProject]?.notes || []);
+        }
+      });
+    }
+
     if (newProjectBtn) newProjectBtn.addEventListener('click', createProject);
     if (newNoteBtn) newNoteBtn.addEventListener('click', () => createNote());
     if (closeNoteBtn) closeNoteBtn.addEventListener('click', closeNote);
@@ -692,9 +868,155 @@
       });
     }
 
+    setupMobileWritingDrawers();
+    initSortableWriting();
     initializeRichTextEditor();
     loadQuickNote();
     fetchProjectsStructure();
+  }
+
+  let sortableProjectInstance = null;
+  let sortableNoteInstance = null;
+
+  function initSortableWriting() {
+    if (typeof Sortable === 'undefined') return;
+
+    if (sortableProjectInstance) {
+      sortableProjectInstance.destroy();
+      sortableProjectInstance = null;
+    }
+    const projectList = document.getElementById('project-list');
+    if (projectList) {
+      sortableProjectInstance = Sortable.create(projectList, {
+        animation: 150,
+        handle: '.project-item-content',
+        ghostClass: 'writing-sortable-ghost',
+        chosenClass: 'writing-sortable-chosen',
+        onEnd(evt) {
+          const el = evt.item;
+          const pid = el?.dataset?.projectId;
+          if (!pid) return;
+          const items = Array.from(projectList.querySelectorAll('li[data-project-id]')).map(li => li.dataset.projectId).filter(Boolean);
+          const prevOrder = Object.keys(window.state.projectsStructure).sort((a, b) => {
+            const pa = window.state.projectsStructure[a]?.project;
+            const pb = window.state.projectsStructure[b]?.project;
+            return (pa?.order ?? 999) - (pb?.order ?? 999);
+          });
+          const newOrder = items;
+          if (JSON.stringify(prevOrder) === JSON.stringify(newOrder)) return;
+          applyProjectsOrderOptimistic(newOrder);
+          _notesFetch(`${getBase()}/writing/projects/order`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_ids: newOrder })
+          }).then(res => { if (!res.ok) fetchProjectsStructure(); }).catch(() => fetchProjectsStructure());
+        }
+      });
+    }
+
+    if (sortableNoteInstance) {
+      sortableNoteInstance.destroy();
+      sortableNoteInstance = null;
+    }
+    const noteList = document.getElementById('note-list');
+    if (noteList) {
+      sortableNoteInstance = Sortable.create(noteList, {
+        animation: 150,
+        handle: '.note-item-content',
+        ghostClass: 'writing-sortable-ghost',
+        chosenClass: 'writing-sortable-chosen',
+        onEnd(evt) {
+          const items = Array.from(noteList.querySelectorAll('li[data-note-id]')).map(li => li.dataset.noteId).filter(Boolean);
+          const projectId = window.state.currentProject;
+          if (!projectId || items.length === 0) return;
+          applyNotesOrderOptimistic(projectId, items);
+          _notesFetch(`${getBase()}/notes/order`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: projectId, note_ids: items })
+          }).then(res => { if (!res.ok) fetchProjectsStructure(); }).catch(() => fetchProjectsStructure());
+        }
+      });
+    }
+  }
+
+  function applyProjectsOrderOptimistic(projectIds) {
+    const structure = window.state.projectsStructure;
+    const ordered = [];
+    projectIds.forEach(pid => {
+      if (structure[pid]) ordered.push(structure[pid]);
+    });
+    const newStruct = {};
+    ordered.forEach((item, idx) => {
+      const pid = item.project.project_id;
+      newStruct[pid] = { ...item, project: { ...item.project, order: idx } };
+    });
+    Object.keys(structure).forEach(pid => {
+      if (!newStruct[pid]) newStruct[pid] = structure[pid];
+    });
+    window.state.projectsStructure = newStruct;
+    renderProjects();
+  }
+
+  function applyNotesOrderOptimistic(projectId, noteIds) {
+    const entry = window.state.projectsStructure[projectId];
+    if (!entry || !entry.notes) return;
+    const noteMap = {};
+    entry.notes.forEach(n => { noteMap[n.note_id] = n; });
+    const ordered = noteIds.map((nid, idx) => ({ ...noteMap[nid], order: idx })).filter(Boolean);
+    window.state.projectsStructure[projectId] = { ...entry, notes: ordered };
+    renderNotes(ordered);
+  }
+
+  function setupMobileWritingDrawers() {
+    const projectsBtn = document.getElementById('mobile-projects-btn');
+    const projectsCol = document.getElementById('projects-sidebar');
+    const notesCol = document.getElementById('notes-sidebar');
+    const layout = document.querySelector('.writing-layout');
+    if (!projectsBtn || !projectsCol || !layout) return;
+
+    function closeDrawers() {
+      projectsCol.classList.remove('mobile-open');
+      if (notesCol) notesCol.classList.remove('mobile-open');
+      document.getElementById('writing-drawer-overlay')?.remove();
+    }
+
+    function openProjectsDrawer() {
+      projectsCol.classList.add('mobile-open');
+      if (notesCol) notesCol.classList.remove('mobile-open');
+      let overlay = document.getElementById('writing-drawer-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'writing-drawer-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;backdrop-filter:blur(4px);';
+        overlay.addEventListener('click', closeDrawers);
+        document.body.appendChild(overlay);
+      }
+    }
+
+    projectsBtn.addEventListener('click', () => {
+      if (projectsCol.classList.contains('mobile-open')) closeDrawers();
+      else openProjectsDrawer();
+    });
+
+    const closeOnSelect = (el) => {
+      if (!el) return;
+      el.addEventListener('click', () => {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+          setTimeout(closeDrawers, 150);
+        }
+      });
+    };
+    document.getElementById('project-list')?.addEventListener('click', (e) => {
+      if (e.target.closest('.project-item-content') && window.matchMedia('(max-width: 768px)').matches) {
+        setTimeout(() => { notesCol?.classList.add('mobile-open'); projectsCol.classList.remove('mobile-open'); }, 100);
+      }
+    });
+    document.getElementById('note-list')?.addEventListener('click', (e) => {
+      if (e.target.closest('.note-item') && window.matchMedia('(max-width: 768px)').matches) {
+        setTimeout(closeDrawers, 150);
+      }
+    });
   }
 
   window.fetchProjectsStructure = fetchProjectsStructure;

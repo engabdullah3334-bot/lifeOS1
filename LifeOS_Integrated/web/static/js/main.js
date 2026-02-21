@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.state = { view: 'dashboard', tasks: [], filter: 'all' };
     }
 
+    // ── Mobile Sidebar (Hamburger) ──────────────────────────
+    setupMobileSidebar();
+
     // ── Navigation ─────────────────────────────────────────
     setupNavigation();
 
@@ -25,14 +28,48 @@ document.addEventListener('DOMContentLoaded', () => {
     loadView(window.state.view || 'dashboard');
 });
 
+// ── Mobile Sidebar (Hamburger Menu) ──────────────────────────
+function setupMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const hamburger = document.getElementById('hamburger-btn');
+
+    function openSidebar() {
+        sidebar?.classList.add('open');
+        overlay?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        sidebar?.classList.remove('open');
+        overlay?.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    hamburger?.addEventListener('click', () => {
+        if (sidebar?.classList.contains('open')) closeSidebar();
+        else openSidebar();
+    });
+
+    overlay?.addEventListener('click', closeSidebar);
+
+    document.querySelectorAll('.nav-links li, .bottom-settings')?.forEach(el => {
+        el.addEventListener('click', () => {
+            if (window.innerWidth <= 768) closeSidebar();
+        });
+    });
+}
+
 // ── Navigation ──────────────────────────────────────────────
 function setupNavigation() {
     document.querySelectorAll('.nav-links li').forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.tab;
-            loadView(view);
-            document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
-            item.classList.add('active');
+            if (view) {
+                loadView(view);
+                document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+                item.classList.add('active');
+            }
         });
     });
 }

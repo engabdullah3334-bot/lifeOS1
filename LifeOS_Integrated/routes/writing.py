@@ -12,6 +12,13 @@ from uuid import uuid4
 
 writing_bp = Blueprint("writing", __name__)
 
+
+def _date_ser(v):
+    """Serialize datetime for JSON."""
+    if isinstance(v, datetime):
+        return v.isoformat()
+    return v
+
 # System project ID - cannot be deleted
 SYSTEM_PROJECT_ID = "system"
 
@@ -76,10 +83,14 @@ def create_project():
     if existing:
         return jsonify({"error": "Project with this name already exists"}), 409
 
+    order = db.note_projects.count_documents({"user_id": user_id})
     project = {
         "project_id": str(uuid4()),
         "user_id": user_id,
         "name": name,
+        "description": (data.get("description") or "").strip(),
+        "tags": data.get("tags") if isinstance(data.get("tags"), list) else [],
+        "order": order,
         "created_at": datetime.now(),
         "archived": False,
         "is_system": False,
@@ -93,7 +104,7 @@ def create_project():
 @writing_bp.route("/writing/projects/<string:project_id>", methods=["PUT"])
 @jwt_required()
 def update_project(project_id):
-    """Update project name"""
+    """Update project name, description, tags"""
     db = get_db()
     user_id = get_jwt_identity()
     data = request.get_json() or {}
@@ -113,9 +124,15 @@ def update_project(project_id):
     if existing:
         return jsonify({"error": "Project with this name already exists"}), 409
 
+    update_data = {"name": name}
+    if "description" in data:
+        update_data["description"] = (data.get("description") or "").strip()
+    if "tags" in data and isinstance(data["tags"], list):
+        update_data["tags"] = data["tags"]
+
     result = db.note_projects.update_one(
         {"user_id": user_id, "project_id": project_id},
-        {"$set": {"name": name}}
+        {"$set": update_data}
     )
 
     if result.matched_count == 0:
@@ -141,6 +158,27 @@ def delete_project(project_id):
         return jsonify({"error": "Project not found"}), 404
 
     db.notes.delete_many({"user_id": user_id, "project_id": project_id})
+    return jsonify({"success": True})
+
+
+@writing_bp.route("/writing/projects/order", methods=["PUT"])
+@jwt_required()
+def update_projects_order():
+    """Save project order (array of project_id). Optimistic UI can call this after reorder."""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    project_ids = data.get("project_ids")
+    if not isinstance(project_ids, list):
+        return jsonify({"error": "project_ids array required"}), 400
+
+    for idx, pid in enumerate(project_ids):
+        if pid == SYSTEM_PROJECT_ID:
+            continue
+        db.note_projects.update_one(
+            {"user_id": user_id, "project_id": pid},
+            {"$set": {"order": idx}}
+        )
     return jsonify({"success": True})
 
 
@@ -184,7 +222,13 @@ def get_structure():
     projects = list(db.note_projects.find(
         {"user_id": user_id, "archived": False},
         {"_id": 0}
-    ).sort("created_at", -1))
+    ))
+    def _project_sort_key(p):
+        o = p.get("order", 999)
+        ca = p.get("created_at")
+        ts = ca.timestamp() if isinstance(ca, datetime) else (ca or 0)
+        return (o, -ts)
+    projects.sort(key=_project_sort_key)
 
     notes = list(db.notes.find({"user_id": user_id}, {"_id": 0}))
 
@@ -192,7 +236,11 @@ def get_structure():
     for project in projects:
         pid = project["project_id"]
         structure[pid] = {
-            "project": project,
+            "project": {
+                **project,
+                "tags": project.get("tags") or [],
+                "description": project.get("description") or "",
+            },
             "notes": []
         }
 
@@ -203,7 +251,21 @@ def get_structure():
                 "note_id": note.get("note_id"),
                 "title": note.get("title", ""),
                 "filename": note.get("filename", ""),
+                "status": note.get("status", "draft"),
+                "tags": note.get("tags") or [],
+                "description": note.get("description") or "",
+                "created_at": _date_ser(note.get("created_at")),
+                "last_updated": _date_ser(note.get("last_updated")),
+                "project_id": project_id,
+                "order": note.get("order", 999),
             })
+    def _note_sort_key(n):
+        o = n.get("order", 999)
+        lu = n.get("last_updated")
+        ts = lu.timestamp() if isinstance(lu, datetime) else 0
+        return (o, -ts)
+    for pid in structure:
+        structure[pid]["notes"].sort(key=_note_sort_key)
 
     return jsonify(structure)
 
@@ -278,6 +340,7 @@ def create_note():
             filename = f"{base_title} ({counter}).txt"
             counter += 1
 
+    order = db.notes.count_documents({"user_id": user_id, "project_id": project_id})
     note = {
         "note_id": str(uuid4()),
         "user_id": user_id,
@@ -285,6 +348,10 @@ def create_note():
         "title": title.replace(".txt", ""),
         "filename": filename,
         "content": data.get("content", ""),
+        "status": data.get("status", "draft"),
+        "tags": data.get("tags") if isinstance(data.get("tags"), list) else [],
+        "description": (data.get("description") or "").strip(),
+        "order": order,
         "created_at": datetime.now(),
         "last_updated": datetime.now(),
     }
@@ -314,6 +381,13 @@ def update_note(note_id):
             filename = title if title.endswith(".txt") else f"{title}.txt"
             update_data["filename"] = filename
 
+    if "status" in data and data["status"] in ("draft", "complete", "in_review"):
+        update_data["status"] = data["status"]
+    if "tags" in data and isinstance(data["tags"], list):
+        update_data["tags"] = data["tags"]
+    if "description" in data:
+        update_data["description"] = (data["description"] or "").strip()
+
     result = db.notes.update_one(
         {"user_id": user_id, "note_id": note_id},
         {"$set": update_data}
@@ -324,6 +398,52 @@ def update_note(note_id):
 
     updated = db.notes.find_one({"user_id": user_id, "note_id": note_id}, {"_id": 0})
     return jsonify(updated)
+
+
+@writing_bp.route("/notes/<string:note_id>/move", methods=["PUT"])
+@jwt_required()
+def move_note(note_id):
+    """Move note to another project."""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    target_project_id = data.get("project_id")
+
+    if not target_project_id:
+        return jsonify({"error": "project_id required"}), 400
+
+    proj = db.note_projects.find_one({"user_id": user_id, "project_id": target_project_id})
+    if not proj:
+        return jsonify({"error": "Target project not found"}), 404
+
+    result = db.notes.update_one(
+        {"user_id": user_id, "note_id": note_id},
+        {"$set": {"project_id": target_project_id, "last_updated": datetime.now()}}
+    )
+    if result.matched_count == 0:
+        return jsonify({"error": "Note not found"}), 404
+    updated = db.notes.find_one({"user_id": user_id, "note_id": note_id}, {"_id": 0})
+    return jsonify(updated)
+
+
+@writing_bp.route("/notes/order", methods=["PUT"])
+@jwt_required()
+def update_notes_order():
+    """Save note order within a project. Body: { project_id, note_ids: string[] }"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    project_id = data.get("project_id")
+    note_ids = data.get("note_ids")
+    if not project_id or not isinstance(note_ids, list):
+        return jsonify({"error": "project_id and note_ids array required"}), 400
+
+    for idx, nid in enumerate(note_ids):
+        db.notes.update_one(
+            {"user_id": user_id, "project_id": project_id, "note_id": nid},
+            {"$set": {"order": idx}}
+        )
+    return jsonify({"success": True})
 
 
 @writing_bp.route("/notes/<string:note_id>", methods=["DELETE"])

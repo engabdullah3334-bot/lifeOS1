@@ -10,6 +10,9 @@
                                 <button class="toggle-sidebar-btn" id="toggle-projects" title="Hide Projects">◀</button>
                             </div>
                         </div>
+                        <div class="writing-quick-filter">
+                            <input type="text" id="writing-search" class="writing-search-input" placeholder="Search projects & notes..." autocomplete="off">
+                        </div>
                         <ul class="project-list" id="project-list">
                             <!-- Dynamic Projects -->
                         </ul>
@@ -37,6 +40,7 @@
                     <!-- Editor Column -->
                     <div class="sf-column editor-col" id="editor-column" style="visibility: hidden;">
                         <div class="editor-header">
+                            <button class="mobile-drawer-btn" id="mobile-projects-btn" title="Projects" aria-label="Open projects">📁</button>
                             <input type="text" class="note-title-input" placeholder="Note title...">
                             <div class="header-actions">
                                 <button class="icon-btn" id="rename-note-btn" title="Edit name">✎</button>
@@ -156,6 +160,79 @@
                                 <p>Start writing...</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Project Properties Modal -->
+                <div id="project-props-modal" class="writing-props-overlay" aria-hidden="true">
+                    <div class="writing-props-modal">
+                        <div class="writing-props-header">
+                            <h3 id="project-props-title">Project</h3>
+                            <button type="button" class="writing-props-close" id="project-props-close" aria-label="Close">×</button>
+                        </div>
+                        <form id="project-props-form" class="writing-props-form">
+                            <input type="hidden" id="project-props-id" value="">
+                            <div class="writing-props-field">
+                                <label for="project-props-name">Name <span class="required">*</span></label>
+                                <input type="text" id="project-props-name" required placeholder="Project name">
+                            </div>
+                            <div class="writing-props-field">
+                                <label for="project-props-tags">Tags</label>
+                                <input type="text" id="project-props-tags" placeholder="tag1, tag2, tag3">
+                            </div>
+                            <div class="writing-props-field">
+                                <label for="project-props-desc">Description</label>
+                                <textarea id="project-props-desc" rows="3" placeholder="Brief description"></textarea>
+                            </div>
+                            <div class="writing-props-actions">
+                                <button type="button" class="writing-props-cancel" id="project-props-cancel">Cancel</button>
+                                <button type="submit" class="writing-props-submit">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Note Properties Modal -->
+                <div id="note-props-modal" class="writing-props-overlay" aria-hidden="true">
+                    <div class="writing-props-modal">
+                        <div class="writing-props-header">
+                            <h3 id="note-props-title">Note</h3>
+                            <button type="button" class="writing-props-close" id="note-props-close" aria-label="Close">×</button>
+                        </div>
+                        <form id="note-props-form" class="writing-props-form">
+                            <input type="hidden" id="note-props-id" value="">
+                            <div class="writing-props-field">
+                                <label for="note-props-name">Name <span class="required">*</span></label>
+                                <input type="text" id="note-props-name" required placeholder="Note title">
+                            </div>
+                            <div class="writing-props-field note-project-ref" id="note-props-project-wrap">
+                                <label>Project</label>
+                                <div class="writing-props-ref" id="note-props-project-name">—</div>
+                                <select id="note-props-move-project" class="writing-props-select">
+                                    <option value="">Move to project...</option>
+                                </select>
+                            </div>
+                            <div class="writing-props-field">
+                                <label for="note-props-status">Status</label>
+                                <select id="note-props-status" class="writing-props-select">
+                                    <option value="draft">Draft</option>
+                                    <option value="in_review">In review</option>
+                                    <option value="complete">Complete</option>
+                                </select>
+                            </div>
+                            <div class="writing-props-field">
+                                <label for="note-props-tags">Tags</label>
+                                <input type="text" id="note-props-tags" placeholder="tag1, tag2">
+                            </div>
+                            <div class="writing-props-field">
+                                <label for="note-props-desc">Description</label>
+                                <textarea id="note-props-desc" rows="3" placeholder="Brief description"></textarea>
+                            </div>
+                            <div class="writing-props-actions">
+                                <button type="button" class="writing-props-cancel" id="note-props-cancel">Cancel</button>
+                                <button type="submit" class="writing-props-submit">Save</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </section>

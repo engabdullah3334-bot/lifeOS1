@@ -6,6 +6,7 @@
 
 (function() {
   const STORAGE_KEY = 'lifeos_settings';
+  const API_BASE = window.API_URL || (window.location.origin + '/api');
 
   const DEFAULTS = {
     theme: 'dark',
@@ -20,21 +21,68 @@
 
   let current = { ...DEFAULTS };
 
+  function getAuthHeaders(includeJson) {
+    const headers = {};
+    if (includeJson) headers['Content-Type'] = 'application/json';
+    const token = window.LifeOSApi?.getToken?.();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return headers;
+  }
+
   // ─── Load / Save ───────────────────────────────────────────
-  function load() {
+  function loadFromLocal() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        current = { ...DEFAULTS, ...saved };
+        return { ...DEFAULTS, ...saved };
       }
     } catch (e) { console.warn('Settings load error:', e); }
+    return { ...DEFAULTS };
+  }
+
+  async function loadFromApi() {
+    const token = window.LifeOSApi?.getToken?.();
+    if (!token) return null;
+    try {
+      const res = await fetch(API_BASE + '/settings', {
+        headers: getAuthHeaders(false)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { ...DEFAULTS, ...data };
+      }
+    } catch (e) { console.warn('Settings API load error:', e); }
+    return null;
+  }
+
+  async function load() {
+    const fromApi = await loadFromApi();
+    if (fromApi) {
+      current = fromApi;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    } else {
+      current = loadFromLocal();
+    }
     return current;
+  }
+
+  async function saveToApi() {
+    const token = window.LifeOSApi?.getToken?.();
+    if (!token) return;
+    try {
+      await fetch(API_BASE + '/settings', {
+        method: 'PUT',
+        headers: getAuthHeaders(true),
+        body: JSON.stringify(current)
+      });
+    } catch (e) { console.warn('Settings API save error:', e); }
   }
 
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+      saveToApi();
     } catch (e) { console.warn('Settings save error:', e); }
   }
 
@@ -280,8 +328,8 @@
   }
 
   // ─── Init ───────────────────────────────────────────────────
-  function init() {
-    load();
+  async function init() {
+    await load();
     applyAll();
     bindThemeToggle();
     bindPrimaryColor();
@@ -289,14 +337,20 @@
     bindUIControls();
     bindReset();
     bindPanelEvents();
+    syncUI();
   }
 
   document.addEventListener('DOMContentLoaded', init);
+
+  window.addEventListener('lifeos:auth:login', () => {
+    if (window.LifeOSSettings?.refresh) window.LifeOSSettings.refresh();
+  });
 
   // ─── Public API ─────────────────────────────────────────────
   window.LifeOSSettings = {
     open, close, toggle,
     get: () => ({ ...current }),
-    set: (key, value) => { current[key] = value; save(); applyAll(); }
+    set: (key, value) => { current[key] = value; save(); applyAll(); },
+    refresh: async () => { await load(); applyAll(); syncUI(); }
   };
 })();
