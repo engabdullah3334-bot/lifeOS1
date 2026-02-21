@@ -13,9 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Navigation ─────────────────────────────────────────
     setupNavigation();
 
-    // ── Writing module init (unchanged) ───────────────────
-    if (window.fetchNotesStructure) window.fetchNotesStructure();
-    if (window.loadQuickNote)       window.loadQuickNote();
+    // ── Writing module init ────────────────────────────────
+    if (window.fetchProjectsStructure) window.fetchProjectsStructure();
+    if (window.loadQuickNote)          window.loadQuickNote();
     setupWritingListeners();
 
     // ── Task System Bootstrap ──────────────────────────────
@@ -62,10 +62,10 @@ function loadView(viewName) {
     }
 }
 
-// ── Writing Space Listeners (unchanged from original) ────────
+// ── Writing Space Listeners ─────────────────────────────────
 function setupWritingListeners() {
     const handlers = {
-        'new-folder-btn':       () => window.createFolder?.(),
+        'new-project-btn':      () => window.createProject?.(),
         'new-note-btn':         () => window.createNote?.(),
         'close-note-btn':       () => window.closeNote?.(),
         'rename-note-btn':      () => window.renameNote?.(),
@@ -78,58 +78,45 @@ function setupWritingListeners() {
         document.getElementById(id)?.addEventListener('click', fn);
     });
 
-    // Sidebar collapse toggles
-    const toggleFolders = document.getElementById('toggle-folders');
-    if (toggleFolders) {
-        toggleFolders.addEventListener('click', () => {
-            const el = document.getElementById('folders-sidebar');
-            const rb = document.getElementById('restore-folders');
+    // Projects sidebar toggle
+    const toggleProjects = document.getElementById('toggle-projects');
+    if (toggleProjects) {
+        toggleProjects.addEventListener('click', () => {
+            const el = document.getElementById('projects-sidebar');
+            const rb = document.getElementById('restore-projects');
             el?.classList.toggle('collapsed');
             if (rb) rb.style.display = el?.classList.contains('collapsed') ? 'block' : 'none';
         });
     }
 
-    const restoreFolders = document.getElementById('restore-folders');
-    if (restoreFolders) {
-        restoreFolders.addEventListener('click', () => {
-            document.getElementById('folders-sidebar')?.classList.remove('collapsed');
-            restoreFolders.style.display = 'none';
+    const restoreProjects = document.getElementById('restore-projects');
+    if (restoreProjects) {
+        restoreProjects.addEventListener('click', () => {
+            document.getElementById('projects-sidebar')?.classList.remove('collapsed');
+            restoreProjects.style.display = 'none';
         });
     }
 
-    const toggleFiles = document.getElementById('toggle-files');
-    if (toggleFiles) {
-        toggleFiles.addEventListener('click', () => {
-            const el = document.getElementById('files-sidebar');
-            const rb = document.getElementById('restore-files');
+    // Notes sidebar toggle
+    const toggleNotes = document.getElementById('toggle-notes');
+    if (toggleNotes) {
+        toggleNotes.addEventListener('click', () => {
+            const el = document.getElementById('notes-sidebar');
+            const rb = document.getElementById('restore-notes');
             el?.classList.toggle('collapsed');
             if (rb) rb.style.display = el?.classList.contains('collapsed') ? 'block' : 'none';
         });
     }
 
-    const restoreFiles = document.getElementById('restore-files');
-    if (restoreFiles) {
-        restoreFiles.addEventListener('click', () => {
-            document.getElementById('files-sidebar')?.classList.remove('collapsed');
-            restoreFiles.style.display = 'none';
+    const restoreNotes = document.getElementById('restore-notes');
+    if (restoreNotes) {
+        restoreNotes.addEventListener('click', () => {
+            document.getElementById('notes-sidebar')?.classList.remove('collapsed');
+            restoreNotes.style.display = 'none';
         });
     }
 
-    // Rich Text Editor
     if (window.initializeRichTextEditor) window.initializeRichTextEditor();
-    if (window.initializeAdvancedFeatures) window.initializeAdvancedFeatures();
-
-    // Auto-save editor content
-    const editor = document.querySelector('.rich-editor');
-    if (editor) {
-        let saveTimeout;
-        editor.addEventListener('input', () => {
-            clearTimeout(saveTimeout);
-            const saveStatus = document.querySelector('.save-status');
-            if (saveStatus) saveStatus.textContent = 'Saving…';
-            saveTimeout = setTimeout(() => window.saveCurrentNote?.(), 2000);
-        });
-    }
 }
 
 // Global

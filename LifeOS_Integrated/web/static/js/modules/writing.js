@@ -1,710 +1,629 @@
+/**
+ * writing.js — LifeOS Writing/Notes System
+ * Cloud Project Management - Projects & Notes
+ */
 
-// --- Writing Space Logic ---
+(function() {
+  'use strict';
 
-// State Helpers
-// We rely on window.state.notesStructure from state.js
+  const getBase = () => (window.API_URL || (window.location.origin + '/api'));
+  const SYSTEM_PROJECT_ID = 'system';
 
-// Per-file formatting isolation — each file has its own toolbar/formatting instance
-const getFileId = (file) => file ? `${file.folder || ''}/${file.name || ''}` : null;
-
-const DEFAULT_FORMATTING = {
-  formatBlock: 'p',
-  fontSize: '3',
-  fontFamily: 'inherit',
-  fontColor: '#f2f4ff',
-  editorBackground: null,  // null = use default
-  overlayOpacity: '0'
-};
-
-const DEFAULT_EDITOR_BG = { type: 'color', value: '#0b0f1a' };
-
-let noteFormattingCache = {};
-
-function resetToolbarToDefaults() {
-  const formatBlock = document.getElementById('format-block');
-  const fontSize = document.getElementById('font-size');
-  const fontFamily = document.getElementById('font-family');
-  const fontColorPicker = document.getElementById('font-color-picker');
-  if (formatBlock) formatBlock.value = DEFAULT_FORMATTING.formatBlock;
-  if (fontSize) fontSize.value = DEFAULT_FORMATTING.fontSize;
-  if (fontFamily) fontFamily.value = DEFAULT_FORMATTING.fontFamily;
-  if (fontColorPicker) fontColorPicker.value = DEFAULT_FORMATTING.fontColor;
-}
-
-function restoreToolbarFromCache(file) {
-  const fileId = getFileId(file);
-  if (!fileId) {
-    resetToolbarToDefaults();
-    resetEditorBackground();
-    return;
+  function _notesFetch(url, opts = {}) {
+    const token = window.LifeOSApi?.getToken?.();
+    const headers = { ...opts.headers };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    return fetch(url, { ...opts, headers });
   }
-  const cached = noteFormattingCache[fileId] || DEFAULT_FORMATTING;
-  const formatBlock = document.getElementById('format-block');
-  const fontSize = document.getElementById('font-size');
-  const fontFamily = document.getElementById('font-family');
-  const fontColorPicker = document.getElementById('font-color-picker');
-  if (formatBlock && cached.formatBlock) formatBlock.value = cached.formatBlock;
-  if (fontSize && cached.fontSize) fontSize.value = cached.fontSize;
-  if (fontFamily && cached.fontFamily) fontFamily.value = cached.fontFamily;
-  if (fontColorPicker && cached.fontColor) fontColorPicker.value = cached.fontColor;
 
-  // Restore per-file editor background
-  restoreEditorBackground(file);
-}
+  window.state = window.state || {};
+  window.state.currentProject = null;
+  window.state.currentNote = null;
+  window.state.projectsStructure = {};
 
-function saveCurrentFileFormattingToCache() {
-  const file = window.state?.currentNote;
-  if (!file) return;
-  const fileId = getFileId(file);
-  if (!fileId) return;
-  const formatBlock = document.getElementById('format-block');
-  const fontSize = document.getElementById('font-size');
-  const fontFamily = document.getElementById('font-family');
-  const fontColorPicker = document.getElementById('font-color-picker');
-  const overlayInput = document.getElementById('bg-overlay-opacity');
-  noteFormattingCache[fileId] = {
-    ...(noteFormattingCache[fileId] || {}),
-    formatBlock: formatBlock?.value || DEFAULT_FORMATTING.formatBlock,
-    fontSize: fontSize?.value || DEFAULT_FORMATTING.fontSize,
-    fontFamily: fontFamily?.value || DEFAULT_FORMATTING.fontFamily,
-    fontColor: fontColorPicker?.value || DEFAULT_FORMATTING.fontColor,
-    editorBackground: noteFormattingCache[fileId]?.editorBackground ?? null,
-    overlayOpacity: overlayInput?.value ?? noteFormattingCache[fileId]?.overlayOpacity ?? DEFAULT_FORMATTING.overlayOpacity
+  const DEFAULT_FORMATTING = {
+    formatBlock: 'p',
+    fontSize: '3',
+    fontFamily: 'inherit',
+    fontColor: '#f2f4ff',
+    editorBackground: null,
+    overlayOpacity: '0'
   };
-}
+  let noteFormattingCache = {};
 
-// Fetch and Render Structure
-async function fetchNotesStructure() {
+  function getNoteId(note) {
+    return note ? (note.note_id || `${note.project_id || ''}/${note.filename || ''}`) : null;
+  }
+
+  // ══════════════════════════════════════════════
+  //  PROJECTS
+  // ══════════════════════════════════════════════
+
+  async function fetchProjectsStructure() {
     try {
-        const res = await fetch(`${window.API_URL}/notes/structure`);
-        if(res.ok) {
-            window.state.notesStructure = await res.json();
-            renderFolders();
-            // Re-render current files if valid
-            if(window.state.currentFolder && window.state.notesStructure[window.state.currentFolder]) {
-                renderFiles(window.state.notesStructure[window.state.currentFolder]);
-            } else if (window.state.currentFolder) {
-                // Folder might have been deleted
-                window.state.currentFolder = null;
-                
-                // Hide Files Column
-                const filesCol = document.getElementById('files-sidebar');
-                if(filesCol) filesCol.style.visibility = 'hidden';
-                
-                const restoreBtn = document.getElementById('restore-files');
-                if(restoreBtn) restoreBtn.style.display = 'none';
-
-                renderFolders();
-            }
+      const res = await _notesFetch(`${getBase()}/notes/structure`);
+      if (res.ok) {
+        window.state.projectsStructure = await res.json();
+        renderProjects();
+        if (window.state.currentProject && window.state.projectsStructure[window.state.currentProject]) {
+          renderNotes(window.state.projectsStructure[window.state.currentProject].notes || []);
         }
-    } catch(e) { console.error("Error fetching notes structure:", e); }
-}
-
-function renderFolders() {
-    const list = document.getElementById('folder-list');
-    if(!list) return;
-    list.innerHTML = '';
-    
-    // Add Archive explicitly if not in structure or just sort keys
-    const folders = Object.keys(window.state.notesStructure).sort();
-    
-    folders.forEach(folder => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <div class="folder-item-content">
-                <span class="icon">📂</span> ${folder}
-            </div>
-            <button class="delete-folder-btn" title="Delete Folder">×</button>
-        `;
-        if(window.state.currentFolder === folder) li.classList.add('active');
-        
-        // Select Folder
-        li.querySelector('.folder-item-content').addEventListener('click', () => selectFolder(folder));
-        
-        // Delete Folder
-        li.querySelector('.delete-folder-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteFolder(folder);
-        });
-        
-        list.appendChild(li);
-    });
-}
-
-function selectFolder(folder) {
-    window.state.currentFolder = folder;
-    closeNote(); // Hide editor and clear selection
-    
-    // Show Files Column
-    const filesCol = document.getElementById('files-sidebar');
-    if(filesCol) filesCol.style.visibility = 'visible';
-
-    renderFolders(); // Update active state
-    renderFiles(window.state.notesStructure[folder] || []);
-}
-
-function renderFiles(files) {
-    const list = document.getElementById('file-list');
-    if(!list) return;
-    list.innerHTML = '';
-
-    // Date formatter
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    };
-    
-    files.forEach(file => {
-        const isNote = file.name.endsWith('.txt') || file.name.endsWith('.md');
-        const displayName = file.name.replace(/\.[^/.]+$/, "");
-        const dateDisplay = file.date ? formatDate(file.date) : '';
-        
-        const li = document.createElement('li');
-        
-        // Check if Thumbnail View is active
-        const isThumbnail = list.classList.contains('thumbnail-view');
-        
-        if (isThumbnail) {
-             li.innerHTML = `
-                <div class="file-card">
-                    <div class="file-icon">📝</div>
-                    <div class="file-info">
-                        <span class="file-name">${displayName}</span>
-                        <span class="file-date">${dateDisplay}</span>
-                    </div>
-                    <button class="delete-note-btn" title="Delete Note">×</button>
-                </div>
-            `;
-        } else {
-             li.innerHTML = `
-                <div class="file-item-content">
-                    <span class="icon">📝</span> 
-                    <div class="file-details">
-                        <span class="file-name">${displayName}</span>
-                        <span class="file-date">${dateDisplay}</span>
-                    </div>
-                </div>
-                <button class="delete-note-btn" title="Delete Note">×</button>
-            `;
-        }
-       
-        if(window.state.currentNote && window.state.currentNote.name === file.name && window.state.currentNote.folder === file.folder) {
-            li.classList.add('active');
-        }
-        
-        // Open Note
-        const clickTarget = isThumbnail ? li.querySelector('.file-card') : li.querySelector('.file-item-content');
-        clickTarget.addEventListener('click', () => openNote(file));
-        
-        // Delete Note
-        li.querySelector('.delete-note-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteNote(file.folder, file.name);
-        });
-        
-        list.appendChild(li);
-    });
-}
-
-async function openNote(file) {
-    if(!file) return;
-
-    // Save current note first to avoid losing changes and formatting bleed
-    if (window.state.currentNote && (window.state.currentNote.name !== file.name || window.state.currentNote.folder !== file.folder)) {
-        saveCurrentFileFormattingToCache();
-        await saveCurrentNote();
+      }
+    } catch (e) {
+      console.error("Error fetching projects:", e);
     }
-    
-    // UI Updates
-    const emptyState = document.getElementById('editor-empty-state'); // Should be removed in HTML but check just in case
-    const closeBtn = document.getElementById('close-note-btn');
+  }
+
+  function renderProjects() {
+    const list = document.getElementById('project-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const items = Object.values(window.state.projectsStructure).map(item => item.project);
+    items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    items.forEach(project => {
+      const li = document.createElement('li');
+      li.className = 'project-item group';
+      if (window.state.currentProject === project.project_id) {
+        li.classList.add('active');
+      }
+
+      const notesCount = window.state.projectsStructure[project.project_id]?.notes?.length || 0;
+      const isSystem = project.project_id === SYSTEM_PROJECT_ID;
+
+      li.innerHTML = `
+        <div class="project-item-content" data-project-id="${project.project_id}">
+          <span class="icon">📁</span>
+          <div class="project-info">
+            <div class="project-name">${project.name}</div>
+            <div class="project-meta">${notesCount} note${notesCount !== 1 ? 's' : ''}</div>
+          </div>
+        </div>
+        <div class="project-actions">
+          <button class="edit-project-btn" title="Edit" data-project-id="${project.project_id}">✎</button>
+          ${!isSystem ? `<button class="archive-project-btn" title="Archive" data-project-id="${project.project_id}">📦</button>
+          <button class="delete-project-btn" title="Delete" data-project-id="${project.project_id}">×</button>` : '<span class="system-badge">System</span>'}
+        </div>
+      `;
+
+      li.querySelector('.project-item-content').addEventListener('click', () => selectProject(project.project_id));
+
+      const editBtn = li.querySelector('.edit-project-btn');
+      if (editBtn) editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isSystem) editProject(project.project_id, project.name);
+      });
+
+      const archiveBtn = li.querySelector('.archive-project-btn');
+      if (archiveBtn) archiveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        archiveProject(project.project_id, !project.archived);
+      });
+
+      const deleteBtn = li.querySelector('.delete-project-btn');
+      if (deleteBtn) deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteProject(project.project_id);
+      });
+
+      list.appendChild(li);
+    });
+  }
+
+  function selectProject(projectId) {
+    window.state.currentProject = projectId;
+    closeNote();
+
+    const notesCol = document.getElementById('notes-sidebar');
+    if (notesCol) notesCol.style.visibility = 'visible';
+
+    renderProjects();
+    const notes = window.state.projectsStructure[projectId]?.notes || [];
+    renderNotes(notes);
+  }
+
+  async function createProject() {
+    const name = prompt("New project name:");
+    if (!name || !name.trim()) return;
+
+    try {
+      const res = await _notesFetch(`${getBase()}/writing/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() })
+      });
+
+      if (res.ok) {
+        await fetchProjectsStructure();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create project");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Server connection error");
+    }
+  }
+
+  async function editProject(projectId, currentName) {
+    const newName = prompt("Project name:", currentName);
+    if (!newName || !newName.trim() || newName === currentName) return;
+
+    try {
+      const res = await _notesFetch(`${getBase()}/writing/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() })
+      });
+
+      if (res.ok) {
+        await fetchProjectsStructure();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to update project");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function archiveProject(projectId, archived) {
+    try {
+      const res = await _notesFetch(`${getBase()}/writing/projects/${projectId}/archive`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived })
+      });
+
+      if (res.ok) {
+        await fetchProjectsStructure();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to archive");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function deleteProject(projectId) {
+    const project = window.state.projectsStructure[projectId]?.project;
+    if (!project || project.project_id === SYSTEM_PROJECT_ID) return;
+
+    if (!confirm(`Delete project "${project.name}" and all its notes?`)) return;
+
+    try {
+      const res = await _notesFetch(`${getBase()}/writing/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        if (window.state.currentProject === projectId) {
+          window.state.currentProject = null;
+          closeNote();
+          const notesCol = document.getElementById('notes-sidebar');
+          if (notesCol) notesCol.style.visibility = 'hidden';
+        }
+        await fetchProjectsStructure();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to delete project");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  //  NOTES
+  // ══════════════════════════════════════════════
+
+  function renderNotes(notes) {
+    const list = document.getElementById('note-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    notes.forEach(note => {
+      const li = document.createElement('li');
+      li.className = 'note-item group';
+      if (window.state.currentNote && window.state.currentNote.note_id === note.note_id) {
+        li.classList.add('active');
+      }
+
+      li.innerHTML = `
+        <div class="note-item-content" data-note-id="${note.note_id}">
+          <span class="icon">📝</span>
+          <div class="note-info">
+            <div class="note-title">${note.title || note.filename || 'Untitled'}</div>
+          </div>
+        </div>
+        <div class="note-actions">
+          <button class="edit-note-btn" title="Edit" data-note-id="${note.note_id}">✎</button>
+          <button class="delete-note-btn" title="Delete" data-note-id="${note.note_id}">×</button>
+        </div>
+      `;
+
+      li.querySelector('.note-item-content').addEventListener('click', () => openNote(note));
+
+      li.querySelector('.edit-note-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.state.currentNote && window.state.currentNote.note_id === note.note_id) {
+          const titleInput = document.querySelector('.note-title-input');
+          if (titleInput) {
+            titleInput.focus();
+            titleInput.select();
+          }
+        } else {
+          openNote(note);
+        }
+      });
+
+      li.querySelector('.delete-note-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteNote(note.note_id);
+      });
+
+      list.appendChild(li);
+    });
+  }
+
+  async function openNote(note) {
+    if (!note || !window.state.currentProject) return;
+
+    if (window.state.currentNote && window.state.currentNote.note_id !== note.note_id) {
+      saveCurrentFileFormattingToCache();
+      await saveCurrentNote();
+    }
+
     const editor = document.querySelector('.rich-editor');
     const titleInput = document.querySelector('.note-title-input');
-    const editorContainer = document.querySelector('.editor-container'); // Ensure this is visible
-    
-    if(emptyState) emptyState.style.display = 'none';
-    if(closeBtn) closeBtn.style.display = 'flex';
-    if(closeBtn) closeBtn.style.display = 'flex';
-    if(editorContainer) editorContainer.style.visibility = 'visible'; // Make sure editor is visible
-    
-    if(editor) {
-        editor.contentEditable = "true";
-        editor.innerHTML = '<p class="loading-placeholder">Loading...</p>';
-    }
-    
-    // Show Editor Column
+    const closeBtn = document.getElementById('close-note-btn');
     const editorCol = document.getElementById('editor-column');
-    if(editorCol) editorCol.style.visibility = 'visible';
-    
-    window.state.currentNote = file;
-    
-    try {
-        const url = `${window.API_URL}/notes/content?folder=${encodeURIComponent(file.folder)}&filename=${encodeURIComponent(file.name)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        // Guard against race conditions
-        if (!window.state.currentNote || window.state.currentNote.name !== file.name || window.state.currentNote.folder !== file.folder) {
-            return;
-        }
 
-        if(editor) editor.innerHTML = data.content || '<p>Start writing...</p>';
-        if(titleInput) titleInput.value = file.name.replace(/\.[^/.]+$/, "");
-        
-        // Restore per-file toolbar state — isolate formatting to this file only
-        restoreToolbarFromCache(file);
-        
-        const saveStatus = document.querySelector('.save-status');
-        if(saveStatus) {
-            saveStatus.textContent = "Saved";
-            saveStatus.style.display = 'inline';
-        }
-
-        // Re-render to highlight active note
-         if(window.state.currentFolder) renderFiles(window.state.notesStructure[window.state.currentFolder] || []);
-        
-    } catch(e) {
-        console.error("Failed to open note:", e);
-        if(editor) editor.innerHTML = '<p style="color:red">Error loading note.</p>';
+    if (closeBtn) closeBtn.style.display = 'flex';
+    if (editorCol) editorCol.style.visibility = 'visible';
+    if (editor) {
+      editor.contentEditable = "true";
+      editor.innerHTML = '<p class="loading-placeholder">Loading...</p>';
     }
-}
 
-function closeNote() {
+    window.state.currentNote = {
+      note_id: note.note_id,
+      project_id: window.state.currentProject,
+      title: note.title,
+      filename: note.filename
+    };
+
+    try {
+      const res = await _notesFetch(`${getBase()}/notes/${note.note_id}`);
+      const data = await res.json();
+
+      if (!window.state.currentNote || window.state.currentNote.note_id !== note.note_id) return;
+
+      if (editor) editor.innerHTML = data.content || '<p>Start writing...</p>';
+      if (titleInput) titleInput.value = data.title || (data.filename || '').replace(/\.[^/.]+$/, "");
+
+      restoreToolbarFromCache(window.state.currentNote);
+      renderNotes(window.state.projectsStructure[window.state.currentProject]?.notes || []);
+    } catch (e) {
+      console.error("Failed to open note:", e);
+      if (editor) editor.innerHTML = '<p style="color:red">Error loading note.</p>';
+    }
+  }
+
+  function closeNote() {
     saveCurrentFileFormattingToCache();
     window.state.currentNote = null;
     resetToolbarToDefaults();
     resetEditorBackground();
-    const emptyState = document.getElementById('editor-empty-state');
+
     const closeBtn = document.getElementById('close-note-btn');
     const editor = document.querySelector('.rich-editor');
     const titleInput = document.querySelector('.note-title-input');
-    
-    // In the new design, we might want to "hide" the editor or show empty state
-    // Per user request, "Hide this screen" -> maybe just blank or specific state
-    // But we removed the empty state div. So just clear editor.
-    
-    if(closeBtn) closeBtn.style.display = 'none';
-    if(editor) {
-        editor.contentEditable = "false";
-        editor.innerHTML = ''; 
-    }
-    if(titleInput) titleInput.value = '';
-
-    // Hide Editor Column
     const editorCol = document.getElementById('editor-column');
-    if(editorCol) editorCol.style.visibility = 'hidden';
-    
-    // Deselect in sidebar
-    if(window.state.currentFolder) renderFiles(window.state.notesStructure[window.state.currentFolder] || []);
-}
 
-// --- CRUD Operations with Duplicate Handling ---
-
-async function createFolder() {
-    let folderName = prompt("New Folder Name:");
-    if(!folderName) return;
-    
-    // Check duplicates
-    if (window.state.notesStructure && window.state.notesStructure[folderName]) {
-        // Simple auto-increment logic on client side pre-check (optional, but backend handles it too or we do it here)
-        // Let's do it here to show user immediately
-        let counter = 2;
-        let baseName = folderName;
-        while (window.state.notesStructure[folderName]) {
-             folderName = `${baseName} (${counter})`;
-             counter++;
-        }
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (editor) {
+      editor.contentEditable = "false";
+      editor.innerHTML = '';
     }
-    
-    try {
-        const res = await fetch(`${window.API_URL}/folders`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({folder_name: folderName})
-        });
-        if(res.ok) {
-            window.state.currentFolder = folderName;
-            fetchNotesStructure();
-        }
-    } catch(e) { console.error(e); }
-}
+    if (titleInput) titleInput.value = '';
+    if (editorCol) editorCol.style.visibility = 'hidden';
 
-async function createNote(title) {
-    if(!title) title = prompt("Note Title:");
-    if(!title) return;
-    if(!window.state.currentFolder) return alert("Select a folder first!");
+    if (window.state.currentProject) {
+      renderNotes(window.state.projectsStructure[window.state.currentProject]?.notes || []);
+    }
+  }
 
-    let filename = title.endsWith('.txt') ? title : title + '.txt';
-    let displayTitle = filename.replace('.txt', '');
-    
-    // Check duplicates
-    const files = window.state.notesStructure[window.state.currentFolder] || [];
-    let counter = 2;
-    let baseDisplay = displayTitle;
-    
-    const exists = (name) => files.some(f => f.name === name);
-    
-    while(exists(filename)) {
-        displayTitle = `${baseDisplay} (${counter})`;
-        filename = `${displayTitle}.txt`;
-        counter++;
+  async function createNote(title) {
+    if (!window.state.currentProject) {
+      alert("Please select a project first!");
+      return;
     }
 
-    try {
-        const res = await fetch(`${window.API_URL}/notes`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                folder: window.state.currentFolder,
-                filename: filename,
-                content: '<p>Start writing...</p>'
-            })
-        });
-        
-        if(res.ok) {
-            await fetchNotesStructure();
-            // Open the new note
-            const newNote = {name: filename, folder: window.state.currentFolder};
-            openNote(newNote);
-        } else {
-            const err = await res.json();
-            alert(err.error || "Failed to create note");
-        }
-    } catch(e) { console.error(e); }
-}
+    if (!title) title = prompt("Note title:");
+    if (!title || !title.trim()) return;
 
-async function renameNote() {
+    try {
+      const res = await _notesFetch(`${getBase()}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: window.state.currentProject,
+          title: title.trim()
+        })
+      });
+
+      if (res.ok) {
+        const newNote = await res.json();
+        await fetchProjectsStructure();
+        openNote(newNote);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create note");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function deleteNote(noteId) {
+    if (!confirm("Delete this note?")) return;
+
+    try {
+      const res = await _notesFetch(`${getBase()}/notes/${noteId}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        if (window.state.currentNote && window.state.currentNote.note_id === noteId) {
+          closeNote();
+        }
+        await fetchProjectsStructure();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to delete note");
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function saveCurrentNote() {
     if (!window.state.currentNote) return;
-    
-    const currentName = window.state.currentNote.name;
-    const currentDisplay = currentName.replace(/\.[^/.]+$/, "");
-    
-    const newDisplay = prompt("Rename note to:", currentDisplay);
-    if (!newDisplay || newDisplay === currentDisplay) return;
-    
-    const newFilename = newDisplay.endsWith('.txt') ? newDisplay : newDisplay + '.txt';
-    
-    // Check if new name exists
-    const files = window.state.notesStructure[window.state.currentNote.folder] || [];
-    if (files.some(f => f.name === newFilename)) {
-        // Auto-increment rename? Or just warn? User likely wants specific name.
-        // Let's warn for rename.
-        alert("A file with this name already exists in this folder.");
-        return;
-    }
 
-    try {
-        const res = await fetch(`${window.API_URL}/notes/rename`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                folder: window.state.currentNote.folder,
-                old_filename: currentName,
-                new_filename: newFilename
-            })
-        });
-        
-        if (res.ok) {
-            // Update state
-            window.state.currentNote.name = newFilename;
-            const titleInput = document.querySelector('.note-title-input');
-            if(titleInput) titleInput.value = newDisplay;
-            
-            fetchNotesStructure();
-        } else {
-            const err = await res.json();
-            alert(err.error || "Failed to rename");
-        }
-    } catch(e) { console.error("Rename Error:", e); }
-}
-
-async function deleteFolder(folderName) {
-    if(!confirm(`Delete folder "${folderName}" and all its contents?`)) return;
-    try {
-        const res = await fetch(`${window.API_URL}/folders`, {
-            method: 'DELETE',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({folder_name: folderName})
-        });
-        if(res.ok) {
-            if(window.state.currentFolder === folderName) {
-                window.state.currentFolder = null;
-                closeNote();
-            }
-            fetchNotesStructure();
-        }
-    } catch(e) { console.error(e); }
-}
-
-async function deleteNote(folder, filename) {
-    if(!confirm(`Delete note "${filename}"?`)) return;
-    try {
-        const res = await fetch(`${window.API_URL}/notes`, {
-            method: 'DELETE',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({folder, filename})
-        });
-        if(res.ok) {
-            if(window.state.currentNote && window.state.currentNote.name === filename && window.state.currentNote.folder === folder) {
-                closeNote();
-            }
-            fetchNotesStructure();
-        }
-    } catch(e) { console.error(e); }
-}
-
-async function saveCurrentNote() {
-    if(!window.state.currentNote) return;
     const editor = document.querySelector('.rich-editor');
     const content = editor ? editor.innerHTML : '';
+    const titleInput = document.querySelector('.note-title-input');
+    const title = titleInput ? titleInput.value.trim() : '';
     const saveStatus = document.querySelector('.save-status');
-    if(saveStatus) saveStatus.textContent = "Saving...";
-    
+
+    if (saveStatus) saveStatus.textContent = "Saving...";
+
     try {
-        const res = await fetch(`${window.API_URL}/notes`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                folder: window.state.currentNote.folder,
-                filename: window.state.currentNote.name,
-                content
-            })
-        });
-        if(res.ok && saveStatus) saveStatus.textContent = "Saved";
-    } catch(e) {
-        console.error(e);
-        if(saveStatus) saveStatus.textContent = "Error";
+      const res = await _notesFetch(`${getBase()}/notes/${window.state.currentNote.note_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, title })
+      });
+
+      if (res.ok && saveStatus) {
+        saveStatus.textContent = "Saved";
+        const updated = await res.json();
+        window.state.currentNote.title = updated.title;
+      }
+    } catch (e) {
+      console.error(e);
+      if (saveStatus) saveStatus.textContent = "Error";
     }
-}
+  }
 
-// --- Rich Text Logic ---
+  // ══════════════════════════════════════════════
+  //  FORMATTING & TOOLBAR
+  // ══════════════════════════════════════════════
 
-function initializeRichTextEditor() {
+  function resetToolbarToDefaults() {
+    const formatBlock = document.getElementById('format-block');
+    const fontSize = document.getElementById('font-size');
+    const fontFamily = document.getElementById('font-family');
+    const fontColorPicker = document.getElementById('font-color-picker');
+    if (formatBlock) formatBlock.value = DEFAULT_FORMATTING.formatBlock;
+    if (fontSize) fontSize.value = DEFAULT_FORMATTING.fontSize;
+    if (fontFamily) fontFamily.value = DEFAULT_FORMATTING.fontFamily;
+    if (fontColorPicker) fontColorPicker.value = DEFAULT_FORMATTING.fontColor;
+  }
+
+  function restoreToolbarFromCache(note) {
+    const noteId = getNoteId(note);
+    if (!noteId) {
+      resetToolbarToDefaults();
+      resetEditorBackground();
+      return;
+    }
+    const cached = noteFormattingCache[noteId] || DEFAULT_FORMATTING;
+    const formatBlock = document.getElementById('format-block');
+    const fontSize = document.getElementById('font-size');
+    const fontFamily = document.getElementById('font-family');
+    const fontColorPicker = document.getElementById('font-color-picker');
+    if (formatBlock && cached.formatBlock) formatBlock.value = cached.formatBlock;
+    if (fontSize && cached.fontSize) fontSize.value = cached.fontSize;
+    if (fontFamily && cached.fontFamily) fontFamily.value = cached.fontFamily;
+    if (fontColorPicker && cached.fontColor) fontColorPicker.value = cached.fontColor;
+    restoreEditorBackground(note);
+  }
+
+  function saveCurrentFileFormattingToCache() {
+    const note = window.state?.currentNote;
+    if (!note) return;
+    const noteId = getNoteId(note);
+    if (!noteId) return;
+    const formatBlock = document.getElementById('format-block');
+    const fontSize = document.getElementById('font-size');
+    const fontFamily = document.getElementById('font-family');
+    const fontColorPicker = document.getElementById('font-color-picker');
+    const overlayInput = document.getElementById('bg-overlay-opacity');
+    noteFormattingCache[noteId] = {
+      ...(noteFormattingCache[noteId] || {}),
+      formatBlock: formatBlock?.value || DEFAULT_FORMATTING.formatBlock,
+      fontSize: fontSize?.value || DEFAULT_FORMATTING.fontSize,
+      fontFamily: fontFamily?.value || DEFAULT_FORMATTING.fontFamily,
+      fontColor: fontColorPicker?.value || DEFAULT_FORMATTING.fontColor,
+      editorBackground: noteFormattingCache[noteId]?.editorBackground ?? null,
+      overlayOpacity: overlayInput?.value ?? noteFormattingCache[noteId]?.overlayOpacity ?? DEFAULT_FORMATTING.overlayOpacity
+    };
+  }
+
+  function updateToolbarState() {
+    document.querySelectorAll('.toolbar-btn[data-command]').forEach(btn => {
+      const command = btn.dataset.command;
+      if (document.queryCommandState(command)) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+  }
+
+  function initializeRichTextEditor() {
     const toolbarButtons = document.querySelectorAll('.toolbar-btn[data-command]');
     toolbarButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!window.state.currentNote) return;
-            document.execCommand(btn.dataset.command, false, null);
-            updateToolbarState();
-            saveCurrentFileFormattingToCache();
-        });
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!window.state.currentNote) return;
+        document.execCommand(btn.dataset.command, false, null);
+        updateToolbarState();
+        saveCurrentFileFormattingToCache();
+      });
     });
-    
+
     const formatBlock = document.getElementById('format-block');
-    if(formatBlock) formatBlock.addEventListener('change', (e) => {
-        if (!window.state.currentNote) return;
-        document.execCommand('formatBlock', false, e.target.value);
-        updateToolbarState();
-        saveCurrentFileFormattingToCache();
+    if (formatBlock) formatBlock.addEventListener('change', (e) => {
+      if (!window.state.currentNote) return;
+      document.execCommand('formatBlock', false, e.target.value);
+      updateToolbarState();
+      saveCurrentFileFormattingToCache();
     });
-    
+
     const fontSize = document.getElementById('font-size');
-    if(fontSize) fontSize.addEventListener('change', (e) => {
-        if (!window.state.currentNote) return;
-        document.execCommand('fontSize', false, e.target.value);
-        updateToolbarState();
-        saveCurrentFileFormattingToCache();
+    if (fontSize) fontSize.addEventListener('change', (e) => {
+      if (!window.state.currentNote) return;
+      document.execCommand('fontSize', false, e.target.value);
+      updateToolbarState();
+      saveCurrentFileFormattingToCache();
     });
 
     const fontFamily = document.getElementById('font-family');
-    if(fontFamily) fontFamily.addEventListener('change', (e) => {
-        if (!window.state.currentNote) return;
-        document.execCommand('fontName', false, e.target.value);
-        updateToolbarState();
-    // --- NEW: Font Family ---
-        saveCurrentFileFormattingToCache();
+    if (fontFamily) fontFamily.addEventListener('change', (e) => {
+      if (!window.state.currentNote) return;
+      document.execCommand('fontName', false, e.target.value);
+      updateToolbarState();
+      saveCurrentFileFormattingToCache();
     });
 
     const fontColorBtn = document.getElementById('font-color-btn');
     const fontColorPicker = document.getElementById('font-color-picker');
-    if(fontColorBtn && fontColorPicker) {
-        fontColorBtn.addEventListener('click', () => fontColorPicker.click());
-    // --- NEW: Font Color ---
-        fontColorPicker.addEventListener('input', (e) => {
-            if (!window.state.currentNote) return;
-            document.execCommand('foreColor', false, e.target.value);
-            saveCurrentFileFormattingToCache();
-        });
+    if (fontColorBtn && fontColorPicker) {
+      fontColorBtn.addEventListener('click', () => fontColorPicker.click());
+      fontColorPicker.addEventListener('input', (e) => {
+        if (!window.state.currentNote) return;
+        document.execCommand('foreColor', false, e.target.value);
+        saveCurrentFileFormattingToCache();
+      });
     }
 
-    // --- Reset Style on Enter: use per-file defaults ---
     const editor = document.querySelector('.rich-editor');
-                // Allow default Enter behavior (new paragraph)
-    if(editor) {
-        editor.addEventListener('keydown', (e) => {
-                    // Reset styles for the new line
-            if (e.key === 'Enter' && !e.shiftKey) {
-                setTimeout(() => {
-                    document.execCommand('removeFormat', false, null);
-                    document.execCommand('foreColor', false, DEFAULT_FORMATTING.fontColor);
-                    document.execCommand('fontName', false, DEFAULT_FORMATTING.fontFamily);
-                    document.execCommand('fontSize', false, DEFAULT_FORMATTING.fontSize);
-                }, 0);
-            }
-        });
+    if (editor) {
+      editor.addEventListener('input', () => {
+        if (window.state.currentNote) {
+          const saveStatus = document.querySelector('.save-status');
+          if (saveStatus) saveStatus.textContent = "Unsaved";
+        }
+      });
+
+      editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          setTimeout(() => {
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('foreColor', false, DEFAULT_FORMATTING.fontColor);
+            document.execCommand('fontName', false, DEFAULT_FORMATTING.fontFamily);
+            document.execCommand('fontSize', false, DEFAULT_FORMATTING.fontSize);
+          }, 0);
+        }
+      });
+
+      let saveTimeout;
+      editor.addEventListener('input', () => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+          if (window.state.currentNote) saveCurrentNote();
+        }, 2000);
+      });
     }
 
     initializeBackgroundSettings();
-}
+  }
 
-// --- Background Settings Logic ---
-function initializeBackgroundSettings() {
+  function initializeBackgroundSettings() {
     const toggleBtn = document.getElementById('toggle-bg-settings');
     const panel = document.getElementById('bg-settings-panel');
     const closeBtn = document.getElementById('close-bg-settings');
-    
-    if(toggleBtn && panel) {
-        toggleBtn.addEventListener('click', () => {
-             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        });
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener('click', () => {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      });
     }
-    
-    if(closeBtn && panel) {
-        closeBtn.addEventListener('click', () => {
-            panel.style.display = 'none';
-        });
-    }
-
-    // Solid Colors
-    document.querySelectorAll('.color-dot').forEach(btn => {
-        btn.style.background = btn.dataset.bg; // Show the color!
-        btn.addEventListener('click', () => setEditorBackground({ type: 'color', value: btn.dataset.bg }));
-    });
-    
-    // Gradients
-    document.querySelectorAll('.gradient-preview').forEach(btn => {
-        btn.style.backgroundImage = btn.dataset.bg; // Show the gradient!
-        btn.addEventListener('click', () => setEditorBackground({ type: 'gradient', value: btn.dataset.bg }));
-    });
-    
-    const customColor = document.getElementById('custom-bg-color');
-    if(customColor) customColor.addEventListener('input', (e) => setEditorBackground({ type: 'color', value: e.target.value }));
-
-    // Image Upload
-    const uploadBtn = document.getElementById('upload-bg-btn');
-    const fileInput = document.getElementById('bg-image-input');
-    const removeImgBtn = document.getElementById('remove-bg-image');
-    
-    if(uploadBtn && fileInput) {
-        uploadBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    setEditorBackground({ type: 'image', value: `url('${event.target.result}')` });
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-    
-    if(removeImgBtn) {
-        removeImgBtn.addEventListener('click', () => {
-            setEditorBackground({ type: 'color', value: '#0b0f1a' }); // Default
-        });
-    }
-
-    // Overlay Opacity — per-file, saved to cache
-    const opacityInput = document.getElementById('bg-overlay-opacity');
-    if(opacityInput) {
-        opacityInput.addEventListener('input', (e) => {
-             const val = e.target.value;
-             document.documentElement.style.setProperty('--overlay-opacity', val);
-             const file = window.state?.currentNote;
-             if (file) {
-                 const fileId = getFileId(file);
-                 if (fileId) {
-                     noteFormattingCache[fileId] = noteFormattingCache[fileId] || {};
-                     noteFormattingCache[fileId].overlayOpacity = val;
-                 }
-             }
-        });
-    }
-}
-
-function applyEditorBackgroundToContainer(settings) {
-  const container = document.querySelector('.editor-container');
-  if (!container) return;
-  if (!settings || !settings.type) {
-    container.style.background = '';
-    container.style.backgroundImage = '';
-    container.style.backgroundSize = '';
-    container.style.backgroundPosition = '';
-    return;
-  }
-  if (settings.type === 'color' || settings.type === 'gradient') {
-    container.style.background = settings.value;
-    container.style.backgroundImage = settings.value;
-  } else if (settings.type === 'image') {
-    container.style.backgroundImage = settings.value;
-    container.style.backgroundSize = 'cover';
-    container.style.backgroundPosition = 'center';
-  }
-}
-
-function setEditorBackground(settings) {
-  const container = document.querySelector('.editor-container');
-  if (!container) return;
-
-  applyEditorBackgroundToContainer(settings);
-
-  // Save to current file's cache only (per-file isolation)
-  const file = window.state?.currentNote;
-  if (file) {
-    const fileId = getFileId(file);
-    if (fileId) {
-      noteFormattingCache[fileId] = noteFormattingCache[fileId] || {};
-      noteFormattingCache[fileId].editorBackground = settings;
+    if (closeBtn && panel) {
+      closeBtn.addEventListener('click', () => { panel.style.display = 'none'; });
     }
   }
-}
 
-function restoreEditorBackground(file) {
-  const fileId = getFileId(file);
-  const overlayInput = document.getElementById('bg-overlay-opacity');
-  if (!fileId) {
-    resetEditorBackground();
-    return;
+  function setEditorBackground(settings) {
+    const container = document.querySelector('.editor-container');
+    if (!container) return;
+    if (settings?.type === 'color' || settings?.type === 'gradient') {
+      container.style.background = settings.value;
+    } else if (settings?.type === 'image') {
+      container.style.backgroundImage = settings.value;
+      container.style.backgroundSize = 'cover';
+      container.style.backgroundPosition = 'center';
+    }
+    const note = window.state?.currentNote;
+    if (note) {
+      const noteId = getNoteId(note);
+      if (noteId) {
+        noteFormattingCache[noteId] = noteFormattingCache[noteId] || {};
+        noteFormattingCache[noteId].editorBackground = settings;
+      }
+    }
   }
-  const cached = noteFormattingCache[fileId];
-  const bg = cached?.editorBackground ?? null;
-  const opacity = cached?.overlayOpacity ?? DEFAULT_FORMATTING.overlayOpacity;
 
-  applyEditorBackgroundToContainer(bg);
-  document.documentElement.style.setProperty('--overlay-opacity', opacity);
-  if (overlayInput) overlayInput.value = opacity;
-}
+  function restoreEditorBackground(note) {
+    const noteId = getNoteId(note);
+    if (!noteId) {
+      resetEditorBackground();
+      return;
+    }
+    const cached = noteFormattingCache[noteId];
+    const bg = cached?.editorBackground ?? null;
+    setEditorBackground(bg);
+  }
 
-function resetEditorBackground() {
-  applyEditorBackgroundToContainer(null);
-  document.documentElement.style.setProperty('--overlay-opacity', DEFAULT_FORMATTING.overlayOpacity);
-  const overlayInput = document.getElementById('bg-overlay-opacity');
-  if (overlayInput) overlayInput.value = DEFAULT_FORMATTING.overlayOpacity;
-}
+  function resetEditorBackground() {
+    const container = document.querySelector('.editor-container');
+    if (container) {
+      container.style.background = '';
+      container.style.backgroundImage = '';
+    }
+  }
 
-// loadBackgroundSettings removed — backgrounds are now per-file in noteFormattingCache
+  // ══════════════════════════════════════════════
+  //  QUICK NOTE (Dashboard)
+  // ══════════════════════════════════════════════
 
-function updateToolbarState() {
-    const editor = document.querySelector('.rich-editor');
-    if(!editor) return;
-    document.querySelectorAll('.toolbar-btn[data-command]').forEach(btn => {
-        const command = btn.dataset.command;
-        if(document.queryCommandState(command)) btn.classList.add('active');
-        else btn.classList.remove('active');
-    });
-}
-
-// --- Quick Note ---
-async function loadQuickNote() {
-    // Textarea stays empty for new captures; previous notes are stored in file
+  window.loadQuickNote = function() {
     const saveBtn = document.getElementById('save-quick-note');
-    if(saveBtn) saveBtn.addEventListener('click', saveQuickNote);
-}
+    if (saveBtn) saveBtn.addEventListener('click', saveQuickNote);
+  };
 
-async function saveQuickNote() {
+  async function saveQuickNote() {
     const noteArea = document.getElementById('quick-note-area');
     const content = (noteArea?.value || '').trim();
     if (!content) return;
@@ -714,162 +633,115 @@ async function saveQuickNote() {
     if (btn) btn.textContent = '...';
 
     try {
-        let finalContent = content;
-        try {
-            const res = await fetch(`${window.API_URL}/notes/content?folder=System&filename=QuickNote`);
-            if (res.ok) {
-                const data = await res.json();
-                const existing = (data.content || '').trim();
-                if (existing) {
-                    const sep = '\n\n---\n';
-                    const timestamp = new Date().toLocaleString();
-                    finalContent = existing + sep + `[${timestamp}] ` + content;
-                }
-            }
-        } catch (_) { /* no existing note */ }
+      const res = await _notesFetch(`${getBase()}/notes/quick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
 
-        await fetch(`${window.API_URL}/notes`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({folder: "System", filename: "QuickNote", content: finalContent})
-        });
-
+      if (res.ok) {
         noteArea.value = '';
         if (btn) {
-            btn.textContent = 'Saved';
-            setTimeout(() => { btn.textContent = origText; }, 1800);
+          btn.textContent = 'Saved';
+          setTimeout(() => { btn.textContent = origText; }, 1800);
         }
-    } catch (e) {
-        console.error('Quick note save failed:', e);
+      } else {
         if (btn) btn.textContent = origText;
+      }
+    } catch (e) {
+      console.error('Quick note save failed:', e);
+      if (btn) btn.textContent = origText;
     }
-}
+  }
 
-// --- Advanced Features (Focus, RTL, Views) ---
+  // ══════════════════════════════════════════════
+  //  INIT
+  // ══════════════════════════════════════════════
 
-function toggleTextDirection() {
+  function init() {
+    const newProjectBtn = document.getElementById('new-project-btn');
+    const newNoteBtn = document.getElementById('new-note-btn');
+    const closeNoteBtn = document.getElementById('close-note-btn');
+    const renameNoteBtn = document.getElementById('rename-note-btn');
+    const deleteNoteBtn = document.getElementById('delete-note-btn');
+
+    if (newProjectBtn) newProjectBtn.addEventListener('click', createProject);
+    if (newNoteBtn) newNoteBtn.addEventListener('click', () => createNote());
+    if (closeNoteBtn) closeNoteBtn.addEventListener('click', closeNote);
+    if (renameNoteBtn) renameNoteBtn.addEventListener('click', () => {
+      const titleInput = document.querySelector('.note-title-input');
+      if (titleInput && window.state.currentNote) {
+        titleInput.focus();
+        titleInput.select();
+      }
+    });
+    if (deleteNoteBtn) deleteNoteBtn.addEventListener('click', () => {
+      if (window.state.currentNote) deleteNote(window.state.currentNote.note_id);
+    });
+
+    const titleInput = document.querySelector('.note-title-input');
+    if (titleInput) {
+      titleInput.addEventListener('blur', () => {
+        if (window.state.currentNote) saveCurrentNote();
+      });
+      titleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          titleInput.blur();
+        }
+      });
+    }
+
+    initializeRichTextEditor();
+    loadQuickNote();
+    fetchProjectsStructure();
+  }
+
+  window.fetchProjectsStructure = fetchProjectsStructure;
+  window.createProject = createProject;
+  window.createNote = createNote;
+  window.deleteProject = deleteProject;
+  window.deleteNote = deleteNote;
+  window.closeNote = closeNote;
+  window.saveCurrentNote = saveCurrentNote;
+  window.initializeRichTextEditor = initializeRichTextEditor;
+  window.toggleTextDirection = function() {
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
-    
     let node = selection.anchorNode;
-    
-    // If text node, get parent
     if (node.nodeType === 3) node = node.parentNode;
-
-    // Traverse up to find a block element inside the editor
     const editor = document.querySelector('.rich-editor');
-    while (node && node !== editor && node.nodeName !== 'DIV' && node.nodeName !== 'P' && !/^H[1-6]$/.test(node.nodeName) && node.nodeName !== 'LI') {
-        node = node.parentNode;
+    while (node && node !== editor) {
+      if (node.setAttribute) {
+        const currentDir = node.getAttribute('dir') || 'ltr';
+        node.setAttribute('dir', currentDir === 'ltr' ? 'rtl' : 'ltr');
+        break;
+      }
+      node = node.parentNode;
     }
-    
-    // If we hit the editor root or found a block inside it
-    if (node && (node === editor || editor.contains(node))) {
-        // If node is editor itself, wrap content in a div or just check lines? 
-        // Better: if selection is just cursor in editor with no block, formatBlock 'div' first
-        if (node === editor) {
-             document.execCommand('formatBlock', false, 'div');
-             // Re-get selection node
-             node = window.getSelection().anchorNode;
-             if(node.nodeType === 3) node = node.parentNode;
-             while(node && node.nodeName !== 'DIV') node = node.parentNode;
-        }
+  };
 
-        if (node && node.setAttribute) {
-            const currentDir = node.getAttribute('dir') || 'ltr';
-            const newDir = currentDir === 'ltr' ? 'rtl' : 'ltr';
-            node.setAttribute('dir', newDir);
-            
-            // Also align text for better UX
-            node.style.textAlign = newDir === 'rtl' ? 'right' : 'left';
-        }
+  window.toggleViewMode = function() {
+    const noteList = document.getElementById('note-list');
+    const projectList = document.getElementById('project-list');
+    if (noteList) noteList.classList.toggle('thumbnail-view');
+    if (projectList) projectList.classList.toggle('thumbnail-view');
+    if (window.state.currentProject) {
+      renderNotes(window.state.projectsStructure[window.state.currentProject]?.notes || []);
     }
-    
-    // Update button visual state (optional, tricky for mixed content)
-    const btn = document.getElementById('toggle-text-direction');
-    // We don't flip the button for block-level changes usually, or only if current block is rtl
-}
+  };
 
-function toggleViewMode() {
-    const fileList = document.getElementById('file-list');
-    const folderList = document.getElementById('folder-list');
-    if(fileList) fileList.classList.toggle('thumbnail-view');
-    if(folderList) folderList.classList.toggle('thumbnail-view');
-    renderFolders(); // Re-render to apply new view classes/HTML
-    if(window.state.currentFolder) renderFiles(window.state.notesStructure[window.state.currentFolder] || []);
-}
-
-let focusMode = false;
-let focusExitZones = [];
-
-function toggleFocusMode() {
+  let focusMode = false;
+  window.toggleFocusMode = function() {
     const layout = document.querySelector('.writing-layout');
-    if(!layout) return;
+    if (!layout) return;
     focusMode = !focusMode;
-    if(focusMode) enterFocusMode(layout);
-    else exitFocusMode(layout);
-}
+    layout.classList.toggle('focus-mode', focusMode);
+  };
 
-function enterFocusMode(layout) {
-    layout.classList.add('focus-mode');
-    const positions = ['top', 'left', 'right', 'bottom'];
-    positions.forEach(pos => {
-        const zone = document.createElement('div');
-        zone.className = `focus-exit-zone ${pos}`;
-        zone.innerHTML = '<button class="focus-exit-btn" onclick="window.toggleFocusMode()">Exit Focus Mode (ESC)</button>';
-        document.body.appendChild(zone);
-        focusExitZones.push(zone);
-    });
-    document.addEventListener('mousemove', handleFocusModeMouseMove);
-    document.addEventListener('keydown', handleFocusModeEscape);
-}
-
-function exitFocusMode(layout) {
-    layout.classList.remove('focus-mode');
-    focusExitZones.forEach(zone => zone.remove());
-    focusExitZones = [];
-    document.removeEventListener('mousemove', handleFocusModeMouseMove);
-    document.removeEventListener('keydown', handleFocusModeEscape);
-}
-
-function handleFocusModeMouseMove(e) {
-    const threshold = 50;
-    const { clientX, clientY } = e;
-    const { innerWidth, innerHeight } = window;
-    
-    // Check if mouse is near edges
-    const nearTop = clientY < threshold;
-    const nearLeft = clientX < threshold;
-    const nearRight = clientX > innerWidth - threshold;
-    const nearBottom = clientY > innerHeight - threshold;
-    
-    focusExitZones.forEach(zone => {
-        const pos = zone.className.split(' ').find(p => ['top', 'left', 'right', 'bottom'].includes(p));
-        const shouldShow = (pos === 'top' && nearTop) ||
-                          (pos === 'left' && nearLeft) ||
-                          (pos === 'right' && nearRight) ||
-                          (pos === 'bottom' && nearBottom);
-        
-        if(shouldShow) zone.classList.add('active');
-        else zone.classList.remove('active');
-    });
-}
-
-function handleFocusModeEscape(e) {
-    if(e.key === 'Escape' && focusMode) toggleFocusMode();
-}
-
-
-// --- WINDOW EXPORTS ---
-window.fetchNotesStructure = fetchNotesStructure;
-window.createFolder = createFolder;
-window.createNote = createNote;
-window.renameNote = renameNote;
-window.deleteFolder = deleteFolder;
-window.deleteNote = deleteNote;
-window.closeNote = closeNote;
-window.saveCurrentNote = saveCurrentNote;
-window.initializeRichTextEditor = initializeRichTextEditor;
-window.loadQuickNote = loadQuickNote;
-window.toggleTextDirection = toggleTextDirection;
-window.toggleViewMode = toggleViewMode;
-window.toggleFocusMode = toggleFocusMode;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

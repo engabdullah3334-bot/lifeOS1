@@ -1,17 +1,13 @@
 /**
- * auth.js — LifeOS Login System (LocalStorage)
- * Route protection, Remember Me, Session management
+ * auth.js — LifeOS Login System (API + JWT)
+ * Signup, Login (email or username), Session via JWT
  */
 
 (function() {
   const AUTH_KEY = 'lifeos_auth';
   const REMEMBER_KEY = 'lifeos_remember';
   const USER_KEY = 'lifeos_user';
-
-  // Demo users (for LocalStorage mode — replace with API/Firebase later)
-  const DEMO_USERS = [
-    { username: 'admin', password: 'admin123' }
-  ];
+  const API = window.API_URL || 'http://localhost:5000/api';
 
   function getStoredAuth() {
     try {
@@ -27,6 +23,8 @@
     const data = {
       authenticated: true,
       username: user.username,
+      user_id: user.user_id,
+      email: user.email,
       timestamp: Date.now()
     };
     localStorage.setItem(AUTH_KEY, JSON.stringify(data));
@@ -37,30 +35,9 @@
   function clearAuth() {
     localStorage.removeItem(AUTH_KEY);
     localStorage.removeItem(USER_KEY);
+    if (window.LifeOSApi) window.LifeOSApi.setToken(null);
     const remember = localStorage.getItem(REMEMBER_KEY) === '1';
     if (!remember) localStorage.removeItem(REMEMBER_KEY);
-  }
-
-  function verifyUser(username, password) {
-    const u = (username || '').trim().toLowerCase();
-    const p = password || '';
-    return DEMO_USERS.some(uu =>
-      uu.username.toLowerCase() === u && uu.password === p
-    );
-  }
-
-  function isAuthenticated() {
-    const auth = getStoredAuth();
-    if (!auth) return false;
-    const remember = localStorage.getItem(REMEMBER_KEY) === '1';
-    if (!remember) {
-      const age = Date.now() - (auth.timestamp || 0);
-      if (age > 24 * 60 * 60 * 1000) {
-        clearAuth();
-        return false;
-      }
-    }
-    return true;
   }
 
   function showLogin() {
@@ -81,9 +58,14 @@
     if (settingsEl) settingsEl.style.display = '';
   }
 
-  function handleLogin(e) {
+  function isAuthenticated() {
+    const token = window.LifeOSApi ? window.LifeOSApi.getToken() : null;
+    return !!token;
+  }
+
+  async function handleLogin(e) {
     e.preventDefault();
-    const username = document.getElementById('login-username')?.value;
+    const identifier = document.getElementById('login-identifier')?.value;
     const password = document.getElementById('login-password')?.value;
     const remember = document.getElementById('login-remember')?.checked;
     const errorEl = document.getElementById('login-error');
@@ -92,50 +74,153 @@
     if (errorEl) errorEl.textContent = '';
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Signing in...';
+      submitBtn.textContent = 'جاري الدخول...';
     }
 
-    setTimeout(() => {
-      if (!username || !password) {
-        if (errorEl) errorEl.textContent = 'Please enter username and password.';
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Sign In';
-        }
-        return;
-      }
-
-      if (verifyUser(username, password)) {
-        setStoredAuth({ username }, remember);
-        hideLogin();
-        window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: { username } }));
-      } else {
-        if (errorEl) errorEl.textContent = 'Invalid username or password.';
-      }
+    if (!identifier || !password) {
+      if (errorEl) errorEl.textContent = 'يرجى إدخال البريد الإلكتروني أو اسم المستخدم وكلمة المرور.';
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
+        submitBtn.textContent = 'تسجيل الدخول';
       }
-    }, 400);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: identifier.trim(),
+          password: password
+        })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        if (window.LifeOSApi) window.LifeOSApi.setToken(data.token);
+        setStoredAuth(data.user, remember);
+        hideLogin();
+        window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: data.user }));
+      } else {
+        if (errorEl) errorEl.textContent = data.error || 'فشل تسجيل الدخول';
+      }
+    } catch (err) {
+      if (errorEl) errorEl.textContent = 'خطأ في الاتصال بالخادم. تحقق من تشغيل التطبيق.';
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'تسجيل الدخول';
+    }
+  }
+
+  async function handleSignup(e) {
+    e.preventDefault();
+    const username = document.getElementById('signup-username')?.value;
+    const email = document.getElementById('signup-email')?.value;
+    const password = document.getElementById('signup-password')?.value;
+    const errorEl = document.getElementById('signup-error');
+    const submitBtn = document.getElementById('signup-submit');
+
+    if (errorEl) errorEl.textContent = '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'جاري الإنشاء...';
+    }
+
+    if (!username || !email || !password) {
+      if (errorEl) errorEl.textContent = 'يرجى ملء جميع الحقول.';
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إنشاء حساب'; }
+      return;
+    }
+
+    if (password.length < 6) {
+      if (errorEl) errorEl.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.';
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إنشاء حساب'; }
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), email: email.trim().toLowerCase(), password })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        // بعد التسجيل، تسجيل الدخول مباشرة
+        const loginRes = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier: email.trim().toLowerCase(), password })
+        });
+        const loginData = await loginRes.json();
+        if (loginRes.ok && window.LifeOSApi) {
+          window.LifeOSApi.setToken(loginData.token);
+          setStoredAuth(loginData.user, true);
+          document.getElementById('login-screen')?.classList.remove('show-signup');
+          hideLogin();
+          window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: loginData.user }));
+        } else {
+          document.getElementById('login-tab')?.click();
+          if (errorEl) errorEl.textContent = 'تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.';
+        }
+      } else {
+        if (errorEl) errorEl.textContent = data.error || 'فشل إنشاء الحساب';
+      }
+    } catch (err) {
+      if (errorEl) errorEl.textContent = 'خطأ في الاتصال بالخادم.';
+    }
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إنشاء حساب'; }
   }
 
   function restoreRememberMe() {
     const remember = localStorage.getItem(REMEMBER_KEY) === '1';
     const user = localStorage.getItem(USER_KEY);
     const rememberCheck = document.getElementById('login-remember');
-    const usernameInput = document.getElementById('login-username');
+    const identifierInput = document.getElementById('login-identifier');
     if (rememberCheck) rememberCheck.checked = remember;
-    if (remember && usernameInput && user) usernameInput.value = user;
+    if (remember && identifierInput && user) identifierInput.value = user;
   }
 
   function init() {
     const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const showSignup = document.getElementById('show-signup');
+    const showLogin = document.getElementById('show-login');
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (signupForm) signupForm.addEventListener('submit', handleSignup);
+    if (showSignup) showSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginForm.style.display = 'none';
+      signupForm.style.display = '';
+    });
+    if (showLogin) showLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      signupForm.style.display = 'none';
+      loginForm.style.display = '';
+    });
 
     restoreRememberMe();
 
-    if (isAuthenticated()) {
-      hideLogin();
+    // التحقق من JWT الحالي (إن وجد)
+    const token = window.LifeOSApi ? window.LifeOSApi.getToken() : null;
+    if (token) {
+      fetch(`${API}/auth/me`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(user => {
+          setStoredAuth(user, true);
+          hideLogin();
+        })
+        .catch(() => {
+          if (window.LifeOSApi) window.LifeOSApi.setToken(null);
+          showLogin();
+        });
     } else {
       showLogin();
     }
@@ -160,9 +245,16 @@
 
   window.LifeOSAuth = {
     isAuthenticated,
-    login: (u, p, remember) => {
-      if (verifyUser(u, p)) {
-        setStoredAuth({ username: u }, remember);
+    login: async (identifier, password, remember) => {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, password })
+      });
+      const data = await res.json();
+      if (res.ok && window.LifeOSApi) {
+        window.LifeOSApi.setToken(data.token);
+        setStoredAuth(data.user, remember);
         hideLogin();
         return true;
       }

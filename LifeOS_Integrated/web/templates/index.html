@@ -5,13 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Life Manager</title>
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0b0f1a',
+                            surface: '#1a1f35',
+                            border: '#2d3348',
+                            text: '#f2f4ff',
+                            muted: '#a1a6c8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
     
     <!-- Feature CSS Modules -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/dashboard.css') }}?v=5">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=4">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=5">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/login.css') }}?v=1">
 
@@ -55,8 +76,10 @@
 
     {% include 'components/settings.html' %}
 
-    <!-- ── Auth (must load first) ── -->
-    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=1"></script>
+    <!-- ── API Helper & Auth (must load first) ── -->
+    <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';</script>
+    <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=2"></script>
 
     <!-- ── Legacy State (for writing module) ── -->
     <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=4"></script>

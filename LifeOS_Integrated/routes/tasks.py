@@ -1,27 +1,30 @@
 from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from uuid import uuid4
 
 tasks_bp = Blueprint("tasks", __name__)
 
 # دالة مساعدة للحصول على قاعدة البيانات من إعدادات التطبيق
 def get_db():
-    return current_app.config['db']
+    return current_app.config["db"]
 
 # ══════════════════════════════════════════════
 #  PROJECT ROUTES
 # ══════════════════════════════════════════════
 
 @tasks_bp.route("/projects", methods=["GET"])
+@jwt_required()
 def get_projects():
     db = get_db()
-    # جلب المشاريع من مجموعة projects
-    projects = list(db.projects.find({}, {'_id': 0}).sort("order", 1))
+    user_id = get_jwt_identity()
+    # جلب المشاريع الخاصة بالمستخدم فقط
+    projects = list(db.projects.find({"user_id": user_id}, {"_id": 0}).sort("order", 1))
     
     # حساب عدد المهام والتقدم لكل مشروع
     for p in projects:
         pid = p["project_id"]
-        # جلب المهام المرتبطة بهذا المشروع من مجموعة tasks
-        proj_tasks = list(db.tasks.find({"project_id": pid}))
+        # جلب المهام المرتبطة بهذا المشروع والمستخدم
+        proj_tasks = list(db.tasks.find({"project_id": pid, "user_id": user_id}))
         total = len(proj_tasks)
         done = len([t for t in proj_tasks if t.get("status") == "completed"])
         
@@ -32,17 +35,20 @@ def get_projects():
     return jsonify(projects)
 
 @tasks_bp.route("/projects", methods=["POST"])
+@jwt_required()
 def create_project():
     db = get_db()
+    user_id = get_jwt_identity()
     data = request.get_json() or {}
-    
+
     project = {
         "project_id": str(uuid4()),
+        "user_id": user_id,
         "name": data.get("name", "New Project"),
         "color": data.get("color", "#6366f1"),
         "icon": data.get("icon", "📁"),
         "description": data.get("description", ""),
-        "order": db.projects.count_documents({}) 
+        "order": db.projects.count_documents({"user_id": user_id}),
     }
     
     db.projects.insert_one(project)
@@ -51,15 +57,20 @@ def create_project():
     return jsonify(project), 201
 
 @tasks_bp.route("/projects/<string:pid>", methods=["DELETE"])
+@jwt_required()
 def delete_project(pid):
     db = get_db()
-    result = db.projects.delete_one({"project_id": pid})
-    
+    user_id = get_jwt_identity()
+    result = db.projects.delete_one({"project_id": pid, "user_id": user_id})
+
     if result.deleted_count == 0:
         return jsonify({"error": "Project not found"}), 404
-        
+
     # نقل المهام التي فقدت مشروعها إلى "عام" (general)
-    db.tasks.update_many({"project_id": pid}, {"$set": {"project_id": "general"}})
+    db.tasks.update_many(
+        {"project_id": pid, "user_id": user_id},
+        {"$set": {"project_id": "general"}},
+    )
     return jsonify({"success": True})
 
 # ══════════════════════════════════════════════
@@ -67,9 +78,11 @@ def delete_project(pid):
 # ══════════════════════════════════════════════
 
 @tasks_bp.route("/tasks", methods=["GET"])
+@jwt_required()
 def get_tasks():
     db = get_db()
-    query = {}
+    user_id = get_jwt_identity()
+    query = {"user_id": user_id}
 
     # الفلاتر
     project_id = request.args.get("project_id")
@@ -83,31 +96,34 @@ def get_tasks():
     if search:
         query["$or"] = [
             {"title": {"$regex": search, "$options": "i"}},
-            {"description": {"$regex": search, "$options": "i"}}
+            {"description": {"$regex": search, "$options": "i"}},
         ]
 
     # السحب من MongoDB مع الترتيب
-    tasks = list(db.tasks.find(query, {'_id': 0}).sort("order", 1))
+    tasks = list(db.tasks.find(query, {"_id": 0}).sort("order", 1))
     return jsonify(tasks)
 
 @tasks_bp.route("/tasks", methods=["POST"])
+@jwt_required()
 def create_task():
     db = get_db()
+    user_id = get_jwt_identity()
     data = request.get_json() or {}
-    
+
     if not data.get("title"):
         return jsonify({"error": "Title is required"}), 400
 
     task = {
         "task_id": str(uuid4()),
+        "user_id": user_id,
         "title": data.get("title"),
         "description": data.get("description", ""),
         "project_id": data.get("project_id", "general"),
         "priority": data.get("priority", "medium"),
         "status": data.get("status", "pending"),
-        "order": db.tasks.count_documents({}),
+        "order": db.tasks.count_documents({"user_id": user_id}),
         "tags": data.get("tags", []),
-        "notes": data.get("notes", "")
+        "notes": data.get("notes", ""),
     }
     
     db.tasks.insert_one(task)
@@ -115,23 +131,27 @@ def create_task():
     return jsonify(task), 201
 
 @tasks_bp.route("/tasks/<string:tid>", methods=["PUT"])
+@jwt_required()
 def update_task(tid):
     db = get_db()
+    user_id = get_jwt_identity()
     data = request.get_json() or {}
-    
-    # تحديث الحقول المرسلة فقط
-    result = db.tasks.update_one({"task_id": tid}, {"$set": data})
+
+    # تحديث الحقول المرسلة فقط (مع التأكد من ملكية المستخدم)
+    result = db.tasks.update_one({"task_id": tid, "user_id": user_id}, {"$set": data})
     
     if result.matched_count == 0:
         return jsonify({"error": "Task not found"}), 404
-        
-    updated_task = db.tasks.find_one({"task_id": tid}, {'_id': 0})
+
+    updated_task = db.tasks.find_one({"task_id": tid, "user_id": user_id}, {"_id": 0})
     return jsonify(updated_task)
 
 @tasks_bp.route("/tasks/<string:tid>", methods=["DELETE"])
+@jwt_required()
 def delete_task(tid):
     db = get_db()
-    result = db.tasks.delete_one({"task_id": tid})
+    user_id = get_jwt_identity()
+    result = db.tasks.delete_one({"task_id": tid, "user_id": user_id})
     if result.deleted_count == 0:
         return jsonify({"error": "Task not found"}), 404
     return jsonify({"success": True})

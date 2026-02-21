@@ -23,8 +23,10 @@
     background: rgba(255, 255, 255, 0);
 }
 
-.folders-col { width: 240px; }
-.files-col { width: 280px; }
+.projects-col { width: 240px; }
+.notes-col { width: 280px; }
+.folders-col { width: 240px; } /* Legacy */
+.files-col { width: 280px; } /* Legacy */
 .editor-col { 
     flex: 1; 
     background: var(--bg-main); 
@@ -83,14 +85,17 @@
     transform: scale(0.95);
 }
 
-/* --- FOLDER & FILE LISTS --- */
-.folder-list, .file-list {
+/* --- PROJECT & NOTE LISTS --- */
+.project-list, .note-list,
+.folder-list, .file-list { /* Legacy support */
     list-style: none;
     padding: 8px 0;
     overflow-y: auto;
     flex: 1;
 }
 
+.project-list li,
+.note-list li,
 .folder-list li,
 .file-list li {
     display: flex;
@@ -107,6 +112,91 @@
     border-left: 3px solid transparent;
 }
 
+.project-item-content,
+.note-item-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.project-info,
+.note-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.project-name,
+.note-title {
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.project-meta,
+.note-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.project-actions,
+.note-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.project-list li:hover .project-actions,
+.note-list li:hover .note-actions {
+    opacity: 1;
+}
+
+.project-actions button,
+.note-actions button {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.project-actions button:hover,
+.note-actions button:hover {
+    background: rgba(64, 150, 255, 0.15);
+    border-color: rgba(64, 150, 255, 0.3);
+    color: #69b1ff;
+}
+
+.delete-project-btn:hover,
+.delete-note-btn:hover {
+    background: rgba(255, 77, 79, 0.2) !important;
+    border-color: rgba(255, 77, 79, 0.4) !important;
+    color: #ff6b6b !important;
+}
+
+.system-badge {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.project-list li:hover,
+.note-list li:hover,
 .folder-list li:hover,
 .file-list li:hover {
     background: rgba(255, 255, 255, 0.07);
@@ -115,6 +205,8 @@
     border-left-color: rgba(255, 255, 255, 0.2);
 }
 
+.project-list li.active,
+.note-list li.active,
 .folder-list li.active,
 .file-list li.active {
     background: linear-gradient(90deg, rgba(64, 150, 255, 0.18) 0%, rgba(64, 150, 255, 0.05) 100%);
@@ -466,6 +558,8 @@
     border: none;
 }
 
+.writing-layout.focus-mode .projects-col,
+.writing-layout.focus-mode .notes-col,
 .writing-layout.focus-mode .folders-col,
 .writing-layout.focus-mode .files-col {
     display: none;
@@ -720,6 +814,8 @@
 }
 
 /* --- COLLAPSED SIDEBAR STATES --- */
+.projects-col.collapsed,
+.notes-col.collapsed,
 .folders-col.collapsed,
 .files-col.collapsed {
     width: 0 !important;
@@ -764,18 +860,24 @@
 }
 
 /* --- CUSTOM SCROLLBARS --- */
+.project-list::-webkit-scrollbar,
+.note-list::-webkit-scrollbar,
 .folder-list::-webkit-scrollbar,
 .file-list::-webkit-scrollbar,
 .rich-editor::-webkit-scrollbar {
     width: 7px;
 }
 
+.project-list::-webkit-scrollbar-track,
+.note-list::-webkit-scrollbar-track,
 .folder-list::-webkit-scrollbar-track,
 .file-list::-webkit-scrollbar-track,
 .rich-editor::-webkit-scrollbar-track {
     background: transparent;
 }
 
+.project-list::-webkit-scrollbar-thumb,
+.note-list::-webkit-scrollbar-thumb,
 .folder-list::-webkit-scrollbar-thumb,
 .file-list::-webkit-scrollbar-thumb,
 .rich-editor::-webkit-scrollbar-thumb {
@@ -783,6 +885,8 @@
     border-radius: 4px;
 }
 
+.project-list::-webkit-scrollbar-thumb:hover,
+.note-list::-webkit-scrollbar-thumb:hover,
 .folder-list::-webkit-scrollbar-thumb:hover,
 .file-list::-webkit-scrollbar-thumb:hover,
 .rich-editor::-webkit-scrollbar-thumb:hover {

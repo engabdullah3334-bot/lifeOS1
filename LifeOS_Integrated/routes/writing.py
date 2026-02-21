@@ -1,82 +1,417 @@
-from flask import Blueprint, request, jsonify, current_app
-from datetime import datetime
+"""
+routes/writing.py — LifeOS Writing/Notes System
+==============================================
+Cloud Project Management with MongoDB Atlas
+Projects (formerly Folders) & Notes with full CRUD
+"""
 
-writing_bp = Blueprint('writing', __name__)
+from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from datetime import datetime
+from uuid import uuid4
+
+writing_bp = Blueprint("writing", __name__)
+
+# System project ID - cannot be deleted
+SYSTEM_PROJECT_ID = "system"
 
 def get_db():
-    return current_app.config['db']
+    return current_app.config["db"]
 
-# 1. جلب هيكل المجلدات والملاحظات
-@writing_bp.route('/notes/structure', methods=['GET'])
-def get_structure():
+
+def ensure_system_project(user_id):
+    """Create System project for user if not exists"""
     db = get_db()
-    # جلب كل الملاحظات من قاعدة البيانات
-    notes = list(db.notes.find({}, {'_id': 0}))
-    
+    existing = db.note_projects.find_one({"user_id": user_id, "project_id": SYSTEM_PROJECT_ID})
+    if not existing:
+        db.note_projects.insert_one({
+            "project_id": SYSTEM_PROJECT_ID,
+            "user_id": user_id,
+            "name": "System",
+            "created_at": datetime.now(),
+            "archived": False,
+            "is_system": True,
+        })
+
+
+# ══════════════════════════════════════════════
+#  PROJECTS CRUD (Writing Projects - note containers)
+# ══════════════════════════════════════════════
+
+@writing_bp.route("/writing/projects", methods=["GET"])
+@jwt_required()
+def get_projects():
+    """Get all note projects for user"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    ensure_system_project(user_id)
+
+    projects = list(db.note_projects.find(
+        {"user_id": user_id, "archived": False},
+        {"_id": 0}
+    ).sort("created_at", -1))
+
+    for project in projects:
+        pid = project["project_id"]
+        notes_count = db.notes.count_documents({"user_id": user_id, "project_id": pid})
+        project["notes_count"] = notes_count
+
+    return jsonify(projects)
+
+
+@writing_bp.route("/writing/projects", methods=["POST"])
+@jwt_required()
+def create_project():
+    """Create new note project"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    ensure_system_project(user_id)
+    data = request.get_json() or {}
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "Project name is required"}), 400
+
+    existing = db.note_projects.find_one({"user_id": user_id, "name": name})
+    if existing:
+        return jsonify({"error": "Project with this name already exists"}), 409
+
+    project = {
+        "project_id": str(uuid4()),
+        "user_id": user_id,
+        "name": name,
+        "created_at": datetime.now(),
+        "archived": False,
+        "is_system": False,
+    }
+
+    db.note_projects.insert_one(project)
+    project.pop("_id", None)
+    return jsonify(project), 201
+
+
+@writing_bp.route("/writing/projects/<string:project_id>", methods=["PUT"])
+@jwt_required()
+def update_project(project_id):
+    """Update project name"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+
+    if project_id == SYSTEM_PROJECT_ID:
+        return jsonify({"error": "Cannot rename System project"}), 403
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "Project name is required"}), 400
+
+    existing = db.note_projects.find_one({
+        "user_id": user_id,
+        "name": name,
+        "project_id": {"$ne": project_id}
+    })
+    if existing:
+        return jsonify({"error": "Project with this name already exists"}), 409
+
+    result = db.note_projects.update_one(
+        {"user_id": user_id, "project_id": project_id},
+        {"$set": {"name": name}}
+    )
+
+    if result.matched_count == 0:
+        return jsonify({"error": "Project not found"}), 404
+
+    updated = db.note_projects.find_one({"user_id": user_id, "project_id": project_id}, {"_id": 0})
+    return jsonify(updated)
+
+
+@writing_bp.route("/writing/projects/<string:project_id>", methods=["DELETE"])
+@jwt_required()
+def delete_project(project_id):
+    """Delete project and its notes (System project cannot be deleted)"""
+    db = get_db()
+    user_id = get_jwt_identity()
+
+    if project_id == SYSTEM_PROJECT_ID:
+        return jsonify({"error": "System project cannot be deleted"}), 403
+
+    result = db.note_projects.delete_one({"user_id": user_id, "project_id": project_id})
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "Project not found"}), 404
+
+    db.notes.delete_many({"user_id": user_id, "project_id": project_id})
+    return jsonify({"success": True})
+
+
+@writing_bp.route("/writing/projects/<string:project_id>/archive", methods=["PUT"])
+@jwt_required()
+def archive_project(project_id):
+    """Archive/unarchive project"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+
+    if project_id == SYSTEM_PROJECT_ID:
+        return jsonify({"error": "System project cannot be archived"}), 403
+
+    archived = data.get("archived", True)
+
+    result = db.note_projects.update_one(
+        {"user_id": user_id, "project_id": project_id},
+        {"$set": {"archived": archived}}
+    )
+
+    if result.matched_count == 0:
+        return jsonify({"error": "Project not found"}), 404
+
+    updated = db.note_projects.find_one({"user_id": user_id, "project_id": project_id}, {"_id": 0})
+    return jsonify(updated)
+
+
+# ══════════════════════════════════════════════
+#  NOTES STRUCTURE & CRUD
+# ══════════════════════════════════════════════
+
+@writing_bp.route("/notes/structure", methods=["GET"])
+@jwt_required()
+def get_structure():
+    """Get projects and notes structure"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    ensure_system_project(user_id)
+
+    projects = list(db.note_projects.find(
+        {"user_id": user_id, "archived": False},
+        {"_id": 0}
+    ).sort("created_at", -1))
+
+    notes = list(db.notes.find({"user_id": user_id}, {"_id": 0}))
+
     structure = {}
+    for project in projects:
+        pid = project["project_id"]
+        structure[pid] = {
+            "project": project,
+            "notes": []
+        }
+
     for note in notes:
-        folder = note.get('folder', 'General')
-        if folder not in structure:
-            structure[folder] = []
-        structure[folder].append(note['filename'])
-    
+        project_id = note.get("project_id")
+        if project_id and project_id in structure:
+            structure[project_id]["notes"].append({
+                "note_id": note.get("note_id"),
+                "title": note.get("title", ""),
+                "filename": note.get("filename", ""),
+            })
+
     return jsonify(structure)
 
-# 2. قراءة محتوى ملاحظة معينة
-@writing_bp.route('/notes/content', methods=['GET'])
-def get_note_content():
-    db = get_db()
-    folder = request.args.get('folder')
-    filename = request.args.get('filename')
-    
-    note = db.notes.find_one({"folder": folder, "filename": filename}, {'_id': 0})
-    content = note.get('content', '') if note else ""
-    return jsonify({"content": content})
 
-# 3. حفظ أو تحديث ملاحظة
-@writing_bp.route('/notes', methods=['POST'])
-def save_note():
+@writing_bp.route("/notes", methods=["GET"])
+@jwt_required()
+def get_notes():
+    """Get notes for a project"""
     db = get_db()
-    data = request.get_json()
-    
-    # استخدام update_one مع upsert=True (لو مش موجودة ينشئها)
-    db.notes.update_one(
-        {"folder": data['folder'], "filename": data['filename']},
-        {"$set": {
-            "content": data['content'],
-            "last_modified": datetime.now()
-        }},
-        upsert=True
+    user_id = get_jwt_identity()
+    project_id = request.args.get("project_id")
+
+    query = {"user_id": user_id}
+    if project_id:
+        query["project_id"] = project_id
+
+    notes = list(db.notes.find(query, {"_id": 0}).sort("last_updated", -1))
+    return jsonify(notes)
+
+
+@writing_bp.route("/notes/<string:note_id>", methods=["GET"])
+@jwt_required()
+def get_note(note_id):
+    """Get single note"""
+    db = get_db()
+    user_id = get_jwt_identity()
+
+    note = db.notes.find_one(
+        {"user_id": user_id, "note_id": note_id},
+        {"_id": 0}
     )
-    return jsonify({"success": True})
 
-# 4. إنشاء ملاحظة جديدة
-@writing_bp.route('/notes/create', methods=['POST'])
+    if not note:
+        return jsonify({"error": "Note not found"}), 404
+
+    return jsonify(note)
+
+
+@writing_bp.route("/notes", methods=["POST"])
+@jwt_required()
 def create_note():
+    """Create new note"""
     db = get_db()
-    data = request.get_json()
-    
-    new_note = {
-        "folder": data['folder'],
-        "filename": data['title'], # أو data.get('filename')
-        "content": "",
-        "created_at": datetime.now()
+    user_id = get_jwt_identity()
+    ensure_system_project(user_id)
+    data = request.get_json() or {}
+
+    project_id = data.get("project_id")
+    title = (data.get("title") or data.get("filename") or "New Note").strip()
+
+    if not project_id:
+        return jsonify({"error": "project_id is required"}), 400
+
+    project = db.note_projects.find_one({"user_id": user_id, "project_id": project_id})
+    if not project:
+        return jsonify({"error": "Project not found"}), 404
+
+    filename = title if title.endswith(".txt") else f"{title}.txt"
+    existing = db.notes.find_one({
+        "user_id": user_id,
+        "project_id": project_id,
+        "filename": filename
+    })
+    if existing:
+        counter = 2
+        base_title = title.replace(".txt", "")
+        while db.notes.find_one({
+            "user_id": user_id,
+            "project_id": project_id,
+            "filename": filename
+        }):
+            filename = f"{base_title} ({counter}).txt"
+            counter += 1
+
+    note = {
+        "note_id": str(uuid4()),
+        "user_id": user_id,
+        "project_id": project_id,
+        "title": title.replace(".txt", ""),
+        "filename": filename,
+        "content": data.get("content", ""),
+        "created_at": datetime.now(),
+        "last_updated": datetime.now(),
     }
-    db.notes.insert_one(new_note)
+
+    db.notes.insert_one(note)
+    note.pop("_id", None)
+    return jsonify(note), 201
+
+
+@writing_bp.route("/notes/<string:note_id>", methods=["PUT"])
+@jwt_required()
+def update_note(note_id):
+    """Update note content or title"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+
+    update_data = {"last_updated": datetime.now()}
+
+    if "content" in data:
+        update_data["content"] = data["content"]
+
+    if "title" in data:
+        title = data["title"].strip()
+        if title:
+            update_data["title"] = title
+            filename = title if title.endswith(".txt") else f"{title}.txt"
+            update_data["filename"] = filename
+
+    result = db.notes.update_one(
+        {"user_id": user_id, "note_id": note_id},
+        {"$set": update_data}
+    )
+
+    if result.matched_count == 0:
+        return jsonify({"error": "Note not found"}), 404
+
+    updated = db.notes.find_one({"user_id": user_id, "note_id": note_id}, {"_id": 0})
+    return jsonify(updated)
+
+
+@writing_bp.route("/notes/<string:note_id>", methods=["DELETE"])
+@jwt_required()
+def delete_note(note_id):
+    """Delete note"""
+    db = get_db()
+    user_id = get_jwt_identity()
+
+    result = db.notes.delete_one({"user_id": user_id, "note_id": note_id})
+
+    if result.deleted_count == 0:
+        return jsonify({"error": "Note not found"}), 404
+
     return jsonify({"success": True})
 
-# 5. حذف ملاحظة
-@writing_bp.route('/notes', methods=['DELETE'])
-def delete_note():
-    db = get_db()
-    data = request.get_json()
-    
-    result = db.notes.delete_one({"folder": data['folder'], "filename": data['filename']})
-    return jsonify({"success": result.deleted_count > 0})
 
-# 6. إنشاء مجلد (في MongoDB المجلد هو مجرد اسم حقل)
-@writing_bp.route('/folders/create', methods=['POST'])
-def create_folder():
-    # في نظام MongoDB لا نحتاج لإنشاء مجلد فعلي، 
-    # المجلد يظهر بمجرد إضافة ملاحظة بداخله.
+# ══════════════════════════════════════════════
+#  LEGACY: Quick Note content (folder/filename style)
+# ══════════════════════════════════════════════
+
+@writing_bp.route("/notes/content", methods=["GET"])
+@jwt_required()
+def get_note_content():
+    """Get note content - supports note_id or project_id+filename (QuickNote)"""
+    db = get_db()
+    user_id = get_jwt_identity()
+
+    note_id = request.args.get("note_id")
+    project_id = request.args.get("project_id")
+    filename = request.args.get("filename")
+
+    if note_id:
+        note = db.notes.find_one({"user_id": user_id, "note_id": note_id}, {"_id": 0})
+    elif project_id and filename:
+        note = db.notes.find_one(
+            {"user_id": user_id, "project_id": project_id, "filename": filename},
+            {"_id": 0}
+        )
+    else:
+        return jsonify({"error": "Invalid parameters"}), 400
+
+    if not note:
+        return jsonify({"content": ""})
+
+    return jsonify({"content": note.get("content", "")})
+
+
+@writing_bp.route("/notes/quick", methods=["POST"])
+@jwt_required()
+def save_quick_note():
+    """Save quick note from Dashboard to System project"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    ensure_system_project(user_id)
+    data = request.get_json() or {}
+
+    content = (data.get("content") or "").strip()
+    if not content:
+        return jsonify({"error": "Content is required"}), 400
+
+    # Append to QuickNote in System project
+    quick_note = db.notes.find_one({
+        "user_id": user_id,
+        "project_id": SYSTEM_PROJECT_ID,
+        "filename": "QuickNote.txt"
+    })
+
+    if quick_note:
+        existing = (quick_note.get("content") or "").strip()
+        sep = "\n\n---\n"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        new_content = existing + sep + f"[{timestamp}] " + content
+        db.notes.update_one(
+            {"user_id": user_id, "project_id": SYSTEM_PROJECT_ID, "filename": "QuickNote.txt"},
+            {"$set": {"content": new_content, "last_updated": datetime.now()}}
+        )
+    else:
+        note = {
+            "note_id": str(uuid4()),
+            "user_id": user_id,
+            "project_id": SYSTEM_PROJECT_ID,
+            "title": "QuickNote",
+            "filename": "QuickNote.txt",
+            "content": content,
+            "created_at": datetime.now(),
+            "last_updated": datetime.now(),
+        }
+        db.notes.insert_one(note)
+
     return jsonify({"success": True})

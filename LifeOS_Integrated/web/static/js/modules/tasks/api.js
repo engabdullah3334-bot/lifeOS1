@@ -1,20 +1,27 @@
 /**
- * tasks/api.js — All API calls to the Flask backend
+ * tasks/api.js — All API calls to the Flask backend (with JWT)
  */
 
 var TS = window.TS = window.TS || {};
 
 const API = window.API_URL || 'http://localhost:5000/api';
 
+function _fetch(url, opts = {}) {
+  const token = window.LifeOSApi?.getToken?.();
+  const headers = { ...opts.headers };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  return fetch(url, { ...opts, headers });
+}
+
 TS.api = {
   // ── Projects ──────────────────────────────────────────
   async getProjects() {
-    const r = await fetch(`${API}/projects`);
+    const r = await _fetch(`${API}/projects`);
     return r.json();
   },
 
   async createProject(data) {
-    const r = await fetch(`${API}/projects`, {
+    const r = await _fetch(`${API}/projects`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -23,7 +30,7 @@ TS.api = {
   },
 
   async updateProject(id, data) {
-    const r = await fetch(`${API}/projects/${id}`, {
+    const r = await _fetch(`${API}/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -32,12 +39,12 @@ TS.api = {
   },
 
   async deleteProject(id) {
-    const r = await fetch(`${API}/projects/${id}`, { method: 'DELETE' });
+    const r = await _fetch(`${API}/projects/${id}`, { method: 'DELETE' });
     return r.json();
   },
 
   async reorderProjects(orderedIds) {
-    await fetch(`${API}/projects/reorder`, {
+    await _fetch(`${API}/projects/reorder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ordered_ids: orderedIds }),
@@ -52,12 +59,12 @@ TS.api = {
     if (params.priority)   q.set('priority',   params.priority);
     if (params.search)     q.set('search',     params.search);
     if (params.sort)       q.set('sort',       params.sort);
-    const r = await fetch(`${API}/tasks?${q}`);
+    const r = await _fetch(`${API}/tasks?${q}`);
     return r.json();
   },
 
   async createTask(data) {
-    const r = await fetch(`${API}/tasks`, {
+    const r = await _fetch(`${API}/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -67,7 +74,7 @@ TS.api = {
   },
 
   async updateTask(id, data) {
-    const r = await fetch(`${API}/tasks/${id}`, {
+    const r = await _fetch(`${API}/tasks/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -77,22 +84,22 @@ TS.api = {
   },
 
   async deleteTask(id) {
-    const r = await fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
+    const r = await _fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
     return r.json();
   },
 
   async completeTask(id) {
-    const r = await fetch(`${API}/tasks/${id}/complete`, { method: 'PUT' });
+    const r = await _fetch(`${API}/tasks/${id}/complete`, { method: 'PUT' });
     return r.json();
   },
 
   async archiveTask(id) {
-    const r = await fetch(`${API}/tasks/${id}/archive`, { method: 'PUT' });
+    const r = await _fetch(`${API}/tasks/${id}/archive`, { method: 'PUT' });
     return r.json();
   },
 
   async reorderTasks(orderedIds) {
-    await fetch(`${API}/tasks/reorder`, {
+    await _fetch(`${API}/tasks/reorder`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ordered_ids: orderedIds }),

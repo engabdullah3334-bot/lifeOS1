@@ -1,10 +1,12 @@
 import os
 from flask import Flask, render_template, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, get_jwt_identity
 from pymongo import MongoClient
-# استيراد الـ Blueprints (تأكد من تعديل الكود داخلها أيضاً للتعامل مع db)
-from routes.tasks import tasks_bp 
-from routes.writing import writing_bp 
+# استيراد الـ Blueprints
+from routes.auth import auth_bp
+from routes.tasks import tasks_bp
+from routes.writing import writing_bp
 
 # 1. إعداد المسارات
 base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -15,8 +17,13 @@ app = Flask(__name__,
             static_folder=static_path,
             template_folder=template_path)
 
-app.debug = True 
+app.debug = True
 CORS(app)
+
+# إعداد JWT (استخدم متغير بيئة أو قيمة افتراضية للتطوير)
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "lifeos-secret-change-in-production-2024")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 60 * 60 * 24 * 7  # 7 أيام
+jwt = JWTManager(app)
 
 # 2. إعداد الاتصال بـ MongoDB
 # استبدل Abdullah123 بكلمة السر اللي عملتها في الخطوة اللي فاتت
@@ -25,11 +32,12 @@ client = MongoClient(MONGO_URI)
 db = client['LifeOS_Database'] # اسم قاعدة البيانات
 
 # جعل الكائن db متاحاً في التطبيق ليتم استخدامه في الـ Blueprints
-app.config['db'] = db
+app.config["db"] = db
 
 # 3. تسجيل الـ Blueprints
-app.register_blueprint(tasks_bp, url_prefix='/api')
-app.register_blueprint(writing_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix="/api")
+app.register_blueprint(tasks_bp, url_prefix="/api")
+app.register_blueprint(writing_bp, url_prefix="/api")
 
 # 4. الروابط الأساسية
 @app.route('/')
