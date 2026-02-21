@@ -15,7 +15,12 @@ TS.taskMgr = {
     const sortBy       = overrides.sortBy       ?? s.sortBy;
 
     // Filter by status
-    if (filterStatus) tasks = tasks.filter(t => t.status === filterStatus);
+    if (filterStatus) {
+      tasks = tasks.filter(t => t.status === filterStatus);
+    } else {
+      // Default: hide archived tasks from active views
+      tasks = tasks.filter(t => t.status !== 'archived');
+    }
 
     // Filter by search
     if (search) {
@@ -63,18 +68,20 @@ TS.taskMgr = {
     );
   },
 
-  // Complete a task with undo support
+  // Toggle complete status
   async complete(taskId) {
     const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
     if (!task) return;
-    const prevStatus = task.status;
+    
+    const isCompleted = task.status === 'completed';
+    const newStatus = isCompleted ? 'pending' : 'completed';
 
-    await TS.api.completeTask(taskId);
+    await TS.api.completeTask(taskId, !isCompleted);
     TS.notify.success(
-      `"${task.title}" completed!`,
+      isCompleted ? `"${task.title}" reactivated` : `"${task.title}" completed!`,
       {
         undoFn: async () => {
-          await TS.api.updateTask(taskId, { status: prevStatus });
+          await TS.api.updateTask(taskId, { status: isCompleted ? 'completed' : 'pending' });
           TS.core.refresh();
         }
       }
@@ -113,6 +120,14 @@ TS.taskMgr = {
     if (!task) return;
     await TS.api.archiveTask(taskId);
     TS.notify.info(`"${task.title}" archived`);
+    TS.core.refresh();
+  },
+
+  async unarchive(taskId) {
+    const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
+    if (!task) return;
+    await TS.api.updateTask(taskId, { status: 'pending' });
+    TS.notify.info(`"${task.title}" unarchived`);
     TS.core.refresh();
   },
 

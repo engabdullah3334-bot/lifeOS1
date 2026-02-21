@@ -230,7 +230,7 @@ def get_structure():
         return (o, -ts)
     projects.sort(key=_project_sort_key)
 
-    notes = list(db.notes.find({"user_id": user_id}, {"_id": 0}))
+    notes = list(db.notes.find({"user_id": user_id, "archived": {"$ne": True}}, {"_id": 0}))
 
     structure = {}
     for project in projects:
@@ -354,6 +354,7 @@ def create_note():
         "order": order,
         "created_at": datetime.now(),
         "last_updated": datetime.now(),
+        "archived": False,
     }
 
     db.notes.insert_one(note)
@@ -453,12 +454,26 @@ def delete_note(note_id):
     db = get_db()
     user_id = get_jwt_identity()
 
-    result = db.notes.delete_one({"user_id": user_id, "note_id": note_id})
-
-    if result.deleted_count == 0:
-        return jsonify({"error": "Note not found"}), 404
-
     return jsonify({"success": True})
+
+
+@writing_bp.route("/notes/<string:note_id>/archive", methods=["PUT"])
+@jwt_required()
+def archive_note(note_id):
+    """Archive/unarchive note"""
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    archived = data.get("archived", True)
+
+    result = db.notes.update_one(
+        {"user_id": user_id, "note_id": note_id},
+        {"$set": {"archived": archived, "last_updated": datetime.now()}}
+    )
+    if result.matched_count == 0:
+        return jsonify({"error": "Note not found"}), 404
+    
+    return jsonify({"success": True, "archived": archived})
 
 
 # ══════════════════════════════════════════════

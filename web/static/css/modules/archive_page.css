@@ -1,0 +1,244 @@
+:root {
+    --archive-bg: #0d111a;
+    --archive-surface: rgba(255, 255, 255, 0.03);
+    --archive-border: rgba(255, 255, 255, 0.08);
+    --archive-text-muted: #6f7499;
+    --archive-accent: #6366f1;
+}
+
+.archive-page-container {
+    padding: 24px 32px;
+    height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow: hidden;
+}
+
+.archive-search-container {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.archive-search-input {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--archive-surface);
+    border: 1px solid var(--archive-border);
+    border-radius: 16px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.archive-search-input:focus {
+    border-color: var(--archive-accent);
+}
+
+.archive-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    flex: 1;
+    overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+    .archive-grid {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+    }
+    .archive-page-container {
+        height: auto;
+        overflow-y: auto;
+    }
+}
+
+.archive-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.01);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid var(--archive-border);
+    overflow: hidden;
+}
+
+.archive-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.archive-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--archive-text-muted);
+}
+
+.archive-section .badge {
+    background: var(--archive-surface);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--archive-text-muted);
+}
+
+.archive-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.archive-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.archive-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+
+/* Smart Grouping Styles */
+.archive-group-block {
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.group-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--archive-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.group-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--archive-border);
+}
+
+/* Cards */
+.archive-smart-card {
+    background: var(--archive-surface);
+    border: 1px solid var(--archive-border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: default;
+    position: relative;
+}
+
+.archive-smart-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.card-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #f2f4ff;
+    flex: 1;
+}
+
+.card-date {
+    font-size: 11px;
+    color: var(--archive-text-muted);
+}
+
+.card-snippet {
+    font-size: 13px;
+    color: var(--archive-text-muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+    word-break: break-word;
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.archive-tag {
+    font-size: 10px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.btn-restore {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-restore:hover {
+    background: var(--archive-accent);
+    color: #fff;
+}
+
+/* Task Checkbox in Archive */
+.task-check-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.archive-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--archive-border);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.archive-checkbox.checked {
+    background: var(--archive-accent);
+    border-color: var(--archive-accent);
+}
+
+.archive-checkbox.checked::after {
+    content: '✓';
+    color: #fff;
+    font-size: 12px;
+}
+
+.archive-task-title.done {
+    text-decoration: line-through;
+    opacity: 0.5;
+}

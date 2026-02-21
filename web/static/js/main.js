@@ -65,6 +65,10 @@ function setupNavigation() {
     document.querySelectorAll('.nav-links li').forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.tab;
+            if (view === 'archive') {
+                window.location.href = '/archive';
+                return;
+            }
             if (view) {
                 loadView(view);
                 document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
@@ -87,12 +91,19 @@ function loadView(viewName) {
         'dashboard': 'Dashboard',
         'tasks':     'Task Manager',
         'writing':   'Writing Space',
+        'archive':   'Archive',
     };
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = titles[viewName] || 'LifeOS';
 
     if (viewName === 'tasks' && window.TS?.core) {
         window.TS.core._renderCurrentView();
+    }
+    if (viewName === 'archive' && window.TS?.core) {
+        // Archive is a sub-view of tasks
+        const tasksSection = document.getElementById('tasks');
+        if (tasksSection) tasksSection.style.display = 'flex';
+        window.TS.core.switchView('archive');
     }
     if (viewName === 'dashboard' && window.updateDashboardStats) {
         window.updateDashboardStats();

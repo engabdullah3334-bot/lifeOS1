@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Archive | LifeOS</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=1">
+    
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+        {% include 'components/sidebar.html' %}
+
+        <main class="main-content">
+            <header class="top-bar">
+                <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">☰</button>
+                <h1 id="page-title">Smart Archive</h1>
+                <div class="user-profile">
+                    <span id="user-name" class="user-name"></span>
+                    <button type="button" id="btn-logout" class="logout-btn" title="Logout">Logout</button>
+                    <div class="avatar"></div>
+                </div>
+            </header>
+
+            <div class="archive-page-container">
+                <div class="archive-search-container">
+                    <input type="text" id="archive-search" placeholder="Search in archive (tasks, quotes, notes)..." class="archive-search-input">
+                </div>
+
+                <div class="archive-grid">
+                    <!-- Left Section: Writing Archive -->
+                    <section class="archive-section writing-archive-section">
+                        <div class="section-header">
+                            <h2>Drafts & Writing</h2>
+                            <span class="badge" id="writing-archive-count">0</span>
+                        </div>
+                        <div id="writing-archive-container" class="archive-scroll-area">
+                            <!-- Grouped Blocks here -->
+                        </div>
+                    </section>
+
+                    <!-- Right Section: Task Archive -->
+                    <section class="archive-section task-archive-section">
+                        <div class="section-header">
+                            <h2>Professional & Tasks</h2>
+                            <span class="badge" id="task-archive-count">0</span>
+                        </div>
+                        <div id="task-archive-container" class="archive-scroll-area">
+                            <!-- Grouped Blocks here -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals (Reusable) -->
+    {% include 'components/settings.html' %}
+
+    <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';</script>
+    <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=1"></script>
+    <script>
+        // Adjust sidebar active state
+        document.addEventListener('DOMContentLoaded', () => {
+             document.querySelectorAll('.nav-links li').forEach(li => {
+                 li.classList.remove('active');
+                 if(li.dataset.tab === 'archive') li.classList.add('active');
+                 
+                 // Handle navigation from sidebar (since this is a separate page)
+                 li.addEventListener('click', () => {
+                     const tab = li.dataset.tab;
+                     if(tab === 'dashboard') window.location.href = '/';
+                     if(tab === 'tasks') window.location.href = '/';
+                     if(tab === 'writing') window.location.href = '/';
+                     if(tab === 'archive') { /* already here */ }
+                 });
+             });
+             
+             // Setup hamburger
+             const sidebar = document.querySelector('.sidebar');
+             const hamburger = document.getElementById('hamburger-btn');
+             const overlay = document.getElementById('sidebar-overlay');
+             hamburger?.addEventListener('click', () => {
+                 sidebar?.classList.add('open');
+                 overlay?.classList.add('active');
+             });
+             overlay?.addEventListener('click', () => {
+                 sidebar?.classList.remove('open');
+                 overlay?.classList.remove('active');
+             });
+        });
+    </script>
+</body>
+</html>

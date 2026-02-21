@@ -30,11 +30,13 @@ try:
     from routes.tasks import tasks_bp
     from routes.writing import writing_bp
     from routes.settings import settings_bp
+    from routes.archive import archive_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(tasks_bp, url_prefix="/api")
     app.register_blueprint(writing_bp, url_prefix="/api")
     app.register_blueprint(settings_bp, url_prefix="/api")
+    app.register_blueprint(archive_bp, url_prefix="/api")
 except ImportError as e:
     print(f"Error importing blueprints: {e}")
 
@@ -53,6 +55,10 @@ app.config["db"] = db
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/archive')
+def archive_page():
+    return render_template('archive.html')
 
 @app.route('/test_db')
 def test_db():

@@ -96,14 +96,12 @@ TS.api = {
     return r.json();
   },
 
-  async completeTask(id) {
-    const r = await _fetch(`${API}/tasks/${id}/complete`, { method: 'PUT' });
-    return r.json();
+  async completeTask(id, isCompleted) {
+    return this.updateTask(id, { status: isCompleted ? 'completed' : 'pending' });
   },
 
   async archiveTask(id) {
-    const r = await _fetch(`${API}/tasks/${id}/archive`, { method: 'PUT' });
-    return r.json();
+    return this.updateTask(id, { status: 'archived' });
   },
 
   async reorderTasks(orderedIds) {

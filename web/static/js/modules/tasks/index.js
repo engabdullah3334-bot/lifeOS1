@@ -78,13 +78,13 @@ TS.core = {
 
   // ── View Switching ────────────────────────────────────────
   switchView(view, initial = false) {
-    if (!['projects','daily','monthly'].includes(view)) view = 'projects';
+    if (!['projects','daily','monthly','archive'].includes(view)) view = 'projects';
 
     TS.state.currentView = view;
     TS.state.save();
 
     // Hide all panels
-    ['projects','daily','monthly'].forEach(v => {
+    ['projects','daily','monthly','archive'].forEach(v => {
       const panel = document.getElementById(`ts-panel-${v}`);
       if (panel) panel.style.display = 'none';
     });
@@ -107,6 +107,7 @@ TS.core = {
     if (v === 'projects') TS.views.projects.render();
     if (v === 'daily')    TS.views.daily.render();
     if (v === 'monthly')  TS.views.monthly.render();
+    if (v === 'archive')  TS.views.archive.render();
   },
 
   // ── Toolbar Wiring ────────────────────────────────────────
