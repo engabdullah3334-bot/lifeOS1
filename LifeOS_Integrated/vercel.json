@@ -2,14 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "LifeOS_Integrated/server.py",
+      "src": "server.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "server.py"
+    },
+    {
       "src": "/(.*)",
-      "dest": "LifeOS_Integrated/server.py"
+      "dest": "static/index.html"
     }
   ]
 }
