@@ -1,3 +1,3 @@
 git add .
-git commit -m "auto update 2"
+git commit -m "1.0.0"
 git push
