@@ -14,15 +14,9 @@ class UpdatedJSONProvider(DefaultJSONProvider):
             return o.isoformat()
         return super().default(o)
 
-# --- 2. إعداد المسارات وهيكل المجلدات ---
-base_dir = os.path.abspath(os.path.dirname(__file__))
-# تأكد أن هذه المجلدات موجودة في المستودع الرئيسي
-static_path = os.path.join(base_dir, 'web', 'static')
-template_path = os.path.join(base_dir, 'web', 'templates')
-
 app = Flask(__name__,
-            static_folder=static_path,
-            template_folder=template_path,
+            static_folder='web/static',
+            template_folder='web/templates',
             static_url_path='/static')
 
 app.json = UpdatedJSONProvider(app)
