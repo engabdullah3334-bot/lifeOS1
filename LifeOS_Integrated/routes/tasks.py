@@ -1,18 +1,11 @@
-"""
-routes/tasks.py — LifeOS Task & Project API Routes
-===================================================
-Projects: GET/POST /api/projects, PUT/DELETE /api/projects/<id>
-Tasks:    GET/POST /api/tasks, PUT/DELETE /api/tasks/<id>,
-          PUT /api/tasks/<id>/complete, PUT /api/tasks/<id>/archive,
-          POST /api/tasks/reorder, POST /api/projects/reorder
-"""
-
-from flask import Blueprint, request, jsonify
-from core.task import task_manager, project_manager, Task, Project
+from flask import Blueprint, request, jsonify, current_app
 from uuid import uuid4
 
 tasks_bp = Blueprint("tasks", __name__)
 
+# دالة مساعدة للحصول على قاعدة البيانات من إعدادات التطبيق
+def get_db():
+    return current_app.config['db']
 
 # ══════════════════════════════════════════════
 #  PROJECT ROUTES
@@ -20,63 +13,54 @@ tasks_bp = Blueprint("tasks", __name__)
 
 @tasks_bp.route("/projects", methods=["GET"])
 def get_projects():
-    projects = [p.to_dict() for p in project_manager.get_all()]
-    # Attach task counts + progress
+    db = get_db()
+    # جلب المشاريع من مجموعة projects
+    projects = list(db.projects.find({}, {'_id': 0}).sort("order", 1))
+    
+    # حساب عدد المهام والتقدم لكل مشروع
     for p in projects:
         pid = p["project_id"]
-        proj_tasks = [t for t in task_manager.get_all() if t.project_id == pid]
+        # جلب المهام المرتبطة بهذا المشروع من مجموعة tasks
+        proj_tasks = list(db.tasks.find({"project_id": pid}))
         total = len(proj_tasks)
-        done  = len([t for t in proj_tasks if t.status == "completed"])
-        p["task_count"]    = total
-        p["done_count"]    = done
-        p["progress"]      = round((done / total * 100) if total else 0)
+        done = len([t for t in proj_tasks if t.get("status") == "completed"])
+        
+        p["task_count"] = total
+        p["done_count"] = done
+        p["progress"] = round((done / total * 100) if total else 0)
+        
     return jsonify(projects)
-
 
 @tasks_bp.route("/projects", methods=["POST"])
 def create_project():
+    db = get_db()
     data = request.get_json() or {}
-    project = Project(
-        project_id  = str(uuid4()),
-        name        = data.get("name", "New Project"),
-        color       = data.get("color", "#6366f1"),
-        icon        = data.get("icon", "📁"),
-        description = data.get("description", ""),
-    )
-    project_manager.add(project)
-    return jsonify(project.to_dict()), 201
-
-
-@tasks_bp.route("/projects/<string:pid>", methods=["PUT"])
-def update_project(pid):
-    data = request.get_json() or {}
-    project = project_manager.update(pid, {
-        k: v for k, v in data.items()
-        if k in ("name", "color", "icon", "description", "order")
-    })
-    if project is None:
-        return jsonify({"error": "Project not found"}), 404
-    return jsonify(project.to_dict())
-
+    
+    project = {
+        "project_id": str(uuid4()),
+        "name": data.get("name", "New Project"),
+        "color": data.get("color", "#6366f1"),
+        "icon": data.get("icon", "📁"),
+        "description": data.get("description", ""),
+        "order": db.projects.count_documents({}) 
+    }
+    
+    db.projects.insert_one(project)
+    # إزالة _id الخاص بـ MongoDB قبل الإرسال للـ Frontend
+    project.pop('_id', None)
+    return jsonify(project), 201
 
 @tasks_bp.route("/projects/<string:pid>", methods=["DELETE"])
 def delete_project(pid):
-    if not project_manager.delete(pid):
+    db = get_db()
+    result = db.projects.delete_one({"project_id": pid})
+    
+    if result.deleted_count == 0:
         return jsonify({"error": "Project not found"}), 404
-    # Move orphaned tasks to "general"
-    for t in task_manager.get_all():
-        if t.project_id == pid:
-            task_manager.update(t.task_id, {"project_id": "general"})
+        
+    # نقل المهام التي فقدت مشروعها إلى "عام" (general)
+    db.tasks.update_many({"project_id": pid}, {"$set": {"project_id": "general"}})
     return jsonify({"success": True})
-
-
-@tasks_bp.route("/projects/reorder", methods=["POST"])
-def reorder_projects():
-    data = request.get_json() or {}
-    ordered_ids = data.get("ordered_ids", [])
-    project_manager.reorder(ordered_ids)
-    return jsonify({"success": True})
-
 
 # ══════════════════════════════════════════════
 #  TASK ROUTES
@@ -84,112 +68,70 @@ def reorder_projects():
 
 @tasks_bp.route("/tasks", methods=["GET"])
 def get_tasks():
-    tasks = task_manager.get_all()
+    db = get_db()
+    query = {}
 
-    # Optional filters via query params
+    # الفلاتر
     project_id = request.args.get("project_id")
-    status     = request.args.get("status")
-    priority   = request.args.get("priority")
-    search     = request.args.get("search", "").strip().lower()
-    sort_by    = request.args.get("sort", "order")   # order|priority|date|status
+    status = request.args.get("status")
+    search = request.args.get("search", "").strip().lower()
 
     if project_id:
-        tasks = [t for t in tasks if t.project_id == project_id]
+        query["project_id"] = project_id
     if status:
-        tasks = [t for t in tasks if t.status == status]
-    if priority:
-        tasks = [t for t in tasks if t.priority == priority]
+        query["status"] = status
     if search:
-        tasks = [t for t in tasks if search in t.title.lower()
-                 or search in (t.description or "").lower()
-                 or any(search in tag.lower() for tag in (t.tags or []))]
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
 
-    # Sorting
-    priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-    status_order   = {"in_progress": 0, "pending": 1, "completed": 2, "archived": 3}
-
-    if sort_by == "priority":
-        tasks = sorted(tasks, key=lambda t: priority_order.get(t.priority, 4))
-    elif sort_by == "date":
-        tasks = sorted(tasks, key=lambda t: t.start_date or t.end_date or "9999")
-    elif sort_by == "status":
-        tasks = sorted(tasks, key=lambda t: status_order.get(t.status, 4))
-    else:  # default: order
-        tasks = sorted(tasks, key=lambda t: t.order)
-
-    return jsonify([t.to_dict() for t in tasks])
-
+    # السحب من MongoDB مع الترتيب
+    tasks = list(db.tasks.find(query, {'_id': 0}).sort("order", 1))
+    return jsonify(tasks)
 
 @tasks_bp.route("/tasks", methods=["POST"])
 def create_task():
+    db = get_db()
     data = request.get_json() or {}
+    
     if not data.get("title"):
         return jsonify({"error": "Title is required"}), 400
 
-    # Auto-assign to first project if none specified
-    if not data.get("project_id"):
-        projects = project_manager.get_all()
-        data["project_id"] = projects[0].project_id if projects else "general"
-
-    task = Task(
-        task_id       = str(uuid4()),
-        title         = data.get("title"),
-        description   = data.get("description", ""),
-        project_id    = data.get("project_id"),
-        start_date    = data.get("start_date") or None,
-        end_date      = data.get("end_date") or None,
-        execution_day = data.get("execution_day") or None,
-        priority      = data.get("priority", "medium"),
-        status        = data.get("status", "pending"),
-        tags          = data.get("tags", []),
-        notes         = data.get("notes", ""),
-        reminder      = data.get("reminder") or None,
-        order         = len(task_manager.tasks),
-    )
-    task_manager.add(task)
-    return jsonify(task.to_dict()), 201
-
+    task = {
+        "task_id": str(uuid4()),
+        "title": data.get("title"),
+        "description": data.get("description", ""),
+        "project_id": data.get("project_id", "general"),
+        "priority": data.get("priority", "medium"),
+        "status": data.get("status", "pending"),
+        "order": db.tasks.count_documents({}),
+        "tags": data.get("tags", []),
+        "notes": data.get("notes", "")
+    }
+    
+    db.tasks.insert_one(task)
+    task.pop('_id', None)
+    return jsonify(task), 201
 
 @tasks_bp.route("/tasks/<string:tid>", methods=["PUT"])
 def update_task(tid):
+    db = get_db()
     data = request.get_json() or {}
-    allowed = {
-        "title", "description", "project_id", "start_date", "end_date",
-        "execution_day", "priority", "status", "tags", "notes", "reminder", "order"
-    }
-    fields = {k: v for k, v in data.items() if k in allowed}
-    task = task_manager.update(tid, fields)
-    if task is None:
+    
+    # تحديث الحقول المرسلة فقط
+    result = db.tasks.update_one({"task_id": tid}, {"$set": data})
+    
+    if result.matched_count == 0:
         return jsonify({"error": "Task not found"}), 404
-    return jsonify(task.to_dict())
-
+        
+    updated_task = db.tasks.find_one({"task_id": tid}, {'_id': 0})
+    return jsonify(updated_task)
 
 @tasks_bp.route("/tasks/<string:tid>", methods=["DELETE"])
 def delete_task(tid):
-    if not task_manager.delete(tid):
+    db = get_db()
+    result = db.tasks.delete_one({"task_id": tid})
+    if result.deleted_count == 0:
         return jsonify({"error": "Task not found"}), 404
-    return jsonify({"success": True})
-
-
-@tasks_bp.route("/tasks/<string:tid>/complete", methods=["PUT"])
-def complete_task(tid):
-    task = task_manager.complete(tid)
-    if task is None:
-        return jsonify({"error": "Task not found"}), 404
-    return jsonify(task.to_dict())
-
-
-@tasks_bp.route("/tasks/<string:tid>/archive", methods=["PUT"])
-def archive_task(tid):
-    task = task_manager.archive(tid)
-    if task is None:
-        return jsonify({"error": "Task not found"}), 404
-    return jsonify(task.to_dict())
-
-
-@tasks_bp.route("/tasks/reorder", methods=["POST"])
-def reorder_tasks():
-    data = request.get_json() or {}
-    ordered_ids = data.get("ordered_ids", [])
-    task_manager.reorder(ordered_ids)
     return jsonify({"success": True})

@@ -1,13 +1,13 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_cors import CORS
-# تأكد أن المجلدات دي موجودة فعلاً في مسار المشروع
-# من الصورة السابقة، يبدو أنك محتاج تتأكد من مكان routes
-# from routes.tasks import tasks_bp 
+from pymongo import MongoClient
+# استيراد الـ Blueprints (تأكد من تعديل الكود داخلها أيضاً للتعامل مع db)
+from routes.tasks import tasks_bp 
+from routes.writing import writing_bp 
 
-# تحديد المسارات بدقة
+# 1. إعداد المسارات
 base_dir = os.path.abspath(os.path.dirname(__file__))
-# لو المجلد اسمه web وبداخله static
 static_path = os.path.join(base_dir, 'web', 'static')
 template_path = os.path.join(base_dir, 'web', 'templates')
 
@@ -15,16 +15,39 @@ app = Flask(__name__,
             static_folder=static_path,
             template_folder=template_path)
 
-# هذا المتغير هو ما يبحث عنه Vercel (اسم الكائن 'app')
 app.debug = True 
 CORS(app)
 
-# ... باقي الـ Blueprints ...
+# 2. إعداد الاتصال بـ MongoDB
+# استبدل Abdullah123 بكلمة السر اللي عملتها في الخطوة اللي فاتت
+MONGO_URI = "mongodb+srv://engabdullah3334_db_user:Abdullah123@cluster0.ezzxrec.mongodb.net/LifeOS_Database?retryWrites=true&w=majority&appName=Cluster0"
+client = MongoClient(MONGO_URI)
+db = client['LifeOS_Database'] # اسم قاعدة البيانات
 
+# جعل الكائن db متاحاً في التطبيق ليتم استخدامه في الـ Blueprints
+app.config['db'] = db
+
+# 3. تسجيل الـ Blueprints
+app.register_blueprint(tasks_bp, url_prefix='/api')
+app.register_blueprint(writing_bp, url_prefix='/api')
+
+# 4. الروابط الأساسية
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Vercel بيتجاهل الجزء ده تماماً، بس خليه عشان التشغيل المحلي (Local)
+# مثال بسيط لاختبار الاتصال في المتصفح عبر رابط /test_db
+@app.route('/test_db')
+def test_db():
+    try:
+        # محاولة جلب عدد المهام للتأكد من الاتصال
+        count = db.tasks.count_documents({})
+        return jsonify({"status": "Connected", "tasks_count": count})
+    except Exception as e:
+        return jsonify({"status": "Error", "message": str(e)})
+
 if __name__ == '__main__':
+    print("========================================")
+    print("   LifeOS Running with MongoDB Cloud")
+    print("========================================")
     app.run(host="0.0.0.0", port=5000)
