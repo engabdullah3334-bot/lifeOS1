@@ -18,7 +18,7 @@ TS.views.projects = {
 
     const projects = TS.state.projects;
 
-    if (projects.length === 0) {
+    if (!Array.isArray(projects) || projects.length === 0) {
       container.style.display = 'none';
       if (empty) empty.style.display = 'block';
       return;

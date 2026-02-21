@@ -17,6 +17,10 @@ TS.api = {
   // ── Projects ──────────────────────────────────────────
   async getProjects() {
     const r = await _fetch(`${API}/projects`);
+    if (!r.ok) {
+      console.error('[API] Failed to fetch projects:', await r.text());
+      return [];
+    }
     return r.json();
   },
 
@@ -60,6 +64,10 @@ TS.api = {
     if (params.search)     q.set('search',     params.search);
     if (params.sort)       q.set('sort',       params.sort);
     const r = await _fetch(`${API}/tasks?${q}`);
+    if (!r.ok) {
+      console.error('[API] Failed to fetch tasks:', await r.text());
+      return [];
+    }
     return r.json();
   },
 

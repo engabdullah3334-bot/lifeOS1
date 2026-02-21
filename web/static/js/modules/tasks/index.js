@@ -37,6 +37,11 @@ TS.core = {
   // ── Data Loading ─────────────────────────────────────────
   async loadData() {
     try {
+      if (!window.LifeOSAuth?.isAuthenticated()) {
+        console.warn('[TS] Not authenticated, skip loading data');
+        return;
+      }
+
       const [projects, tasks] = await Promise.all([
         TS.api.getProjects(),
         TS.api.getTasks({
@@ -45,14 +50,22 @@ TS.core = {
           search: TS.state.searchQuery,
         }),
       ]);
-      TS.state.projects = projects;
-      TS.state.tasks    = tasks;
+
+      // Safety check: ensure we got arrays
+      TS.state.projects = Array.isArray(projects) ? projects : [];
+      TS.state.tasks    = Array.isArray(tasks) ? tasks : [];
+
+      if (!Array.isArray(projects)) {
+        console.error('[TS] getProjects returned non-array:', projects);
+      }
 
       // Keep legacy window.state.tasks in sync for dashboard widget
-      if (window.state) window.state.tasks = tasks;
+      if (window.state) window.state.tasks = TS.state.tasks;
     } catch(e) {
       console.error('[TS] Failed to load data:', e);
       TS.notify.error('Could not load tasks. Is the server running?');
+      TS.state.projects = [];
+      TS.state.tasks = [];
     }
   },
 
@@ -203,9 +216,16 @@ window.initTaskSystem = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof window.initTaskSystem === 'function') {
+    // Check if already authenticated (auth.js might have restored session)
+    if (window.LifeOSAuth?.isAuthenticated()) {
         window.initTaskSystem();
     }
+});
+
+// Also initialize on login event
+window.addEventListener('lifeos:auth:login', () => {
+    console.log("TS: Detected login, initializing system...");
+    window.initTaskSystem();
 });
 
 // Legacy compatibility — other parts of app can still call these
