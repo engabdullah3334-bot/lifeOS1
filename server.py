@@ -21,9 +21,9 @@ static_path = os.path.join(base_dir, 'web', 'static')
 template_path = os.path.join(base_dir, 'web', 'templates')
 
 app = Flask(__name__,
-            static_folder='web/static',
-            static_url_path='/static',
-            template_folder='web/templates')
+            static_folder=static_path,
+            template_folder=template_path,
+            static_url_path='/static')
 
 app.json = UpdatedJSONProvider(app)
 app.debug = True
