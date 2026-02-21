@@ -667,6 +667,7 @@ select.ts-input option:checked {
 .ts-task-card.ts-done .ts-task-title {
   text-decoration: line-through;
   color: var(--ts-text-muted);
+  transition: color var(--ts-dur) var(--ts-ease), text-decoration 0.2s ease;
 }
 
 .ts-task-desc {
@@ -1665,4 +1666,71 @@ select.ts-input option:checked {
   gap: 10px;
   margin-top: auto;
   padding-top: 10px;
+}
+
+.ts-archive-section {
+  margin-bottom: 32px;
+}
+.ts-archive-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ts-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+}
+.ts-archive-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ts-text-muted);
+}
+.ts-archive-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+.ts-archive-empty h3 {
+  font-size: 18px;
+  color: var(--ts-text-primary);
+  margin-bottom: 8px;
+}
+.ts-archive-empty p {
+  font-size: 14px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.ts-animate-in {
+  animation: ts-fade-in 0.35s var(--ts-ease);
+}
+@keyframes ts-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ts-archive-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ts-archive-project-name {
+  font-weight: 600;
+  color: var(--ts-text-primary);
+  margin-left: 8px;
+}
+.ts-archive-meta {
+  font-size: 12px;
+  color: var(--ts-text-muted);
+}
+.ts-archive-projects-grid {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.ts-btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+.ts-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
 }

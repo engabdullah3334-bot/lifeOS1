@@ -18,8 +18,8 @@ TS.taskMgr = {
     if (filterStatus) {
       tasks = tasks.filter(t => t.status === filterStatus);
     } else {
-      // Default: hide archived tasks from active views
-      tasks = tasks.filter(t => t.status !== 'archived');
+      // Default: hide archived tasks from active views (isArchived or legacy status)
+      tasks = tasks.filter(t => !t.isArchived && t.status !== 'archived');
     }
 
     // Filter by search
@@ -103,13 +103,13 @@ TS.taskMgr = {
           `"${task.title}" deleted`,
           {
             undoFn: async () => {
-              // Re-create via API
               await TS.api.createTask(task);
               TS.core.refresh();
             }
           }
         );
-        TS.core.refresh();
+        if (TS.state.currentView === 'archive') TS.core.refreshArchive();
+        else TS.core.refresh();
       }
     );
   },
@@ -124,11 +124,13 @@ TS.taskMgr = {
   },
 
   async unarchive(taskId) {
-    const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
+    const task = (TS.state.archivedTasks || []).find(t => String(t.task_id) === String(taskId))
+      || TS.state.tasks.find(t => String(t.task_id) === String(taskId));
     if (!task) return;
-    await TS.api.updateTask(taskId, { status: 'pending' });
-    TS.notify.info(`"${task.title}" unarchived`);
-    TS.core.refresh();
+    await TS.api.unarchiveTask(taskId);
+    TS.notify.info(`"${task.title}" restored`);
+    if (TS.state.currentView === 'archive') TS.core.refreshArchive();
+    else TS.core.refresh();
   },
 
   // Convert task → project (creates project with task's title, moves task into it)
@@ -150,6 +152,23 @@ TS.taskMgr = {
     }
   },
 
+  async archiveProject(projectId) {
+    const project = TS.state.projects.find(p => String(p.project_id) === String(projectId));
+    if (!project) return;
+    await TS.api.archiveProject(projectId);
+    TS.notify.info(`"${project.name}" archived`);
+    TS.core.refresh();
+  },
+
+  async unarchiveProject(projectId) {
+    const project = (TS.state.archivedProjects || []).find(p => String(p.project_id) === String(projectId));
+    if (!project) return;
+    await TS.api.unarchiveProject(projectId);
+    TS.notify.info(`"${project.name}" restored`);
+    if (TS.state.currentView === 'archive') TS.core.refreshArchive();
+    else TS.core.refresh();
+  },
+
   // Delete a project (confirm + re-assign orphaned tasks)
   async deleteProject(projectId) {
     const project = TS.state.projects.find(p => String(p.project_id) === String(projectId));
@@ -162,7 +181,8 @@ TS.taskMgr = {
       async () => {
         await TS.api.deleteProject(projectId);
         TS.notify.success(`"${project.name}" deleted`);
-        TS.core.refresh();
+        if (TS.state.currentView === 'archive') TS.core.refreshArchive();
+        else TS.core.refresh();
       }
     );
   },

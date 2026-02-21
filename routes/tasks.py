@@ -17,8 +17,11 @@ def get_db():
 def get_projects():
     db = get_db()
     user_id = get_jwt_identity()
-    # جلب المشاريع الخاصة بالمستخدم فقط
-    projects = list(db.projects.find({"user_id": user_id}, {"_id": 0}).sort("order", 1))
+    # ?archived=1 للمشاريع المؤرشفة فقط
+    archived = request.args.get("archived", "").strip().lower() in ("1", "true", "yes")
+    query = {"user_id": user_id}
+    query["isArchived"] = True if archived else {"$ne": True}
+    projects = list(db.projects.find(query, {"_id": 0}).sort("order", 1))
     
     # حساب عدد المهام والتقدم لكل مشروع
     for p in projects:
@@ -49,12 +52,53 @@ def create_project():
         "icon": data.get("icon", "📁"),
         "description": data.get("description", ""),
         "order": db.projects.count_documents({"user_id": user_id}),
+        "isArchived": False,
     }
     
     db.projects.insert_one(project)
     # إزالة _id الخاص بـ MongoDB قبل الإرسال للـ Frontend
     project.pop('_id', None)
     return jsonify(project), 201
+
+@tasks_bp.route("/projects/<string:pid>", methods=["PUT"])
+@jwt_required()
+def update_project(pid):
+    db = get_db()
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    
+    allowed = {"name", "color", "icon", "description", "order", "isArchived"}
+    update = {k: v for k, v in data.items() if k in allowed}
+    
+    if not update:
+        return jsonify({"error": "No valid fields to update"}), 400
+        
+    # المنطق الخاص بـ Parent-Child Logic للمشاريع والمهام
+    # إذا تم أرشفة المشروع، يجب أرشفة جميع المهام التابعة له
+    if update.get("isArchived") is True:
+        db.tasks.update_many(
+            {"project_id": pid, "user_id": user_id},
+            {"$set": {"isArchived": True}}
+        )
+    # إذا تم استعادة المشروع، يمكننا اختيار استعادة المهام أيضاً أو تركها (برمجياً هنا سنعيدها)
+    elif update.get("isArchived") is False:
+        db.tasks.update_many(
+            {"project_id": pid, "user_id": user_id},
+            {"$set": {"isArchived": False}}
+        )
+
+    result = db.projects.update_one(
+        {"project_id": pid, "user_id": user_id},
+        {"$set": update}
+    )
+    
+    if result.matched_count == 0:
+        return jsonify({"error": "Project not found"}), 404
+        
+    updated = db.projects.find_one({"project_id": pid, "user_id": user_id}, {"_id": 0})
+    return jsonify(updated)
+
+
 
 @tasks_bp.route("/projects/<string:pid>", methods=["DELETE"])
 @jwt_required()
@@ -83,6 +127,10 @@ def get_tasks():
     db = get_db()
     user_id = get_jwt_identity()
     query = {"user_id": user_id}
+
+    # الأرشيف: ?archived=1 يعيد المهام المؤرشفة فقط؛ وإلا النشطة فقط
+    archived = request.args.get("archived", "").strip().lower() in ("1", "true", "yes")
+    query["isArchived"] = True if archived else {"$ne": True}
 
     # الفلاتر
     project_id = request.args.get("project_id")
@@ -124,6 +172,7 @@ def create_task():
         "order": db.tasks.count_documents({"user_id": user_id}),
         "tags": data.get("tags", []),
         "notes": data.get("notes", ""),
+        "isArchived": False,
     }
     
     db.tasks.insert_one(task)

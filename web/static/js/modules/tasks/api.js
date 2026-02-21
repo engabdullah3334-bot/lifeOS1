@@ -15,8 +15,10 @@ function _fetch(url, opts = {}) {
 
 TS.api = {
   // ── Projects ──────────────────────────────────────────
-  async getProjects() {
-    const r = await _fetch(`${API}/projects`);
+  async getProjects(params = {}) {
+    const q = new URLSearchParams();
+    if (params.archived) q.set('archived', '1');
+    const r = await _fetch(`${API}/projects${q.toString() ? '?' + q : ''}`);
     if (!r.ok) {
       console.error('[API] Failed to fetch projects:', await r.text());
       return [];
@@ -63,6 +65,7 @@ TS.api = {
     if (params.priority)   q.set('priority',   params.priority);
     if (params.search)     q.set('search',     params.search);
     if (params.sort)       q.set('sort',       params.sort);
+    if (params.archived)   q.set('archived',   '1');
     const r = await _fetch(`${API}/tasks?${q}`);
     if (!r.ok) {
       console.error('[API] Failed to fetch tasks:', await r.text());
@@ -101,7 +104,19 @@ TS.api = {
   },
 
   async archiveTask(id) {
-    return this.updateTask(id, { status: 'archived' });
+    return this.updateTask(id, { isArchived: true });
+  },
+
+  async unarchiveTask(id) {
+    return this.updateTask(id, { isArchived: false, status: 'pending' });
+  },
+
+  async archiveProject(id) {
+    return this.updateProject(id, { isArchived: true });
+  },
+
+  async unarchiveProject(id) {
+    return this.updateProject(id, { isArchived: false });
   },
 
   async reorderTasks(orderedIds) {

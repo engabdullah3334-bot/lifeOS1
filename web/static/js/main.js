@@ -65,50 +65,78 @@ function setupNavigation() {
     document.querySelectorAll('.nav-links li').forEach(item => {
         item.addEventListener('click', () => {
             const view = item.dataset.tab;
-            if (view === 'archive') {
-                window.location.href = '/archive';
-                return;
-            }
             if (view) {
+                const path = view === 'dashboard' ? '/' : `/${view}`;
+                history.pushState({ view }, '', path);
                 loadView(view);
-                document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
-                item.classList.add('active');
             }
         });
     });
+
+    // Handle back/forward buttons
+    window.addEventListener('popstate', (e) => {
+        const view = e.state?.view || (window.location.pathname === '/archive' ? 'archive' : 'dashboard');
+        loadView(view);
+    });
+
+    // Handle initial route
+    const initialPath = window.location.pathname;
+    if (initialPath === '/archive') {
+        loadView('archive');
+        document.querySelectorAll('.nav-links li').forEach(li => {
+            li.classList.toggle('active', li.dataset.tab === 'archive');
+        });
+    }
 }
 
 function loadView(viewName) {
+    if (!viewName) return;
     window.state.view = viewName;
+    
+    // Hide all views
     document.querySelectorAll('.content-view').forEach(el => el.style.display = 'none');
-
-    const target = document.getElementById(viewName);
+    
+    // Show target view
+    const targetId = (viewName === 'archive') ? 'archive' : viewName;
+    const target = document.getElementById(targetId);
+    
     if (target) {
-        target.style.display = target.classList.contains('ts-view') ? 'flex' : 'block';
+        // Some views might use flex, others block
+        const isTaskView = target.classList.contains('ts-view');
+        target.style.display = isTaskView ? 'flex' : 'block';
     }
+
+    // Update active tab in sidebar
+    document.querySelectorAll('.nav-links li').forEach(li => {
+        li.classList.toggle('active', li.dataset.tab === viewName);
+    });
 
     const titles = {
         'dashboard': 'Dashboard',
         'tasks':     'Task Manager',
         'writing':   'Writing Space',
-        'archive':   'Archive',
+        'archive':   'Archive Hub',
     };
+    
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = titles[viewName] || 'LifeOS';
 
+    // Module-specific initializations
     if (viewName === 'tasks' && window.TS?.core) {
         window.TS.core._renderCurrentView();
     }
-    if (viewName === 'archive' && window.TS?.core) {
-        // Archive is a sub-view of tasks
-        const tasksSection = document.getElementById('tasks');
-        if (tasksSection) tasksSection.style.display = 'flex';
-        window.TS.core.switchView('archive');
+    if (viewName === 'archive') {
+        if (window.Archive && typeof window.Archive.init === 'function') {
+            window.Archive.init();
+        } else if (window.TS?.core) {
+            window.TS.core.switchView('archive');
+        }
     }
     if (viewName === 'dashboard' && window.updateDashboardStats) {
         window.updateDashboardStats();
     }
 }
+
 
 // ── Writing Space Listeners ─────────────────────────────────
 function setupWritingListeners() {

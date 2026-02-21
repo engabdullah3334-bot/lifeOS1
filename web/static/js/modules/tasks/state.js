@@ -8,7 +8,9 @@ var TS = window.TS = window.TS || {};
 TS.state = {
   projects:      [],
   tasks:         [],
-  currentView:   'projects',      // 'projects' | 'daily' | 'monthly'
+  archivedTasks: [],
+  archivedProjects: [],
+  currentView:   'projects',      // 'projects' | 'daily' | 'monthly' | 'archive'
   selectedDate:  new Date(),
   calDate:       new Date(),
   calMode:       'month',         // 'month' | 'week'

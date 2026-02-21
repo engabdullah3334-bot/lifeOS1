@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=4">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=5">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/login.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
 
@@ -72,6 +73,39 @@
             {% include 'components/dashboard.html' %}
             {% include 'components/tasks.html' %}
             {% include 'components/writing.html' %}
+            
+            <div id="archive" class="content-view" style="display: none;">
+                <div class="archive-content">
+                    <div class="archive-search-wrap">
+                        <span class="archive-search-icon">🔍</span>
+                        <input type="text" id="archive-search" class="archive-search-input" placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
+                    </div>
+
+                    <div class="archive-two-cols">
+                        <section class="archive-section archive-section-writing" aria-label="Writing Archive">
+                            <h2 class="archive-section-title">
+                                <span class="archive-section-icon">✎</span>
+                                Writing & Drafts Archive
+                            </h2>
+                            <div id="writing-archive-container" class="archive-blocks archive-scroll-area"></div>
+                            <div id="archive-writing-empty" class="archive-empty" style="display: none;">
+                                <p>No archived drafts or writing projects.</p>
+                            </div>
+                        </section>
+
+                        <section class="archive-section archive-section-tasks" aria-label="Tasks Archive">
+                            <h2 class="archive-section-title">
+                                <span class="archive-section-icon">✓</span>
+                                Tasks & Projects Archive
+                            </h2>
+                            <div id="task-archive-container" class="archive-blocks archive-scroll-area"></div>
+                            <div id="archive-tasks-empty" class="archive-empty" style="display: none;">
+                                <p>No archived tasks or task projects.</p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -107,6 +141,9 @@
 
 <!-- ── Settings Module ── -->
 <script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=1"></script>
+
+<!-- ── Archive Module ── -->
+<script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=2"></script>
 
 <!-- ── App Entry Point ── -->
 <script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>

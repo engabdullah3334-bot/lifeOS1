@@ -54,7 +54,8 @@ TS.views.projects = {
             <div class="ts-project-actions">
               <button class="ts-icon-btn ts-btn-sm" data-action="add-task" title="Add Task">＋</button>
               <button class="ts-icon-btn ts-btn-sm" data-action="edit" title="Edit Project">✏️</button>
-              ${['general','archive'].includes(project.project_id) ? '' : '<button class="ts-icon-btn ts-btn-sm" data-action="delete" title="Delete Project">🗑️</button>'}
+              ${['general','archive'].includes(project.project_id) ? '' : `<button class="ts-icon-btn ts-btn-sm" data-action="archive-project" title="Archive Project">📦</button>
+              <button class="ts-icon-btn ts-btn-sm" data-action="delete" title="Delete Project">🗑️</button>`}
             </div>
             <span class="ts-project-chevron">▾</span>
           </div>
@@ -142,6 +143,7 @@ TS.views.projects = {
 
         if (action === 'add-task')  TS.modal.openTask(null, pid);
         if (action === 'edit')      TS.modal.openProject(project);
+        if (action === 'archive-project') TS.taskMgr.archiveProject(pid);
         if (action === 'delete')    TS.taskMgr.deleteProject(pid);
         if (action === 'complete')  TS.taskMgr.complete(tid);
         if (action === 'edit-task') {

@@ -1,5 +1,8 @@
 /**
- * archive_page.js — Logic for Smart Archive Page
+ * archive_page.js — Archive Hub Module
+ * Tasks grouped by project; Writing/Notes grouped by tags.
+ * Checkbox toggle (complete), Restore, Search, Delete.
+ * English language version.
  */
 
 const Archive = {
@@ -9,237 +12,391 @@ const Archive = {
         note_projects: [],
         task_projects: []
     },
-    filtered: {
-        tasks: [],
-        notes: []
-    },
+    filtered: { tasks: [], notes: [], note_projects: [] },
+    initialized: false,
 
     async init() {
-        console.log("[Archive] Initializing...");
-        if (!window.LifeOSApi.getToken()) {
-            console.warn("[Archive] No token found, redirecting...");
-            window.location.href = '/';
-            return;
+        // If we're inside the SPA, we don't need to check token here as main.js/auth.js handles it.
+        // But we do need to ensure the container is visible if called directly.
+        const container = document.getElementById('archive');
+        if (container && container.style.display === 'none') {
+            // If called from main.js loadView, it should already be block/flex.
         }
+
         await this.loadData();
-        this.setupUserUI();
-        this.bindEvents();
+        if (!this.initialized) {
+            this.setupUserUI();
+            this.bindEvents();
+            this._bindCardActions();
+            this.initialized = true;
+        }
         this.render();
     },
 
     async loadData() {
         try {
-            const response = await window.LifeOSApi.apiFetch(`${window.API_URL}/archive/all`);
-            if (!response.ok) throw new Error("Failed to fetch archive");
-            this.data = await response.json();
+            // Call the correct API endpoint
+            const response = await this._fetch(`${window.API_URL}/archive`);
+            if (!response.ok) throw new Error('Failed to fetch archive');
+            const json = await response.json();
+            
+            this.data = {
+                tasks: Array.isArray(json.tasks) ? json.tasks : [],
+                notes: Array.isArray(json.notes) ? json.notes : [],
+                note_projects: Array.isArray(json.note_projects) ? json.note_projects : [],
+                task_projects: Array.isArray(json.task_projects) ? json.task_projects : []
+            };
+            
             this.filtered.tasks = [...this.data.tasks];
             this.filtered.notes = [...this.data.notes];
+            this.filtered.note_projects = [...this.data.note_projects];
         } catch (e) {
-            console.error(e);
+            console.error('[Archive]', e);
         }
     },
 
+    _fetch(url, opts = {}) {
+        const token = localStorage.getItem('lifeos_token') || (window.LifeOSApi?.getToken?.());
+        const headers = { 
+            'Content-Type': 'application/json',
+            ...opts.headers 
+        };
+        if (token) headers.Authorization = 'Bearer ' + token;
+        return fetch(url, { ...opts, headers });
+    },
+
     setupUserUI() {
-        const user = JSON.parse(localStorage.getItem('lifeos_user') || '{}');
+        // Handled by main.js in SPA mode, but keeping for compatibility
+        const auth = JSON.parse(localStorage.getItem('lifeos_auth') || '{}');
         const nameEl = document.getElementById('user-name');
-        if (nameEl && user.full_name) nameEl.textContent = user.full_name;
-        
-        const logoutBtn = document.getElementById('btn-logout');
-        logoutBtn?.addEventListener('click', () => {
-            window.LifeOSApi.setToken(null);
-            localStorage.removeItem('lifeos_user');
-            window.location.href = '/';
-        });
+        if (nameEl && auth.username) nameEl.textContent = auth.username;
     },
 
     bindEvents() {
-        // Search
         const searchInput = document.getElementById('archive-search');
-        searchInput?.addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase();
-            this.filtered.tasks = this.data.tasks.filter(t => 
-                t.title.toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q)
-            );
-            this.filtered.notes = this.data.notes.filter(n => 
-                n.title.toLowerCase().includes(q) || (n.content || '').toLowerCase().includes(q)
-            );
-            this.render();
-        });
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const q = (e.target.value || '').toLowerCase().trim();
+                if (!q) {
+                    this.filtered.tasks = [...this.data.tasks];
+                    this.filtered.notes = [...this.data.notes];
+                    this.filtered.note_projects = [...this.data.note_projects];
+                } else {
+                    const projNames = {};
+                    this.data.task_projects.forEach(p => { projNames[p.project_id] = (p.name || '').toLowerCase(); });
+                    
+                    this.filtered.tasks = this.data.tasks.filter(t =>
+                        (t.title || '').toLowerCase().includes(q) ||
+                        (t.description || '').toLowerCase().includes(q) ||
+                        (t.tags || []).some(tag => tag.toLowerCase().includes(q)) ||
+                        projNames[t.project_id]?.includes(q)
+                    );
+                    
+                    this.filtered.notes = this.data.notes.filter(n =>
+                        (n.title || '').toLowerCase().includes(q) ||
+                        (n.content || '').toLowerCase().includes(q) ||
+                        (n.description || '').toLowerCase().includes(q) ||
+                        (n.tags || []).some(tag => tag.toLowerCase().includes(q))
+                    );
+                    
+                    this.filtered.note_projects = this.data.note_projects.filter(p =>
+                        (p.name || '').toLowerCase().includes(q)
+                    );
+                }
+                this.render();
+            });
+        }
     },
 
     render() {
         this.renderTasks();
         this.renderWriting();
-        
-        // Update counts
-        document.getElementById('task-archive-count').textContent = this.filtered.tasks.length;
-        document.getElementById('writing-archive-count').textContent = this.filtered.notes.length;
     },
 
-    // ─── Task Rendering (Grouped by Project) ───
+    _esc(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+
+    _dateStr(iso) {
+        if (!iso) return '';
+        try {
+            const d = new Date(iso);
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        } catch (_) { return iso; }
+    },
+
+    // ─── Tasks: group by project_id
     renderTasks() {
         const container = document.getElementById('task-archive-container');
+        const emptyEl = document.getElementById('archive-tasks-empty');
         if (!container) return;
-        container.innerHTML = '';
 
         if (this.filtered.tasks.length === 0) {
-            container.innerHTML = `<div class="ts-empty">No archived tasks found.</div>`;
+            container.innerHTML = '';
+            if (emptyEl) emptyEl.style.display = 'block';
             return;
         }
+        if (emptyEl) emptyEl.style.display = 'none';
 
-        // Group by project_id
-        const groups = {};
-        this.filtered.tasks.forEach(task => {
-            const pid = task.project_id || 'unassigned';
-            if (!groups[pid]) groups[pid] = [];
-            groups[pid].push(task);
+        const byProject = {};
+        this.filtered.tasks.forEach(t => {
+            const pid = t.project_id || 'general';
+            if (!byProject[pid]) byProject[pid] = [];
+            byProject[pid].push(t);
         });
 
-        Object.keys(groups).forEach(pid => {
-            const project = this.data.task_projects.find(p => p.project_id === pid) || { name: 'General', color: '#666' };
+        container.innerHTML = '';
+        Object.keys(byProject).forEach(pid => {
+            const project = this.data.task_projects.find(p => p.project_id === pid) || { name: 'General', color: '#6b7280' };
+            const tasks = byProject[pid];
+            
             const block = document.createElement('div');
             block.className = 'archive-group-block';
             block.innerHTML = `
-                <div class="group-title" style="color: ${project.color}">${project.name}</div>
+                <div class="group-title" style="color:${project.color}">${this._esc(project.name)}</div>
                 <div class="group-items">
-                    ${groups[pid].map(t => this._taskCardTemplate(t)).join('')}
+                    ${tasks.map(t => this._taskCard(t)).join('')}
                 </div>
             `;
             container.appendChild(block);
         });
     },
 
-    _taskCardTemplate(task) {
+    _taskCard(task) {
         const isDone = task.status === 'completed';
+        const dateLabel = task.last_updated || task.execution_day || task.created_at;
         return `
             <div class="archive-smart-card task-card" data-tid="${task.task_id}">
                 <div class="card-header">
                     <div class="task-check-wrap">
-                        <div class="archive-checkbox ${isDone ? 'checked' : ''}" onclick="Archive.toggleTask('${task.task_id}')"></div>
-                        <span class="card-title archive-task-title ${isDone ? 'done' : ''}">${task.title}</span>
+                        <div class="archive-checkbox ${isDone ? 'checked' : ''}" data-action="toggle" data-tid="${task.task_id}" role="button" aria-pressed="${isDone}"></div>
+                        <span class="card-title archive-task-title ${isDone ? 'done' : ''}">${this._esc(task.title)}</span>
                     </div>
-                    <span class="card-date">${task.execution_day || ''}</span>
+                    <span class="card-date">${this._dateStr(dateLabel)}</span>
                 </div>
-                ${task.description ? `<div class="card-snippet">${task.description}</div>` : ''}
+                ${task.description ? `<div class="card-snippet">${this._esc(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>` : ''}
                 <div class="card-actions">
-                    <button class="btn-restore" onclick="Archive.restoreTask('${task.task_id}')">Restore</button>
-                    <button class="btn-restore" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2);" onclick="Archive.deleteTask('${task.task_id}')">Delete</button>
+                    <button type="button" class="btn-restore" data-action="restore-task" data-tid="${task.task_id}">Restore</button>
+                    <button type="button" class="btn-delete" data-action="delete-task" data-tid="${task.task_id}">Delete Permanently</button>
                 </div>
+
             </div>
         `;
     },
 
-    // ─── Writing Rendering (Grouped by Tags) ───
+    // ─── Writing: group by first tag, then note_projects as separate block
     renderWriting() {
         const container = document.getElementById('writing-archive-container');
+        const emptyEl = document.getElementById('archive-writing-empty');
         if (!container) return;
-        container.innerHTML = '';
 
-        if (this.filtered.notes.length === 0) {
-            container.innerHTML = `<div class="ts-empty">No archived notes found.</div>`;
+        const hasNotes = this.filtered.notes.length > 0;
+        const hasProjects = this.filtered.note_projects.length > 0;
+
+        if (!hasNotes && !hasProjects) {
+            container.innerHTML = '';
+            if (emptyEl) emptyEl.style.display = 'block';
             return;
         }
+        if (emptyEl) emptyEl.style.display = 'none';
 
-        // Group by primary tag (or "Untagged")
-        const groups = {};
-        this.filtered.notes.forEach(note => {
-            const tag = (note.tags && note.tags.length > 0) ? note.tags[0] : 'General';
-            if (!groups[tag]) groups[tag] = [];
-            groups[tag].push(note);
-        });
+        container.innerHTML = '';
 
-        Object.keys(groups).forEach(tag => {
+        if (hasProjects) {
             const block = document.createElement('div');
             block.className = 'archive-group-block';
             block.innerHTML = `
-                <div class="group-title">${tag}</div>
+                <div class="group-title">Archived Writing Projects</div>
                 <div class="group-items">
-                    ${groups[tag].map(n => this._noteCardTemplate(n)).join('')}
+                    ${this.filtered.note_projects.map(p => this._noteProjectCard(p)).join('')}
                 </div>
             `;
             container.appendChild(block);
-        });
+        }
+
+        if (hasNotes) {
+            const byTag = {};
+            this.filtered.notes.forEach(n => {
+                const tag = (n.tags && n.tags.length > 0) ? n.tags[0] : 'No Tags';
+                if (!byTag[tag]) byTag[tag] = [];
+                byTag[tag].push(n);
+            });
+            Object.keys(byTag).forEach(tag => {
+                const block = document.createElement('div');
+                block.className = 'archive-group-block';
+                block.innerHTML = `
+                    <div class="group-title">${this._esc(tag)}</div>
+                    <div class="group-items">
+                        ${byTag[tag].map(n => this._noteCard(n)).join('')}
+                    </div>
+                `;
+                container.appendChild(block);
+            });
+        }
     },
 
-    _noteCardTemplate(note) {
-        const snippet = note.content ? note.content.substring(0, 120) + '...' : 'No content';
+    _noteProjectCard(project) {
         return `
-            <div class="archive-smart-card note-card" data-nid="${note.note_id}">
+            <div class="archive-smart-card note-project-card" data-pid="${project.project_id}">
                 <div class="card-header">
-                    <span class="card-title">${note.title}</span>
-                </div>
-                <div class="card-snippet">${snippet}</div>
-                <div class="card-tags">
-                    ${(note.tags || []).map(t => `<span class="archive-tag">${t}</span>`).join('')}
+                    <span class="card-title">${this._esc(project.name)}</span>
+                    <span class="card-date">${this._dateStr(project.created_at)}</span>
                 </div>
                 <div class="card-actions">
-                    <button class="btn-restore" onclick="Archive.restoreNote('${note.note_id}')">Restore</button>
-                    <button class="btn-restore" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2);" onclick="Archive.deleteNote('${note.note_id}')">Delete</button>
+                    <button type="button" class="btn-restore" data-action="restore-note-project" data-pid="${project.project_id}">Restore</button>
+                    <button type="button" class="btn-delete" data-action="delete-note-project" data-pid="${project.project_id}">Delete Permanently</button>
                 </div>
             </div>
         `;
     },
 
-    // ─── Actions ───
+    _noteCard(note) {
+        const raw = (note.content || '').replace(/<[^>]+>/g, ' ').trim();
+        const snippet = raw ? raw.substring(0, 100) + (raw.length > 100 ? '...' : '') : 'No content';
+        const tags = (note.tags || []).slice(0, 4);
+        return `
+            <div class="archive-smart-card note-card" data-nid="${note.note_id}">
+                <div class="card-header">
+                    <span class="card-title">${this._esc(note.title || note.filename || 'Untitled')}</span>
+                    <span class="card-date">${this._dateStr(note.last_updated)}</span>
+                </div>
+                <div class="card-snippet">${this._esc(snippet)}</div>
+                ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="archive-tag">${this._esc(t)}</span>`).join('')}</div>` : ''}
+                <div class="card-actions">
+                    <button type="button" class="btn-restore" data-action="restore-note" data-nid="${note.note_id}">Restore</button>
+                    <button type="button" class="btn-delete" data-action="delete-note" data-nid="${note.note_id}">Delete Permanently</button>
+                </div>
+            </div>
+        `;
+    },
+
+    _bindCardActions() {
+        const main = document.getElementById('archive');
+        if (!main) return;
+        main.addEventListener('click', (e) => {
+            const t = e.target.closest('[data-action]');
+            if (!t) return;
+            const action = t.dataset.action;
+            const tid = t.dataset.tid;
+            const nid = t.dataset.nid;
+            const pid = t.dataset.pid;
+
+            if (action === 'toggle' && tid) this.toggleTask(tid);
+            if (action === 'restore-task' && tid) this.restoreTask(tid);
+            if (action === 'delete-task' && tid) this.deleteTask(tid);
+            if (action === 'restore-note' && nid) this.restoreNote(nid);
+            if (action === 'delete-note' && nid) this.deleteNote(nid);
+            if (action === 'restore-note-project' && pid) this.restoreNoteProject(pid);
+            if (action === 'delete-note-project' && pid) this.deleteNoteProject(pid);
+        });
+    },
+
     async toggleTask(tid) {
         const task = this.data.tasks.find(t => t.task_id === tid);
-        if(!task) return;
+        if (!task) return;
         const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-        
-        await window.LifeOSApi.apiFetch(`${window.API_URL}/tasks/${tid}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
-        });
-        
-        task.status = newStatus;
-        this.render();
+        try {
+            const r = await this._fetch(`${window.API_URL}/tasks/${tid}`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: newStatus })
+            });
+            if (r.ok) {
+                task.status = newStatus;
+                const f = this.filtered.tasks.find(t => t.task_id === tid);
+                if (f) f.status = newStatus;
+                this.renderTasks();
+            }
+        } catch (e) { console.error(e); }
     },
 
     async restoreTask(tid) {
-        await window.LifeOSApi.apiFetch(`${window.API_URL}/tasks/${tid}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'pending' })
-        });
-        this.data.tasks = this.data.tasks.filter(t => t.task_id !== tid);
-        this.filtered.tasks = this.filtered.tasks.filter(t => t.task_id !== tid);
-        this.render();
+        try {
+            const r = await this._fetch(`${window.API_URL}/tasks/${tid}`, {
+                method: 'PUT',
+                body: JSON.stringify({ isArchived: false })
+            });
+            if (r.ok) {
+                this.data.tasks = this.data.tasks.filter(t => t.task_id !== tid);
+                this.filtered.tasks = this.filtered.tasks.filter(t => t.task_id !== tid);
+                this.render();
+            }
+        } catch (e) { console.error(e); }
     },
 
     async deleteTask(tid) {
-        if(!confirm("Are you sure you want to delete this task permanently?")) return;
-        await window.LifeOSApi.apiFetch(`${window.API_URL}/tasks/${tid}`, {
-            method: 'DELETE'
-        });
-        this.data.tasks = this.data.tasks.filter(t => t.task_id !== tid);
-        this.filtered.tasks = this.filtered.tasks.filter(t => t.task_id !== tid);
-        this.render();
+        if (!confirm('Permanently delete this task?')) return;
+        try {
+            const r = await this._fetch(`${window.API_URL}/tasks/${tid}`, { method: 'DELETE' });
+            if (r.ok) {
+                this.data.tasks = this.data.tasks.filter(t => t.task_id !== tid);
+                this.filtered.tasks = this.filtered.tasks.filter(t => t.task_id !== tid);
+                this.render();
+            }
+        } catch (e) { console.error(e); }
     },
 
     async restoreNote(nid) {
-        await window.LifeOSApi.apiFetch(`${window.API_URL}/notes/${nid}/archive`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ archived: false })
-        });
-        this.data.notes = this.data.notes.filter(n => n.note_id !== nid);
-        this.filtered.notes = this.filtered.notes.filter(n => n.note_id !== nid);
-        this.render();
+        try {
+            const r = await this._fetch(`${window.API_URL}/notes/${nid}/archive`, {
+                method: 'PUT',
+                body: JSON.stringify({ archived: false })
+            });
+            if (r.ok) {
+                this.data.notes = this.data.notes.filter(n => n.note_id !== nid);
+                this.filtered.notes = this.filtered.notes.filter(n => n.note_id !== nid);
+                this.render();
+            }
+        } catch (e) { console.error(e); }
     },
 
     async deleteNote(nid) {
-        if(!confirm("Are you sure you want to delete this note permanently?")) return;
-        await window.LifeOSApi.apiFetch(`${window.API_URL}/notes/${nid}`, {
-            method: 'DELETE'
-        });
-        this.data.notes = this.data.notes.filter(n => n.note_id !== nid);
-        this.filtered.notes = this.filtered.notes.filter(n => n.note_id !== nid);
-        this.render();
+        if (!confirm('Permanently delete this note?')) return;
+        try {
+            const r = await this._fetch(`${window.API_URL}/notes/${nid}`, { method: 'DELETE' });
+            if (r.ok) {
+                this.data.notes = this.data.notes.filter(n => n.note_id !== nid);
+                this.filtered.notes = this.filtered.notes.filter(n => n.note_id !== nid);
+                this.render();
+            }
+        } catch (e) { console.error(e); }
+    },
+
+    async restoreNoteProject(pid) {
+        try {
+            const r = await this._fetch(`${window.API_URL}/writing/projects/${pid}/archive`, {
+                method: 'PUT',
+                body: JSON.stringify({ archived: false })
+            });
+            if (r.ok) {
+                this.data.note_projects = this.data.note_projects.filter(p => p.project_id !== pid);
+                this.filtered.note_projects = this.filtered.note_projects.filter(p => p.project_id !== pid);
+                this.render();
+            }
+        } catch (e) { console.error(e); }
+    },
+
+    async deleteNoteProject(pid) {
+        if (!confirm('Permanently delete this project and all its notes?')) return;
+        try {
+            const r = await this._fetch(`${window.API_URL}/writing/projects/${pid}`, { method: 'DELETE' });
+            if (r.ok) {
+                this.data.note_projects = this.data.note_projects.filter(p => p.project_id !== pid);
+                this.filtered.note_projects = this.filtered.note_projects.filter(p => p.project_id !== pid);
+                this.render();
+            }
+        } catch (e) { console.error(e); }
     }
 };
 
+// Auto-init if we are on the standalone archive page, 
+// otherwise main.js calls Archive.init() when switching views.
 document.addEventListener('DOMContentLoaded', () => {
-    Archive.init();
+    if (window.location.pathname === '/archive' && !document.getElementById('app-container')) {
+        Archive.init();
+    }
 });
-window.Archive = Archive; // Export for onclick handlers
+
+window.Archive = Archive;

@@ -1,31 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Archive | LifeOS</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Core Styles -->
+    <title>Archive Hub — LifeOS</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=1">
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="app-container">
+<body class="archive-page">
+    {% include 'components/login.html' %}
+
+    <div class="app-container" id="app-container" style="display: none;">
         <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
         {% include 'components/sidebar.html' %}
 
-        <main class="main-content">
+        <main class="main-content archive-main">
+
             <header class="top-bar">
                 <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">☰</button>
-                <h1 id="page-title">Smart Archive</h1>
+                <h1 id="page-title">Archive Hub</h1>
                 <div class="user-profile">
                     <span id="user-name" class="user-name"></span>
                     <button type="button" id="btn-logout" class="logout-btn" title="Logout">Logout</button>
@@ -33,31 +30,38 @@
                 </div>
             </header>
 
-            <div class="archive-page-container">
-                <div class="archive-search-container">
-                    <input type="text" id="archive-search" placeholder="Search in archive (tasks, quotes, notes)..." class="archive-search-input">
+            <div class="archive-content">
+                <div class="archive-search-wrap">
+                    <span class="archive-search-icon">🔍</span>
+                    <input type="text" id="archive-search" class="archive-search-input" placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
                 </div>
 
-                <div class="archive-grid">
-                    <!-- Left Section: Writing Archive -->
-                    <section class="archive-section writing-archive-section">
-                        <div class="section-header">
-                            <h2>Drafts & Writing</h2>
-                            <span class="badge" id="writing-archive-count">0</span>
+                <div class="archive-two-cols">
+                    <!-- Writing Section (left on desktop) -->
+                    <section class="archive-section archive-section-writing" aria-label="Writing Archive">
+                        <h2 class="archive-section-title">
+                            <span class="archive-section-icon">✎</span>
+                            Writing & Drafts Archive
+                        </h2>
+                        <div id="writing-archive-container" class="archive-blocks archive-scroll-area">
+                            <!-- Grouped by tags/topic, rendered by JS -->
                         </div>
-                        <div id="writing-archive-container" class="archive-scroll-area">
-                            <!-- Grouped Blocks here -->
+                        <div id="archive-writing-empty" class="archive-empty" style="display: none;">
+                            <p>No archived drafts or writing projects.</p>
                         </div>
                     </section>
 
-                    <!-- Right Section: Task Archive -->
-                    <section class="archive-section task-archive-section">
-                        <div class="section-header">
-                            <h2>Professional & Tasks</h2>
-                            <span class="badge" id="task-archive-count">0</span>
+                    <!-- Tasks Section (right on desktop) -->
+                    <section class="archive-section archive-section-tasks" aria-label="Tasks Archive">
+                        <h2 class="archive-section-title">
+                            <span class="archive-section-icon">✓</span>
+                            Tasks & Projects Archive
+                        </h2>
+                        <div id="task-archive-container" class="archive-blocks archive-scroll-area">
+                            <!-- Grouped by project or date, rendered by JS -->
                         </div>
-                        <div id="task-archive-container" class="archive-scroll-area">
-                            <!-- Grouped Blocks here -->
+                        <div id="archive-tasks-empty" class="archive-empty" style="display: none;">
+                            <p>No archived tasks or task projects.</p>
                         </div>
                     </section>
                 </div>
@@ -65,43 +69,14 @@
         </main>
     </div>
 
-    <!-- Modals (Reusable) -->
-    {% include 'components/settings.html' %}
-
     <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';</script>
     <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=1"></script>
     <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=2"></script>
-    <script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=1"></script>
-    <script>
-        // Adjust sidebar active state
-        document.addEventListener('DOMContentLoaded', () => {
-             document.querySelectorAll('.nav-links li').forEach(li => {
-                 li.classList.remove('active');
-                 if(li.dataset.tab === 'archive') li.classList.add('active');
-                 
-                 // Handle navigation from sidebar (since this is a separate page)
-                 li.addEventListener('click', () => {
-                     const tab = li.dataset.tab;
-                     if(tab === 'dashboard') window.location.href = '/';
-                     if(tab === 'tasks') window.location.href = '/';
-                     if(tab === 'writing') window.location.href = '/';
-                     if(tab === 'archive') { /* already here */ }
-                 });
-             });
-             
-             // Setup hamburger
-             const sidebar = document.querySelector('.sidebar');
-             const hamburger = document.getElementById('hamburger-btn');
-             const overlay = document.getElementById('sidebar-overlay');
-             hamburger?.addEventListener('click', () => {
-                 sidebar?.classList.add('open');
-                 overlay?.classList.add('active');
-             });
-             overlay?.addEventListener('click', () => {
-                 sidebar?.classList.remove('open');
-                 overlay?.classList.remove('active');
-             });
-        });
-    </script>
+
+    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>
+
 </body>
 </html>

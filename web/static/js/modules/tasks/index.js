@@ -77,7 +77,7 @@ TS.core = {
   },
 
   // ── View Switching ────────────────────────────────────────
-  switchView(view, initial = false) {
+  async switchView(view, initial = false) {
     if (!['projects','daily','monthly','archive'].includes(view)) view = 'projects';
 
     TS.state.currentView = view;
@@ -98,8 +98,28 @@ TS.core = {
       t.classList.toggle('active', t.dataset.view === view);
     });
 
-    if (!initial) this._renderCurrentView();
-    else          this._renderCurrentView();
+    if (view === 'archive') await this.loadArchiveData();
+    this._renderCurrentView();
+  },
+
+  async loadArchiveData() {
+    try {
+      const [archivedTasks, archivedProjects] = await Promise.all([
+        TS.api.getTasks({ archived: true }),
+        TS.api.getProjects({ archived: true }),
+      ]);
+      TS.state.archivedTasks = Array.isArray(archivedTasks) ? archivedTasks : [];
+      TS.state.archivedProjects = Array.isArray(archivedProjects) ? archivedProjects : [];
+    } catch (e) {
+      console.error('[TS] Failed to load archive:', e);
+      TS.state.archivedTasks = [];
+      TS.state.archivedProjects = [];
+    }
+  },
+
+  async refreshArchive() {
+    await this.loadArchiveData();
+    if (TS.state.currentView === 'archive') TS.views.archive.render();
   },
 
   _renderCurrentView() {
