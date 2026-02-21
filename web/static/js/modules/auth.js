@@ -74,14 +74,14 @@
     if (errorEl) errorEl.textContent = '';
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'جاري الدخول...';
+      submitBtn.textContent = 'Logging in...';
     }
 
     if (!identifier || !password) {
-      if (errorEl) errorEl.textContent = 'يرجى إدخال البريد الإلكتروني أو اسم المستخدم وكلمة المرور.';
+      if (errorEl) errorEl.textContent = 'Please enter your email/username and password.';
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'تسجيل الدخول';
+        submitBtn.textContent = 'Login';
       }
       return;
     }
@@ -103,15 +103,15 @@
         hideLogin();
         window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: data.user }));
       } else {
-        if (errorEl) errorEl.textContent = data.error || 'فشل تسجيل الدخول';
+        if (errorEl) errorEl.textContent = data.error || 'Login failed';
       }
     } catch (err) {
-      if (errorEl) errorEl.textContent = 'خطأ في الاتصال بالخادم. تحقق من تشغيل التطبيق.';
+      if (errorEl) errorEl.textContent = 'Server connection error. Please try again.';
     }
 
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'تسجيل الدخول';
+      submitBtn.textContent = 'Login';
     }
   }
 
@@ -126,18 +126,18 @@
     if (errorEl) errorEl.textContent = '';
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'جاري الإنشاء...';
+      submitBtn.textContent = 'Creating account...';
     }
 
     if (!username || !email || !password) {
-      if (errorEl) errorEl.textContent = 'يرجى ملء جميع الحقول.';
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إنشاء حساب'; }
+      if (errorEl) errorEl.textContent = 'Please fill in all fields.';
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign Up'; }
       return;
     }
 
     if (password.length < 6) {
-      if (errorEl) errorEl.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.';
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إنشاء حساب'; }
+      if (errorEl) errorEl.textContent = 'Password must be at least 6 characters.';
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign Up'; }
       return;
     }
 
@@ -165,16 +165,17 @@
           window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: loginData.user }));
         } else {
           document.getElementById('login-tab')?.click();
-          if (errorEl) errorEl.textContent = 'تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.';
+          if (errorEl) errorEl.textContent = 'Account created. You can now login.';
         }
       } else {
-        if (errorEl) errorEl.textContent = data.error || 'فشل إنشاء الحساب';
+        if (errorEl) errorEl.textContent = data.error || 'Signup failed';
       }
     } catch (err) {
-      if (errorEl) errorEl.textContent = 'خطأ في الاتصال بالخادم.';
+      if (errorEl) errorEl.textContent = 'Server connection error.';
     }
 
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'إنشاء حساب'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign Up'; }
+
   }
 
   function restoreRememberMe() {

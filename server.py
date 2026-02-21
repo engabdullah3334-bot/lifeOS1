@@ -51,14 +51,14 @@ client = MongoClient(MONGO_URI)
 db = client['LifeOS_Database']
 app.config["db"] = db
 
-# --- 5. المسارات الأساسية ---
+# --- 5. المسارات الأساسية (SPA Routing) ---
 @app.route('/')
+@app.route('/tasks')
+@app.route('/writing')
+@app.route('/archive')
 def index():
     return render_template('index.html')
 
-@app.route('/archive')
-def archive_page():
-    return render_template('archive.html')
 
 @app.route('/test_db')
 def test_db():
