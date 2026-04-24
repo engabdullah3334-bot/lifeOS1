@@ -10,7 +10,7 @@ var TS = window.TS = window.TS || {};
 TS.core = {
   async init() {
     // 1. Load saved preferences
-    try { TS.state.load(); } catch(e) { console.error(e); }
+    try { await TS.state.load(); } catch(e) { console.error(e); }
 
     // 2. Apply theme
     TS.theme.init();

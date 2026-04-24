@@ -81,10 +81,17 @@ function setupNavigation() {
 
     // Handle initial route
     const initialPath = window.location.pathname;
-    if (initialPath === '/archive') {
-        loadView('archive');
+    const pathViewMap = {
+        '/archive':   'archive',
+        '/templates': 'templates',
+        '/ai':        'ai-chat',
+    };
+    
+    if (pathViewMap[initialPath]) {
+        const view = pathViewMap[initialPath];
+        loadView(view);
         document.querySelectorAll('.nav-links li').forEach(li => {
-            li.classList.toggle('active', li.dataset.tab === 'archive');
+            li.classList.toggle('active', li.dataset.tab === view);
         });
     }
 }
@@ -101,9 +108,10 @@ function loadView(viewName) {
     const target = document.getElementById(targetId);
     
     if (target) {
-        // Some views might use flex, others block
-        const isTaskView = target.classList.contains('ts-view');
-        target.style.display = isTaskView ? 'flex' : 'block';
+        // ai-chat uses flex column layout; tasks use flex too
+        const isFlexView = target.classList.contains('ts-view') ||
+                           target.classList.contains('ai-chat-view');
+        target.style.display = isFlexView ? 'flex' : 'block';
     }
 
     // Update active tab in sidebar
@@ -116,6 +124,8 @@ function loadView(viewName) {
         'tasks':     'Task Manager',
         'writing':   'Writing Space',
         'archive':   'Archive Hub',
+        'templates': 'Template Gallery',
+        'ai-chat':   'AI Chat',
     };
     
     const titleEl = document.getElementById('page-title');
@@ -135,6 +145,12 @@ function loadView(viewName) {
     if (viewName === 'dashboard' && window.updateDashboardStats) {
         window.updateDashboardStats();
     }
+    if (viewName === 'templates' && window.Templates) {
+        window.Templates.init();
+    }
+
+    // Notify AI module when its page becomes visible
+    document.dispatchEvent(new CustomEvent('lifeos:pageChanged', { detail: { page: viewName } }));
 }
 
 

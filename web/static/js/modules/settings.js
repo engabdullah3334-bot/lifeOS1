@@ -5,11 +5,13 @@
  */
 
 (function() {
-  const STORAGE_KEY = 'lifeos_settings';
   const API_BASE = window.API_URL || (window.location.origin + '/api');
 
   const DEFAULTS = {
     theme: 'dark',
+    taskSortBy: 'order',
+    taskCurrentView: 'projects',
+    taskCalMode: 'month',
     primaryColor: '#4d7cff',
     backgroundType: 'gradient', // 'gradient' | 'solid' | 'image'
     backgroundColor: '#0b0f1a',
@@ -20,6 +22,7 @@
   };
 
   let current = { ...DEFAULTS };
+  let saveTimer = null;
 
   function getAuthHeaders(includeJson) {
     const headers = {};
@@ -30,17 +33,6 @@
   }
 
   // ─── Load / Save ───────────────────────────────────────────
-  function loadFromLocal() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        return { ...DEFAULTS, ...saved };
-      }
-    } catch (e) { console.warn('Settings load error:', e); }
-    return { ...DEFAULTS };
-  }
-
   async function loadFromApi() {
     const token = window.LifeOSApi?.getToken?.();
     if (!token) return null;
@@ -60,30 +52,30 @@
     const fromApi = await loadFromApi();
     if (fromApi) {
       current = fromApi;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
     } else {
-      current = loadFromLocal();
+      current = { ...DEFAULTS };
     }
     return current;
   }
 
-  async function saveToApi() {
+  async function saveToApi(snapshot) {
     const token = window.LifeOSApi?.getToken?.();
     if (!token) return;
     try {
       await fetch(API_BASE + '/settings', {
         method: 'PUT',
         headers: getAuthHeaders(true),
-        body: JSON.stringify(current)
+        body: JSON.stringify(snapshot)
       });
     } catch (e) { console.warn('Settings API save error:', e); }
   }
 
   function save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-      saveToApi();
-    } catch (e) { console.warn('Settings save error:', e); }
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const snapshot = { ...current };
+      saveToApi(snapshot);
+    }, 250);
   }
 
   // ─── Apply to DOM (CSS Variables) ───────────────────────────
@@ -94,7 +86,9 @@
     root.setAttribute('data-theme', current.theme);
     if (window.TS?.state) {
       TS.state.theme = current.theme;
-      TS.state.save?.();
+      TS.state.sortBy = current.taskSortBy || TS.state.sortBy;
+      TS.state.currentView = current.taskCurrentView || TS.state.currentView;
+      TS.state.calMode = current.taskCalMode || TS.state.calMode;
     }
     document.body.style.colorScheme = current.theme;
 
@@ -175,8 +169,8 @@
       if (window.TS?.theme) TS.theme.apply(current.theme);
     });
 
-    // On init, sync from TS if it has theme set (user may have toggled from tasks)
-    if (window.TS?.state?.theme && !localStorage.getItem(STORAGE_KEY)) {
+    // On init, sync from TS only if settings are still defaults
+    if (window.TS?.state?.theme && current.theme === DEFAULTS.theme) {
       current.theme = TS.state.theme;
       save();
     }
@@ -351,6 +345,12 @@
     open, close, toggle,
     get: () => ({ ...current }),
     set: (key, value) => { current[key] = value; save(); applyAll(); },
+    setMany: (partial) => {
+      if (!partial || typeof partial !== 'object') return;
+      current = { ...current, ...partial };
+      save();
+      applyAll();
+    },
     refresh: async () => { await load(); applyAll(); syncUI(); }
   };
 })();

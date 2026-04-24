@@ -1,0 +1,42 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  LifeOS — AI Modes Configuration
+#  ────────────────────────────────────────────────────────────────────────────
+#  Each mode defines its UI metadata and which prompt file to load.
+#  To add a new AI mode:
+#    1. Add an entry here
+#    2. Create the corresponding prompt file in prompts/
+#    3. That's it — the AI agent will pick it up automatically
+# ══════════════════════════════════════════════════════════════════════════════
+
+modes:
+  - id: "planning"
+    label: "Planning"
+    icon: "🗺️"
+    description: "Break down goals into projects & tasks"
+    placeholder: "Describe a goal and I'll create a plan..."
+    prompt_file: "planning.txt"
+    actions_enabled: true
+
+  - id: "tasks"
+    label: "Tasks"
+    icon: "✓"
+    description: "Create and manage tasks with AI"
+    placeholder: "Tell me what you need to do..."
+    prompt_file: "tasks.txt"
+    actions_enabled: true
+
+  - id: "coaching"
+    label: "Coaching"
+    icon: "🎯"
+    description: "Productivity coaching & accountability"
+    placeholder: "What's on your mind today?"
+    prompt_file: "coaching.txt"
+    actions_enabled: false
+
+  - id: "productivity"
+    label: "Productivity"
+    icon: "⚡"
+    description: "Optimise your workflow & systems"
+    placeholder: "Ask about GTD, time-blocking, focus techniques..."
+    prompt_file: "productivity.txt"
+    actions_enabled: true

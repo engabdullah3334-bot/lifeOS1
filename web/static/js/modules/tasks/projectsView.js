@@ -28,7 +28,24 @@ TS.views.projects = {
     if (empty) empty.style.display = 'none';
 
     projects.forEach(project => {
-      const tasks  = TS.taskMgr.getForProject(project.project_id);
+      let tasks  = TS.taskMgr.getForProject(project.project_id);
+
+      // Deduplicate recurring tasks so we don't spam the list with 90 instances
+      const recMap = new Map();
+      tasks.forEach(t => {
+        if (t.original_task_id) {
+          if (!recMap.has(t.original_task_id)) {
+            recMap.set(t.original_task_id, t);
+          } else {
+            const existing = recMap.get(t.original_task_id);
+            if (existing.status === 'completed' && t.status !== 'completed') {
+              recMap.set(t.original_task_id, t);
+            }
+          }
+        }
+      });
+      tasks = tasks.filter(t => !t.original_task_id || recMap.get(t.original_task_id) === t);
+
       const total  = tasks.length;
       const done   = tasks.filter(t => t.status === 'completed').length;
       const pct    = total ? Math.round(done / total * 100) : 0;
@@ -69,7 +86,7 @@ TS.views.projects = {
           <div class="ts-project-quick-add">
             <input
               class="ts-quick-input"
-              placeholder="Quick add task… (press Enter)"
+              placeholder="Quick add to ${this._esc(project.name)}… (press Enter)"
               data-project-id="${project.project_id}"
             >
             <button class="ts-btn ts-btn-outline ts-btn-sm" data-action="quick-add" data-project-id="${project.project_id}">Add</button>
@@ -115,6 +132,7 @@ TS.views.projects = {
           </div>
         </div>
         <div class="ts-task-actions">
+          <button class="ts-task-action-btn" data-action="duplicate-task" data-task-id="${task.task_id}" title="Duplicate">📑</button>
           <button class="ts-task-action-btn" data-action="edit-task" data-task-id="${task.task_id}" title="Edit">✏️</button>
           <button class="ts-task-action-btn" data-action="archive-task" data-task-id="${task.task_id}" title="Archive">📦</button>
           <button class="ts-task-action-btn delete" data-action="delete-task" data-task-id="${task.task_id}" title="Delete">🗑️</button>
@@ -150,6 +168,7 @@ TS.views.projects = {
           const task = TS.state.tasks.find(t => String(t.task_id) === String(tid));
           if (task) TS.modal.openTask(task);
         }
+        if (action === 'duplicate-task') TS.taskMgr.duplicate(tid);
         if (action === 'archive-task') TS.taskMgr.archive(tid);
         if (action === 'delete-task')  TS.taskMgr.delete(tid);
         if (action === 'quick-add') {
@@ -194,7 +213,23 @@ TS.views.projects = {
     TS.state.projects.forEach(project => {
       const card  = document.querySelector(`.ts-project-card[data-project-id="${project.project_id}"]`);
       if (!card) return;
-      const tasks = TS.taskMgr.getForProject(project.project_id);
+      let tasks = TS.taskMgr.getForProject(project.project_id);
+
+      const recMap = new Map();
+      tasks.forEach(t => {
+        if (t.original_task_id) {
+          if (!recMap.has(t.original_task_id)) {
+            recMap.set(t.original_task_id, t);
+          } else {
+            const existing = recMap.get(t.original_task_id);
+            if (existing.status === 'completed' && t.status !== 'completed') {
+              recMap.set(t.original_task_id, t);
+            }
+          }
+        }
+      });
+      tasks = tasks.filter(t => !t.original_task_id || recMap.get(t.original_task_id) === t);
+
       const total = tasks.length;
       const done  = tasks.filter(t => t.status === 'completed').length;
       const pct   = total ? Math.round(done / total * 100) : 0;

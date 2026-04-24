@@ -1,6 +1,6 @@
 /**
  * tasks/state.js — Centralized App State
- * Handles state persistence via localStorage
+ * Persists user preferences via LifeOS settings API
  */
 
 var TS = window.TS = window.TS || {};
@@ -21,22 +21,31 @@ TS.state = {
   undoStack:     [],              // [{ type, data }]
   _weekOffset:   0,               // weeks from current
 
-  // Persist lightweight prefs to localStorage
+  // Persist lightweight prefs to MongoDB via settings module
   save() {
     try {
-      localStorage.setItem('ts_theme',  this.theme);
-      localStorage.setItem('ts_sort',   this.sortBy);
-      localStorage.setItem('ts_view',   this.currentView);
-      localStorage.setItem('ts_calMode',this.calMode);
-    } catch(e) {}
+      if (window.LifeOSSettings?.setMany) {
+        window.LifeOSSettings.setMany({
+          theme: this.theme,
+          taskSortBy: this.sortBy,
+          taskCurrentView: this.currentView,
+          taskCalMode: this.calMode,
+        });
+      }
+    } catch (e) {}
   },
 
-  load() {
+  async load() {
     try {
-      this.theme      = localStorage.getItem('ts_theme')   || 'dark';
-      this.sortBy     = localStorage.getItem('ts_sort')    || 'order';
-      this.currentView= localStorage.getItem('ts_view')    || 'projects';
-      this.calMode    = localStorage.getItem('ts_calMode') || 'month';
-    } catch(e) {}
+      if (window.LifeOSSettings?.refresh) {
+        await window.LifeOSSettings.refresh();
+      }
+      const settings = window.LifeOSSettings?.get?.();
+      if (!settings) return;
+      this.theme = settings.theme || 'dark';
+      this.sortBy = settings.taskSortBy || 'order';
+      this.currentView = settings.taskCurrentView || 'projects';
+      this.calMode = settings.taskCalMode || 'month';
+    } catch (e) {}
   },
 };

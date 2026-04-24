@@ -1,0 +1,93 @@
+{# ============================================================
+   AI Widget — Floating Trigger + Mini Chat Panel
+   Included once globally in index.html (outside app-container)
+   ============================================================ #}
+
+{# ── Floating Paper Plane FAB ──────────────────────────────── #}
+<button
+  id="ai-widget-trigger"
+  type="button"
+  aria-label="Open AI Assistant"
+  title="LifeOS AI Assistant"
+>
+  {# Paper-plane SVG icon #}
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+  </svg>
+</button>
+
+{# ── Mini Widget Panel ─────────────────────────────────────── #}
+<div id="ai-mini-widget" role="dialog" aria-label="AI Assistant" aria-hidden="true">
+
+  {# Header #}
+  <div class="ai-widget-header">
+    <div class="ai-widget-title">
+      <div class="ai-widget-dot" aria-hidden="true"></div>
+      <span class="ai-widget-name">LifeOS AI</span>
+      <span class="ai-widget-badge">BETA</span>
+    </div>
+    <button
+      class="ai-widget-close"
+      id="ai-widget-close"
+      type="button"
+      aria-label="Close AI Assistant"
+    >✕</button>
+  </div>
+
+  {# Mode Tabs #}
+  <div class="ai-mode-tabs" role="tablist" aria-label="AI Modes">
+    <button class="ai-mode-tab active" data-mode="planning" role="tab" aria-selected="true" id="ai-tab-planning">
+      <span class="ai-tab-icon">🗺️</span> Planning
+    </button>
+    <button class="ai-mode-tab" data-mode="tasks" role="tab" aria-selected="false" id="ai-tab-tasks">
+      <span class="ai-tab-icon">✓</span> Tasks
+    </button>
+    <button class="ai-mode-tab" data-mode="coaching" role="tab" aria-selected="false" id="ai-tab-coaching">
+      <span class="ai-tab-icon">🎯</span> Coaching
+    </button>
+    <button class="ai-mode-tab" data-mode="productivity" role="tab" aria-selected="false" id="ai-tab-productivity">
+      <span class="ai-tab-icon">⚡</span> Productivity
+    </button>
+  </div>
+
+  {# Messages #}
+  <div class="ai-messages" id="ai-widget-messages" role="log" aria-live="polite">
+    {# Welcome state (shown when no messages) #}
+    <div class="ai-welcome" id="ai-widget-welcome">
+      <div class="ai-welcome-icon">✈️</div>
+      <div class="ai-welcome-title">How can I help?</div>
+      <div class="ai-welcome-sub">Ask me to plan a project, create tasks, or coach you through your day.</div>
+    </div>
+  </div>
+
+  {# Typing Indicator #}
+  <div class="ai-typing" id="ai-widget-typing" aria-label="AI is thinking">
+    <div class="ai-typing-dot"></div>
+    <div class="ai-typing-dot"></div>
+    <div class="ai-typing-dot"></div>
+  </div>
+
+  {# Input Row #}
+  <div class="ai-input-row">
+    <textarea
+      class="ai-input"
+      id="ai-widget-input"
+      placeholder="Ask me anything..."
+      rows="1"
+      aria-label="Message input"
+      autocomplete="off"
+    ></textarea>
+    <button
+      class="ai-send-btn"
+      id="ai-widget-send"
+      type="button"
+      aria-label="Send message"
+      disabled
+    >
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+      </svg>
+    </button>
+  </div>
+
+</div>

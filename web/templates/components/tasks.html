@@ -201,6 +201,38 @@
           </select>
         </div>
 
+        <!-- Recurrence -->
+        <div class="ts-form-group">
+          <label>Recurrence</label>
+          <select id="ts-task-recurrence" class="ts-input">
+            <option value="none" selected>None</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <!-- Weekly Recurrence Options -->
+        <div class="ts-form-group ts-span-2" id="ts-task-recurrence-weekly" style="display: none;">
+          <label>Repeat on</label>
+          <div class="ts-weekly-days" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Mon" class="ts-weekly-day" /> Mon</label>
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Tue" class="ts-weekly-day" /> Tue</label>
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Wed" class="ts-weekly-day" /> Wed</label>
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Thu" class="ts-weekly-day" /> Thu</label>
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Fri" class="ts-weekly-day" /> Fri</label>
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Sat" class="ts-weekly-day" /> Sat</label>
+            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" value="Sun" class="ts-weekly-day" /> Sun</label>
+          </div>
+        </div>
+
+        <!-- Custom Recurrence Options -->
+        <div class="ts-form-group" id="ts-task-recurrence-custom" style="display: none;">
+          <label>Every X Days</label>
+          <input type="number" id="ts-task-recurrence-interval" class="ts-input" min="1" placeholder="e.g. 3" />
+        </div>
+
         <!-- Status -->
         <div class="ts-form-group">
           <label>Status</label>

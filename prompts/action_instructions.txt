@@ -1,0 +1,13 @@
+## Action Tags — استخدمها بصمت، لا تشرحها للمستخدم
+
+لإنشاء مهمة في قاعدة البيانات:
+[ACTION:CREATE_TASK]{"title": "...", "priority": "medium", "description": "اختياري", "due_date": "YYYY-MM-DD"}[/ACTION]
+
+لإنشاء مشروع:
+[ACTION:CREATE_PROJECT]{"name": "...", "description": "اختياري", "color": "#6366f1"}[/ACTION]
+
+قواعد:
+- priority: low | medium | high
+- due_date: اختياري، احذفه إن لم يُذكر تاريخ
+- يمكن وضع أكثر من tag في رد واحد
+- اكتب شرحك خارج الـ tags — تُحذف قبل العرض

@@ -1,313 +1,231 @@
 """
-core/task.py — LifeOS Task Management Core
-==========================================
-Models: Project, Task
-Managers: ProjectManager, TaskManager
+core/task.py — Task & Project Business Logic
+==============================================
+Uses schema_factory for document construction.
+All field definitions come from configs/schemas.yaml.
 """
 
-import json
-import os
-from datetime import datetime
-from uuid import uuid4
-from core.database import DatabaseConfig
+import re
+from datetime import datetime, timedelta
+
+from core.schema_factory import build_document, get_updatable_fields
 
 
-# ─── Constants ────────────────────────────────────────────────────────────────
-PRIORITY_LEVELS = ["low", "medium", "high", "critical"]
-STATUS_VALUES   = ["pending", "in_progress", "completed", "archived"]
-PROJECT_COLORS  = [
-    "#6366f1",  # indigo
-    "#8b5cf6",  # violet
-    "#ec4899",  # pink
-    "#ef4444",  # red
-    "#f97316",  # orange
-    "#eab308",  # yellow
-    "#22c55e",  # green
-    "#06b6d4",  # cyan
-]
-
-
-# ─── Project Model ─────────────────────────────────────────────────────────────
-class Project:
-    def __init__(self, project_id, name, color="#6366f1", icon="📁",
-                 description="", created_at=None, order=0):
-        self.project_id  = str(project_id)
-        self.name        = name
-        self.color       = color
-        self.icon        = icon
-        self.description = description
-        self.order       = order
-        self.created_at  = created_at or datetime.now().isoformat()
-
-    def to_dict(self):
-        return {
-            "project_id":  self.project_id,
-            "id":          self.project_id,   # frontend alias
-            "name":        self.name,
-            "color":       self.color,
-            "icon":        self.icon,
-            "description": self.description,
-            "order":       self.order,
-            "created_at":  self.created_at,
-        }
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(
-            project_id  = d.get("project_id") or d.get("id"),
-            name        = d.get("name", "Untitled"),
-            color       = d.get("color", "#6366f1"),
-            icon        = d.get("icon", "📁"),
-            description = d.get("description", ""),
-            created_at  = d.get("created_at"),
-            order       = d.get("order", 0),
-        )
-
-
-# ─── Task Model ────────────────────────────────────────────────────────────────
-class Task:
-    def __init__(
-        self,
-        task_id,
-        title,
-        description   = "",
-        project_id    = None,
-        start_date    = None,
-        end_date      = None,
-        execution_day = None,
-        priority      = "medium",
-        status        = "pending",
-        tags          = None,
-        notes         = "",
-        reminder      = None,
-        order         = 0,
-        created_at    = None,
-        # Legacy compat fields (ignored in logic, kept for migration)
-        due_date      = None,
-        start_time    = None,
-        end_time      = None,
-        recurrence    = None,
-        estimated_time= None,
-        actual_time   = None,
-        category      = None,
-        **kwargs,
-    ):
-        self.task_id       = str(task_id)
-        self.title         = title
-        self.description   = description or ""
-        self.project_id    = str(project_id) if project_id else None
-        self.priority      = priority if priority in PRIORITY_LEVELS else "medium"
-        self.status        = status   if status   in STATUS_VALUES   else "pending"
-        self.tags          = tags or []
-        self.notes         = notes or ""
-        self.reminder      = reminder
-        self.order         = order
-        self.created_at    = created_at or datetime.now().isoformat()
-
-        # Dates — accept both new-style and legacy field names
-        self.start_date    = start_date    or start_time  or None
-        self.end_date      = end_date      or due_date    or None
-        self.execution_day = execution_day or None
-
-        # Normalise dates to ISO strings
-        for attr in ("start_date", "end_date", "execution_day"):
-            v = getattr(self, attr)
-            if isinstance(v, datetime):
-                setattr(self, attr, v.date().isoformat())
-            elif isinstance(v, str) and "T" in v:
-                setattr(self, attr, v.split("T")[0])
-
-    def to_dict(self):
-        return {
-            "task_id":       self.task_id,
-            "id":            self.task_id,   # frontend alias
-            "title":         self.title,
-            "description":   self.description,
-            "project_id":    self.project_id,
-            "start_date":    self.start_date,
-            "end_date":      self.end_date,
-            "execution_day": self.execution_day,
-            "priority":      self.priority,
-            "status":        self.status,
-            "tags":          self.tags,
-            "notes":         self.notes,
-            "reminder":      self.reminder,
-            "order":         self.order,
-            "created_at":    self.created_at,
-        }
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(**{k: v for k, v in d.items() if k != "self"})
-
-    def complete(self):
-        self.status = "completed"
-
-    def archive(self):
-        self.status = "archived"
-
-
-# ─── Project Manager ───────────────────────────────────────────────────────────
-class ProjectManager:
-    def __init__(self):
-        self.projects = {}
-        self.db_path  = DatabaseConfig.get_projects_db_path()
-        self.load()
-
-    def _save(self):
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        with open(self.db_path, "w", encoding="utf-8") as f:
-            json.dump([p.to_dict() for p in self.projects.values()], f,
-                      ensure_ascii=False, indent=2)
-
-    def load(self):
-        if not os.path.exists(self.db_path):
-            # Seed with a default project
-            self._seed_default()
-            return
-        try:
-            with open(self.db_path, "r", encoding="utf-8") as f:
-                for item in json.load(f):
-                    p = Project.from_dict(item)
-                    self.projects[p.project_id] = p
-            
-            # Ensure core projects exist
-            needs_save = False
-            if "general" not in self.projects:
-                self.projects["general"] = Project("general", "General", "#6366f1", "📋", order=0)
-                needs_save = True
-            
-            if "archive" not in self.projects:
-                self.projects["archive"] = Project("archive", "Archive", "#6b7280", "📦", order=max(len(self.projects), 1))
-                needs_save = True
-                
-            if needs_save:
-                self._save()
-                
-        except Exception as e:
-            print(f"[ProjectManager] Load error: {e}")
-            self._seed_default()
-
-    def _seed_default(self):
-        p = Project(project_id="general", name="General",
-                    color="#6366f1", icon="📋", order=0)
-        self.projects[p.project_id] = p
-
-        pa = Project(project_id="archive", name="Archive",
-                     color="#6b7280", icon="📦", order=1)
-        self.projects[pa.project_id] = pa
+class ProjectService:
+    @staticmethod
+    def get_projects(db, user_id, archived=False):
+        query = {"user_id": user_id}
+        query["isArchived"] = True if archived else {"$ne": True}
+        projects = list(db.projects.find(query, {"_id": 0}).sort("order", 1))
         
-        self._save()
+        # Calculate task count and progress for each project
+        for p in projects:
+            pid = p["project_id"]
+            proj_tasks = list(db.tasks.find({"project_id": pid, "user_id": user_id}))
+            total = len(proj_tasks)
+            done = sum(1 for t in proj_tasks if t.get("status") == "completed")
+            
+            p["task_count"] = total
+            p["done_count"] = done
+            p["progress"] = round((done / total * 100) if total else 0)
+            
+        return projects
 
-    def get_all(self):
-        return sorted(self.projects.values(), key=lambda p: p.order)
-
-    def add(self, project: Project):
-        project.order = len(self.projects)
-        self.projects[project.project_id] = project
-        self._save()
+    @staticmethod
+    def create_project(db, user_id, data):
+        project = build_document("project", data, db=db, user_id=user_id)
+        db.projects.insert_one(project)
+        project.pop('_id', None)
         return project
 
-    def update(self, project_id, fields: dict):
-        if project_id not in self.projects:
-            return None
-        p = self.projects[project_id]
-        for k, v in fields.items():
-            if hasattr(p, k):
-                setattr(p, k, v)
-        self._save()
-        return p
-
-    def delete(self, project_id):
-        if project_id in ["general", "archive"]:
-            return False
+    @staticmethod
+    def update_project(db, user_id, pid, data):
+        allowed = get_updatable_fields("project")
+        update = {k: v for k, v in data.items() if k in allowed}
+        
+        if not update:
+            return None, "No valid fields to update"
             
-        if project_id in self.projects:
-            del self.projects[project_id]
-            self._save()
-            return True
-        return False
+        # Parent-Child Logic for Projects and Tasks
+        is_archived = update.get("isArchived")
+        if is_archived is not None:
+            db.tasks.update_many(
+                {"project_id": pid, "user_id": user_id},
+                {"$set": {"isArchived": is_archived}}
+            )
 
-    def reorder(self, ordered_ids: list):
-        for i, pid in enumerate(ordered_ids):
-            if pid in self.projects:
-                self.projects[pid].order = i
-        self._save()
+        result = db.projects.update_one(
+            {"project_id": pid, "user_id": user_id},
+            {"$set": update}
+        )
+        
+        if result.matched_count == 0:
+            return None, "Project not found"
+            
+        updated = db.projects.find_one({"project_id": pid, "user_id": user_id}, {"_id": 0})
+        return updated, None
 
+    @staticmethod
+    def delete_project(db, user_id, pid):
+        result = db.projects.delete_one({"project_id": pid, "user_id": user_id})
 
-# ─── Task Manager ──────────────────────────────────────────────────────────────
-class TaskManager:
-    def __init__(self):
-        self.tasks   = {}
-        self.db_path = DatabaseConfig.get_tasks_db_path()
-        self.load()
+        if result.deleted_count == 0:
+            return False, "Project not found"
 
-    def _save(self):
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        with open(self.db_path, "w", encoding="utf-8") as f:
-            json.dump([t.to_dict() for t in self.tasks.values()], f,
-                      ensure_ascii=False, indent=2)
-
-    def load(self):
-        if not os.path.exists(self.db_path):
-            return
-        try:
-            with open(self.db_path, "r", encoding="utf-8") as f:
-                for item in json.load(f):
-                    try:
-                        # Migration: map old `category` to project_id
-                        if "category" in item and not item.get("project_id"):
-                            item["project_id"] = "general"
-                        # Migration: map old `task_id` int → str
-                        if "task_id" not in item and "id" in item:
-                            item["task_id"] = str(item["id"])
-                        elif "task_id" in item:
-                            item["task_id"] = str(item["task_id"])
-                        t = Task.from_dict(item)
-                        self.tasks[t.task_id] = t
-                    except Exception as ex:
-                        print(f"[TaskManager] Skip invalid task: {ex}")
-        except Exception as e:
-            print(f"[TaskManager] Load error: {e}")
-
-    def get_all(self):
-        return list(self.tasks.values())
-
-    def add(self, task: Task):
-        self.tasks[task.task_id] = task
-        self._save()
-        return task
-
-    def update(self, task_id, fields: dict):
-        if task_id not in self.tasks:
-            return None
-        t = self.tasks[task_id]
-        for k, v in fields.items():
-            if hasattr(t, k):
-                setattr(t, k, v)
-        self._save()
-        return t
-
-    def delete(self, task_id):
-        if task_id in self.tasks:
-            del self.tasks[task_id]
-            self._save()
-            return True
-        return False
-
-    def complete(self, task_id):
-        return self.update(task_id, {"status": "completed"})
-
-    def archive(self, task_id):
-        return self.update(task_id, {"status": "archived", "project_id": "archive"})
-
-    def reorder(self, ordered_ids: list):
-        for i, tid in enumerate(ordered_ids):
-            if tid in self.tasks:
-                self.tasks[tid].order = i
-        self._save()
+        # Transfer orphaned tasks to "general"
+        db.tasks.update_many(
+            {"project_id": pid, "user_id": user_id},
+            {"$set": {"project_id": "general"}},
+        )
+        return True, None
 
 
-# ─── Shared Instances ──────────────────────────────────────────────────────────
-project_manager = ProjectManager()
-task_manager    = TaskManager()
+class TaskService:
+    @staticmethod
+    def get_tasks(db, user_id, archived=False, project_id=None, status=None, search=None):
+        query = {"user_id": user_id}
+        query["isArchived"] = True if archived else {"$ne": True}
+
+        if project_id:
+            query["project_id"] = project_id
+        if search:
+            safe_search = re.escape(search)
+            query["$or"] = [
+                {"title": {"$regex": safe_search, "$options": "i"}},
+                {"description": {"$regex": safe_search, "$options": "i"}},
+            ]
+
+        # Fetch without status first (recurring tasks have virtual status)
+        tasks = list(db.tasks.find(query, {"_id": 0}).sort("order", 1))
+        
+        processed_tasks = []
+        today = datetime.now()
+        window_start = (today - timedelta(days=30)).date()
+        window_end = (today + timedelta(days=60)).date()
+
+        for task in tasks:
+            is_recurring = task.get("is_recurring", False) or task.get("recurrence", "none") != "none"
+            
+            if is_recurring and task.get("recurrence", "none") != "none":
+                instances = TaskService._generate_occurrences(task, window_start, window_end)
+                for inst in instances:
+                    if status and inst.get("status") != status:
+                        continue
+                    processed_tasks.append(inst)
+            else:
+                if status and task.get("status") != status:
+                    continue
+                processed_tasks.append(task)
+                
+        return processed_tasks
+
+    @staticmethod
+    def _generate_occurrences(task, window_start, window_end):
+        instances = []
+        recurrence = task.get("recurrence", "none")
+        completed_dates = task.get("completed_dates", [])
+        
+        base_date_str = task.get("execution_day") or task.get("start_date")
+        if base_date_str:
+            try:
+                base_date = datetime.strptime(base_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                base_date = window_start
+        else:
+            base_date = window_start
+
+        current_date = max(window_start, base_date)
+
+        while current_date <= window_end:
+            should_create = False
+            
+            if recurrence == "daily":
+                should_create = True
+            elif recurrence == "weekly":
+                pattern = task.get("recurrence_pattern") or []
+                weekday_map = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
+                if isinstance(pattern, list):
+                    day_name = weekday_map[current_date.weekday()]
+                    if day_name in pattern:
+                        should_create = True
+            elif recurrence == "monthly":
+                if current_date.day == base_date.day:
+                    should_create = True
+            elif recurrence == "custom":
+                try:
+                    interval = int(task.get("recurrence_pattern") or 1)
+                except:
+                    interval = 1
+                days_diff = (current_date - base_date).days
+                if days_diff % interval == 0:
+                    should_create = True
+
+            if should_create:
+                date_str = current_date.strftime("%Y-%m-%d")
+                inst_status = "completed" if date_str in completed_dates else "pending"
+                
+                inst = task.copy()
+                inst["task_id"] = f"{task['task_id']}|{date_str}"
+                inst["original_task_id"] = task["task_id"]
+                inst["execution_day"] = date_str
+                inst["status"] = inst_status
+                instances.append(inst)
+                
+            current_date += timedelta(days=1)
+            
+        return instances
+
+    @staticmethod
+    def create_task(db, user_id, data):
+        if not data.get("title"):
+            return None, "Title is required"
+
+        task = build_document("task", data, db=db, user_id=user_id)
+        
+        db.tasks.insert_one(task)
+        task.pop('_id', None)
+        return task, None
+
+    @staticmethod
+    def update_task(db, user_id, tid, data):
+        date_str = None
+        if "|" in tid:
+            tid, date_str = tid.split("|")
+            
+        existing_task = db.tasks.find_one({"task_id": tid, "user_id": user_id})
+        if not existing_task:
+            return None, "Task not found"
+
+        is_recurring = existing_task.get("is_recurring", False) or existing_task.get("recurrence", "none") != "none"
+        
+        if is_recurring and "status" in data:
+            if not date_str:
+                date_str = datetime.now().strftime("%Y-%m-%d")
+                
+            completed_dates = existing_task.get("completed_dates", [])
+            target_status = data.get("status")
+            
+            if target_status == "completed" and date_str not in completed_dates:
+                completed_dates.append(date_str)
+            elif target_status != "completed" and date_str in completed_dates:
+                completed_dates.remove(date_str)
+                
+            data["completed_dates"] = completed_dates
+            if "status" in data:
+                del data["status"]
+
+        if data:
+            db.tasks.update_one({"task_id": tid, "user_id": user_id}, {"$set": data})
+        
+        updated_task = db.tasks.find_one({"task_id": tid, "user_id": user_id}, {"_id": 0})
+        return updated_task, None
+
+    @staticmethod
+    def delete_task(db, user_id, tid):
+        if "|" in tid:
+            tid = tid.split("|")[0]
+            
+        result = db.tasks.delete_one({"task_id": tid, "user_id": user_id})
+        if result.deleted_count == 0:
+            return False, "Task not found"
+        return True, None

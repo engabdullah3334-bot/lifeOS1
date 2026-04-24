@@ -1,0 +1,490 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  LifeOS — Built-in Templates
+#  ────────────────────────────────────────────────────────────────────────────
+#  Template definitions for the Templates gallery.
+#  To add a new template, just add an entry below.
+#  No Python code changes needed.
+# ══════════════════════════════════════════════════════════════════════════════
+
+templates:
+
+  # ───── قوالب الإنتاجية / المهام ─────
+
+  - id: "weekly_planning"
+    category: "tasks"
+    title: "Weekly Planning Sprint"
+    description: "A ready-made project with 7 essential tasks to plan your week from Sunday to Saturday."
+    icon: "📅"
+    color: "#6366f1"
+    preview_tasks:
+      - "Define weekly goals"
+      - "Review last week"
+      - "Schedule key meetings"
+      - "Set daily priorities"
+      - "Block deep-work time"
+      - "Clear inbox"
+      - "Weekly review"
+    data:
+      type: "project_with_tasks"
+      project:
+        name: "Weekly Planning Sprint"
+        color: "#6366f1"
+        icon: "📅"
+        description: "Structure and plan your week effectively."
+      tasks:
+        - title: "Define weekly goals"
+          priority: "critical"
+          status: "pending"
+        - title: "Review last week"
+          priority: "high"
+          status: "pending"
+        - title: "Schedule key meetings"
+          priority: "high"
+          status: "pending"
+        - title: "Set daily priorities"
+          priority: "medium"
+          status: "pending"
+        - title: "Block deep-work time"
+          priority: "medium"
+          status: "pending"
+        - title: "Clear inbox & notifications"
+          priority: "low"
+          status: "pending"
+        - title: "Weekly review & reflection"
+          priority: "high"
+          status: "pending"
+
+  - id: "project_launch"
+    category: "tasks"
+    title: "Project Launch Checklist"
+    description: "A complete project with 10 launch-ready tasks — from ideation to go-live."
+    icon: "🚀"
+    color: "#f97316"
+    preview_tasks:
+      - "Define scope & goals"
+      - "Research & analysis"
+      - "Design wireframes"
+      - "Develop MVP"
+      - "QA Testing"
+      - "Prepare marketing"
+      - "Launch!"
+    data:
+      type: "project_with_tasks"
+      project:
+        name: "Project Launch Checklist"
+        color: "#f97316"
+        icon: "🚀"
+        description: "From idea to launch — structured and ready."
+      tasks:
+        - title: "Define scope & goals"
+          priority: "critical"
+          status: "pending"
+        - title: "Research & competitive analysis"
+          priority: "high"
+          status: "pending"
+        - title: "Design wireframes / mockups"
+          priority: "high"
+          status: "pending"
+        - title: "Set up dev environment"
+          priority: "medium"
+          status: "pending"
+        - title: "Develop core features (MVP)"
+          priority: "critical"
+          status: "pending"
+        - title: "Internal QA testing"
+          priority: "high"
+          status: "pending"
+        - title: "Fix critical bugs"
+          priority: "critical"
+          status: "pending"
+        - title: "Prepare marketing materials"
+          priority: "medium"
+          status: "pending"
+        - title: "Setup analytics & monitoring"
+          priority: "medium"
+          status: "pending"
+        - title: "🚀 Go Live!"
+          priority: "critical"
+          status: "pending"
+
+  - id: "habit_tracker"
+    category: "tasks"
+    title: "Daily Habit Tracker"
+    description: "A project with recurring daily habits to keep you consistent every day."
+    icon: "🔁"
+    color: "#30d158"
+    preview_tasks:
+      - "Morning workout"
+      - "Read 30 min"
+      - "Meditate"
+      - "No social media"
+      - "Sleep before midnight"
+    data:
+      type: "project_with_tasks"
+      project:
+        name: "Daily Habit Tracker"
+        color: "#30d158"
+        icon: "🔁"
+        description: "Build daily habits that stick."
+      tasks:
+        - title: "Morning workout (30 min)"
+          priority: "high"
+          status: "pending"
+          recurrence: "daily"
+        - title: "Read for 30 minutes"
+          priority: "medium"
+          status: "pending"
+          recurrence: "daily"
+        - title: "Meditate (10 min)"
+          priority: "medium"
+          status: "pending"
+          recurrence: "daily"
+        - title: "No social media before 10am"
+          priority: "high"
+          status: "pending"
+          recurrence: "daily"
+        - title: "Drink 2L of water"
+          priority: "low"
+          status: "pending"
+          recurrence: "daily"
+        - title: "Sleep before midnight"
+          priority: "high"
+          status: "pending"
+          recurrence: "daily"
+
+  - id: "study_plan"
+    category: "tasks"
+    title: "Study & Learning Plan"
+    description: "Structured project for learning a new skill or completing a course."
+    icon: "🎓"
+    color: "#eab308"
+    preview_tasks:
+      - "Define learning goals"
+      - "Gather resources"
+      - "Week 1 study"
+      - "Week 2 practice"
+      - "Final review"
+    data:
+      type: "project_with_tasks"
+      project:
+        name: "Study & Learning Plan"
+        color: "#eab308"
+        icon: "🎓"
+        description: "Learn anything systematically."
+      tasks:
+        - title: "Define learning goals & timeline"
+          priority: "critical"
+          status: "pending"
+        - title: "Gather books, courses & resources"
+          priority: "high"
+          status: "pending"
+        - title: "Week 1: Foundations & core concepts"
+          priority: "high"
+          status: "pending"
+        - title: "Week 2: Deep dive & practice"
+          priority: "high"
+          status: "pending"
+        - title: "Week 3: Apply with a mini project"
+          priority: "high"
+          status: "pending"
+        - title: "Final review & summary notes"
+          priority: "medium"
+          status: "pending"
+        - title: "Share what you learned"
+          priority: "low"
+          status: "pending"
+
+  # ───── قوالب الكتابة ─────
+
+  - id: "book_review"
+    category: "writing"
+    title: "Book Review"
+    description: "A structured writing note for reviewing any book — summary, insights & rating."
+    icon: "📖"
+    color: "#a78bfa"
+    preview_tasks:
+      - "Summary"
+      - "Key insights"
+      - "Quotes"
+      - "Rating"
+      - "Recommendation"
+    data:
+      type: "writing_note"
+      project_name: "Book Reviews"
+      note:
+        title: "Book Review: [Book Title]"
+        content: |
+          # 📖 Book Review
+
+          **Title:** [Book Title]
+          **Author:** [Author Name]
+          **Date Read:** [Date]
+          **Rating:** ⭐⭐⭐⭐⭐ (X/5)
+
+          ---
+
+          ## 📝 Summary
+
+          [Write a brief summary of the book's main ideas in 2-3 paragraphs]
+
+          ---
+
+          ## 💡 Key Insights & Takeaways
+
+          1. 
+          2. 
+          3. 
+
+          ---
+
+          ## 📌 Favorite Quotes
+
+          > "Quote here"
+
+          > "Quote here"
+
+          ---
+
+          ## 🎯 What I'll Apply
+
+          [How will you apply what you learned?]
+
+          ---
+
+          ## 👍 Who Should Read This?
+
+          [Who would benefit from this book?]
+
+  - id: "daily_journal"
+    category: "writing"
+    title: "Daily Journal"
+    description: "A daily journaling template for reflection, gratitude and planning your day."
+    icon: "📔"
+    color: "#f472b6"
+    preview_tasks:
+      - "Morning reflection"
+      - "Gratitude"
+      - "Goals for today"
+      - "Evening review"
+    data:
+      type: "writing_note"
+      project_name: "Daily Journal"
+      note:
+        title: "Journal — {date_formatted}"
+        content: |
+          # 📔 Daily Journal — {date_long}
+
+          ---
+
+          ## 🌅 Morning Reflection
+
+          **How do I feel right now?**
+
+          [Write here...]
+
+          **What am I grateful for today?**
+
+          1. 
+          2. 
+          3. 
+
+          ---
+
+          ## 🎯 My Main Goals for Today
+
+          - [ ] 
+          - [ ] 
+          - [ ] 
+
+          ---
+
+          ## 💭 Thoughts & Notes
+
+          [Anything on your mind...]
+
+          ---
+
+          ## 🌙 Evening Review
+
+          **What went well today?**
+
+          [Write here...]
+
+          **What could I improve tomorrow?**
+
+          [Write here...]
+
+          **Energy level today:** ⚡⚡⚡ (X/5)
+
+  - id: "meeting_notes"
+    category: "writing"
+    title: "Meeting Notes"
+    description: "Professional meeting notes template with agenda, decisions and action items."
+    icon: "🤝"
+    color: "#38bdf8"
+    preview_tasks:
+      - "Attendees"
+      - "Agenda"
+      - "Discussion"
+      - "Decisions"
+      - "Action items"
+    data:
+      type: "writing_note"
+      project_name: "Meeting Notes"
+      note:
+        title: "Meeting Notes — {date_formatted}"
+        content: |
+          # 🤝 Meeting Notes
+
+          **Date:** {date_formatted}
+          **Time:** [Start] – [End]
+          **Location / Platform:** [Zoom / Office / etc.]
+
+          ---
+
+          ## 👥 Attendees
+
+          - 
+          - 
+
+          ---
+
+          ## 📋 Agenda
+
+          1. 
+          2. 
+          3. 
+
+          ---
+
+          ## 💬 Discussion & Notes
+
+          [Write discussion points here...]
+
+          ---
+
+          ## ✅ Decisions Made
+
+          - 
+          - 
+
+          ---
+
+          ## 🎯 Action Items
+
+          | Task | Owner | Due Date |
+          |------|-------|----------|
+          | | | |
+          | | | |
+
+          ---
+
+          ## 📅 Next Meeting
+
+          **Date:** 
+          **Agenda:** 
+
+  - id: "article_draft"
+    category: "writing"
+    title: "Article / Blog Draft"
+    description: "A structured template for writing articles, blog posts or essays."
+    icon: "✍️"
+    color: "#fb923c"
+    preview_tasks:
+      - "Headline"
+      - "Intro hook"
+      - "Main sections"
+      - "CTA"
+      - "SEO tags"
+    data:
+      type: "writing_note"
+      project_name: "Articles & Blog"
+      note:
+        title: "Article Draft: [Working Title]"
+        content: |
+          # ✍️ Article Draft
+
+          **Working Title:** [Your headline here]
+          **Target Audience:** [Who is this for?]
+          **Target Word Count:** [e.g. 1000 words]
+          **Status:** 🔴 Draft
+
+          ---
+
+          ## 🪝 Hook / Opening
+
+          [Start with a compelling hook — a question, stat, or bold statement]
+
+          ---
+
+          ## 📖 Introduction
+
+          [Briefly introduce the topic and what the reader will learn]
+
+          ---
+
+          ## 📌 Section 1: [Title]
+
+          [Content...]
+
+          ## 📌 Section 2: [Title]
+
+          [Content...]
+
+          ## 📌 Section 3: [Title]
+
+          [Content...]
+
+          ---
+
+          ## 🎯 Conclusion & CTA
+
+          [Summarize key points and add a call to action]
+
+          ---
+
+          ## 🏷️ SEO & Tags
+
+          **Keywords:** 
+          **Meta Description:** 
+
+  # ───── قوالب الأرشيف ─────
+
+  - id: "archive_organizer"
+    category: "archive"
+    title: "Archive Organizer Project"
+    description: "A project with tasks to help you systematically organize and archive your work."
+    icon: "🗂️"
+    color: "#64748b"
+    preview_tasks:
+      - "Audit existing files"
+      - "Define categories"
+      - "Label & tag"
+      - "Archive completed"
+      - "Review monthly"
+    data:
+      type: "project_with_tasks"
+      project:
+        name: "Archive Organizer"
+        color: "#64748b"
+        icon: "🗂️"
+        description: "Systematically organize and maintain your archive."
+      tasks:
+        - title: "Audit all existing files & notes"
+          priority: "high"
+          status: "pending"
+        - title: "Define folder categories & structure"
+          priority: "high"
+          status: "pending"
+        - title: "Label & tag all items"
+          priority: "medium"
+          status: "pending"
+        - title: "Delete or archive outdated content"
+          priority: "medium"
+          status: "pending"
+        - title: "Move completed tasks to archive"
+          priority: "low"
+          status: "pending"
+        - title: "Set monthly archive review reminder"
+          priority: "low"
+          status: "pending"

@@ -51,6 +51,16 @@ TS.modal = {
     document.getElementById('ts-new-task-btn')?.addEventListener('click', () => this.openTask());
     document.getElementById('ts-new-project-btn')?.addEventListener('click', () => this.openProject());
     document.getElementById('ts-empty-add-project')?.addEventListener('click', () => this.openProject());
+
+    // Recurrence change listener
+    const recSelect = document.getElementById('ts-task-recurrence');
+    recSelect?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      const wOpt = document.getElementById('ts-task-recurrence-weekly');
+      const cOpt = document.getElementById('ts-task-recurrence-custom');
+      if (wOpt) wOpt.style.display = (val === 'weekly') ? 'block' : 'none';
+      if (cOpt) cOpt.style.display = (val === 'custom') ? 'block' : 'none';
+    });
   },
 
   open(id) {
@@ -91,6 +101,30 @@ TS.modal = {
     get('ts-task-end').value        = task?.end_date    || '';
     get('ts-task-exec-day').value   = task?.execution_day || '';
     get('ts-task-reminder').value   = task?.reminder    || '';
+    
+    const recurrence = task?.recurrence || 'none';
+    get('ts-task-recurrence').value = recurrence;
+
+    const wOpt = document.getElementById('ts-task-recurrence-weekly');
+    const cOpt = document.getElementById('ts-task-recurrence-custom');
+    if (wOpt) wOpt.style.display = (recurrence === 'weekly') ? 'block' : 'none';
+    if (cOpt) cOpt.style.display = (recurrence === 'custom') ? 'block' : 'none';
+
+    const pattern = task?.recurrence_pattern || null;
+    if (recurrence === 'weekly' && Array.isArray(pattern)) {
+      document.querySelectorAll('.ts-weekly-day').forEach(cb => {
+        cb.checked = pattern.includes(cb.value);
+      });
+    } else {
+      document.querySelectorAll('.ts-weekly-day').forEach(cb => cb.checked = false);
+    }
+
+    if (recurrence === 'custom') {
+      get('ts-task-recurrence-interval').value = pattern || 1;
+    } else {
+      get('ts-task-recurrence-interval').value = "";
+    }
+
     get('ts-task-tags').value       = (task?.tags || []).join(', ');
     get('ts-task-notes').value      = task?.notes       || '';
 
@@ -124,6 +158,14 @@ TS.modal = {
       tags,
       notes:         get('ts-task-notes').value.trim(),
     };
+    
+    const recurrence = get('ts-task-recurrence').value || 'none';
+    payload.recurrence = recurrence;
+    if (recurrence === 'weekly') {
+      payload.recurrence_pattern = Array.from(document.querySelectorAll('.ts-weekly-day:checked')).map(cb => cb.value);
+    } else if (recurrence === 'custom') {
+      payload.recurrence_pattern = parseInt(get('ts-task-recurrence-interval').value) || 1;
+    }
 
     const editingId = get('ts-task-editing-id').value;
 

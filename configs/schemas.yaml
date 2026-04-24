@@ -1,0 +1,259 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  LifeOS — Entity Schemas
+#  ────────────────────────────────────────────────────────────────────────────
+#  All data structures (Task, Project, Note, etc.) are defined here.
+#  The schema_factory reads this file to build MongoDB documents dynamically.
+#
+#  To add a new field to any entity:
+#    1. Add it below under the appropriate entity
+#    2. That's it — the code will pick it up automatically
+#
+#  Field types:
+#    uuid           → auto-generated UUID string
+#    string         → text field
+#    boolean        → true/false
+#    enum           → one of the listed 'values'
+#    list           → array
+#    any            → no type validation
+#    datetime       → auto-set to current timestamp
+#    auto_increment → auto-calculated order number
+#    computed       → derived from other fields (handled in code)
+# ══════════════════════════════════════════════════════════════════════════════
+
+task:
+  collection: "tasks"
+  id_field: "task_id"
+  fields:
+    task_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    title:
+      type: "string"
+      required: true
+      default: "New Task"
+
+    description:
+      type: "string"
+      default: ""
+
+    project_id:
+      type: "string"
+      default: "general"
+
+    priority:
+      type: "enum"
+      values: ["low", "medium", "high", "critical"]
+      default: "medium"
+
+    status:
+      type: "enum"
+      values: ["pending", "completed"]
+      default: "pending"
+
+    recurrence:
+      type: "enum"
+      values: ["none", "daily", "weekly", "monthly", "custom"]
+      default: "none"
+
+    recurrence_pattern:
+      type: "any"
+      default: null
+
+    is_recurring:
+      type: "computed"
+      rule: "recurrence != 'none'"
+
+    completed_dates:
+      type: "list"
+      default: []
+
+    execution_day:
+      type: "string"
+      default: ""
+
+    start_date:
+      type: "string"
+      default: ""
+
+    end_date:
+      type: "string"
+      default: ""
+
+    order:
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    tags:
+      type: "list"
+      default: []
+
+    notes:
+      type: "string"
+      default: ""
+
+    isArchived:
+      type: "boolean"
+      default: false
+
+
+project:
+  collection: "projects"
+  id_field: "project_id"
+  fields:
+    project_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    name:
+      type: "string"
+      required: true
+      default: "New Project"
+
+    color:
+      type: "string"
+      default: "#6366f1"
+
+    icon:
+      type: "string"
+      default: "📁"
+
+    description:
+      type: "string"
+      default: ""
+
+    order:
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    isArchived:
+      type: "boolean"
+      default: false
+
+
+note:
+  collection: "notes"
+  id_field: "note_id"
+  fields:
+    note_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    project_id:
+      type: "string"
+      required: true
+
+    title:
+      type: "string"
+      default: "New Note"
+
+    filename:
+      type: "string"
+      default: ""
+
+    content:
+      type: "string"
+      default: ""
+
+    status:
+      type: "enum"
+      values: ["draft", "complete", "in_review"]
+      default: "draft"
+
+    tags:
+      type: "list"
+      default: []
+
+    description:
+      type: "string"
+      default: ""
+
+    order:
+      type: "auto_increment"
+      collection_scope: ["user_id", "project_id"]
+
+    created_at:
+      type: "datetime"
+      auto: true
+
+    last_updated:
+      type: "datetime"
+      auto: true
+
+    archived:
+      type: "boolean"
+      default: false
+
+
+note_project:
+  collection: "note_projects"
+  id_field: "project_id"
+  fields:
+    project_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    name:
+      type: "string"
+      required: true
+
+    description:
+      type: "string"
+      default: ""
+
+    tags:
+      type: "list"
+      default: []
+
+    order:
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    created_at:
+      type: "datetime"
+      auto: true
+
+    archived:
+      type: "boolean"
+      default: false
+
+    is_system:
+      type: "boolean"
+      default: false
+
+
+user:
+  collection: "users"
+  id_field: "user_id"
+  fields:
+    user_id:
+      type: "uuid"
+      auto: true
+
+    username:
+      type: "string"
+      required: true
+
+    email:
+      type: "string"
+      required: true
+
+    password_hash:
+      type: "string"
+      required: true

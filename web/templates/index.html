@@ -35,6 +35,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=5">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/templates.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/ai_agent.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/login.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
 
@@ -73,6 +75,100 @@
             {% include 'components/dashboard.html' %}
             {% include 'components/tasks.html' %}
             {% include 'components/writing.html' %}
+            {% include 'components/templates_page.html' %}
+
+            <!-- AI Chat Page -->
+            <div id="ai-chat" class="content-view ai-chat-view" style="display: none;">
+
+              <!-- Top bar -->
+              <div class="ai-chat-topbar">
+                <div class="ai-chat-topbar-left">
+                  <div class="ai-chat-icon">✈️</div>
+                  <div>
+                    <div class="ai-chat-heading">LifeOS AI</div>
+                    <div class="ai-chat-subtitle">Your personal productivity co-pilot</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mode tabs -->
+              <div class="ai-chat-mode-tabs" role="tablist" aria-label="AI Modes">
+                <button class="ai-chat-tab active" data-mode="planning" role="tab" aria-selected="true" id="ai-chat-tab-planning">
+                  <span class="ai-chat-tab-icon">🗺️</span>
+                  Planning
+                  <span class="ai-chat-tab-desc">Break goals into plans</span>
+                </button>
+                <button class="ai-chat-tab" data-mode="tasks" role="tab" aria-selected="false" id="ai-chat-tab-tasks">
+                  <span class="ai-chat-tab-icon">✓</span>
+                  Tasks
+                  <span class="ai-chat-tab-desc">Create &amp; manage tasks</span>
+                </button>
+                <button class="ai-chat-tab" data-mode="coaching" role="tab" aria-selected="false" id="ai-chat-tab-coaching">
+                  <span class="ai-chat-tab-icon">🎯</span>
+                  Coaching
+                  <span class="ai-chat-tab-desc">Accountability &amp; mindset</span>
+                </button>
+                <button class="ai-chat-tab" data-mode="productivity" role="tab" aria-selected="false" id="ai-chat-tab-productivity">
+                  <span class="ai-chat-tab-icon">⚡</span>
+                  Productivity
+                  <span class="ai-chat-tab-desc">Optimise your workflow</span>
+                </button>
+              </div>
+
+              <!-- Messages -->
+              <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite">
+
+                <!-- Welcome state -->
+                <div class="ai-chat-welcome" id="ai-chat-welcome-state">
+                  <div class="ai-chat-welcome-icon">✈️</div>
+                  <div class="ai-chat-welcome-title">What would you like to accomplish?</div>
+                  <div class="ai-chat-welcome-sub">
+                    Choose a mode above and start a conversation. I can plan projects,
+                    create tasks, coach you, or help optimise your workflow.
+                  </div>
+                  <div class="ai-suggestion-chips" id="ai-chat-suggestions">
+                    <button class="ai-suggestion-chip" type="button">Help me plan a new project</button>
+                    <button class="ai-suggestion-chip" type="button">Break this goal into tasks: launch my blog</button>
+                    <button class="ai-suggestion-chip" type="button">Create a weekly sprint plan</button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Typing indicator -->
+              <div class="ai-typing" id="ai-chat-typing" aria-label="AI is thinking" style="margin: 0 36px 8px;">
+                <div class="ai-typing-dot"></div>
+                <div class="ai-typing-dot"></div>
+                <div class="ai-typing-dot"></div>
+              </div>
+
+              <!-- Input area -->
+              <div class="ai-chat-input-area">
+                <div class="ai-chat-input-wrap">
+                  <textarea
+                    class="ai-chat-input"
+                    id="ai-chat-input"
+                    placeholder="Describe a goal and I'll create a plan..."
+                    rows="1"
+                    aria-label="Message input"
+                    autocomplete="off"
+                  ></textarea>
+                  <button
+                    class="ai-chat-send-btn"
+                    id="ai-chat-send"
+                    type="button"
+                    aria-label="Send message"
+                    disabled
+                  >
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+            <!-- /AI Chat Page -->
             
             <div id="archive" class="content-view" style="display: none;">
                 <div class="archive-content">
@@ -111,6 +207,9 @@
 
     {% include 'components/settings.html' %}
 
+    {# AI floating widget — lives outside app-container so it overlays everything #}
+    {% include 'components/ai_widget.html' %}
+
     <!-- ── API Helper & Auth (must load first) ── -->
     <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';</script>
     <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=1"></script>
@@ -144,6 +243,12 @@
 
 <!-- ── Archive Module ── -->
 <script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=2"></script>
+
+<!-- ── Templates Module ── -->
+<script src="{{ url_for('static', filename='js/modules/templates.js') }}?v=1"></script>
+
+<!-- ── AI Agent Module ── -->
+<script src="{{ url_for('static', filename='js/modules/ai_agent.js') }}?v=1"></script>
 
 <!-- ── App Entry Point ── -->
 <script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>

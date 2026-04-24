@@ -6,6 +6,24 @@ from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
+
+def _load_local_env():
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if not os.path.exists(env_path):
+        return
+    with open(env_path, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+_load_local_env()
 
 # --- 1. إعداد محول الـ JSON للتاريخ ---
 class UpdatedJSONProvider(DefaultJSONProvider):
@@ -20,35 +38,73 @@ app = Flask(__name__,
             static_url_path='/static')
 
 app.json = UpdatedJSONProvider(app)
-app.debug = True
-CORS(app)
+app.debug = os.getenv("FLASK_ENV", "").lower() == "development"
+
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if allowed_origins:
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
+else:
+    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5000", "http://127.0.0.1:5000"]}})
 
 # --- 3. استيراد وتسجيل الـ Blueprints ---
-# ملاحظة: سيتم الاستيراد هنا لتجنب مشاكل المسارات في Vercel
-try:
-    from routes.auth import auth_bp
-    from routes.tasks import tasks_bp
-    from routes.writing import writing_bp
-    from routes.settings import settings_bp
-    from routes.archive import archive_bp
+# كل blueprint يتم استيراده بشكل مستقل لتجنب فشل الكل بسبب خطأ واحد
 
-    app.register_blueprint(auth_bp, url_prefix="/api")
-    app.register_blueprint(tasks_bp, url_prefix="/api")
-    app.register_blueprint(writing_bp, url_prefix="/api")
-    app.register_blueprint(settings_bp, url_prefix="/api")
-    app.register_blueprint(archive_bp, url_prefix="/api")
-except ImportError as e:
-    print(f"Error importing blueprints: {e}")
+_blueprints = [
+    ("routes.auth",      "auth_bp",      "/api"),
+    ("routes.tasks",     "tasks_bp",     "/api"),
+    ("routes.writing",   "writing_bp",   "/api"),
+    ("routes.settings",  "settings_bp",  "/api"),
+    ("routes.archive",   "archive_bp",   "/api"),
+    ("routes.templates", "templates_bp", "/api"),
+    ("routes.ai",        "ai_bp",        "/api"),
+]
+
+import importlib
+for module_path, bp_name, prefix in _blueprints:
+    try:
+        mod = importlib.import_module(module_path)
+        bp = getattr(mod, bp_name)
+        app.register_blueprint(bp, url_prefix=prefix)
+    except Exception as e:
+        print(f"⚠ Failed to load {module_path}: {e}")
 
 # --- 4. إعدادات الأمان وقاعدة البيانات ---
-app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "lifeos-secret-2024")
+jwt_secret = os.getenv("JWT_SECRET_KEY")
+if not jwt_secret:
+    raise RuntimeError(
+        "Missing JWT_SECRET_KEY. Set it in environment variables or in My_App/.env"
+    )
+app.config["JWT_SECRET_KEY"] = jwt_secret
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 60 * 60 * 24 * 7 
 jwt = JWTManager(app)
 
 # رابط قاعدة البيانات
-MONGO_URI = "mongodb+srv://engabdullah3334_db_user:Abdullah123@cluster0.ezzxrec.mongodb.net/LifeOS_Database?retryWrites=true&w=majority&appName=Cluster0"
-client = MongoClient(MONGO_URI)
-db = client['LifeOS_Database']
+MONGO_URI = os.getenv("MONGO_URI")
+if not MONGO_URI:
+    raise RuntimeError(
+        "Missing MONGO_URI. Set it in environment variables or in My_App/.env"
+    )
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "LifeOS_Database")
+
+def _connect_mongo(uri, db_name):
+    try:
+        mongo_client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        mongo_client.admin.command("ping")
+        return mongo_client[db_name]
+    except ServerSelectionTimeoutError as exc:
+        raise RuntimeError(
+            "Could not connect to local MongoDB at mongodb://localhost:27017. "
+            "Make sure MongoDB service is running on Windows. "
+            f"Original error: {exc}"
+        ) from exc
+    except PyMongoError as exc:
+        raise RuntimeError(f"MongoDB connection error: {exc}") from exc
+
+db = _connect_mongo(MONGO_URI, MONGO_DB_NAME)
 app.config["db"] = db
 
 # --- 5. المسارات الأساسية (SPA Routing) ---
@@ -56,6 +112,9 @@ app.config["db"] = db
 @app.route('/tasks')
 @app.route('/writing')
 @app.route('/archive')
+@app.route('/templates')
+@app.route('/ai')
+@app.route('/ai-chat')
 def index():
     return render_template('index.html')
 
@@ -74,6 +133,6 @@ app = app
 
 if __name__ == '__main__':
     print("========================================")
-    print("   LifeOS Running with MongoDB Cloud")
+    print("   LifeOS Running with Local MongoDB")
     print("========================================")
     app.run(host="0.0.0.0", port=5000)

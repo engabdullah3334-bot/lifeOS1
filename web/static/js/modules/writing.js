@@ -31,6 +31,41 @@
     return Array.isArray(tags) ? tags.join(', ') : '';
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function sanitizeRichHtml(html) {
+    const template = document.createElement('template');
+    template.innerHTML = String(html || '');
+
+    const blockedTags = ['script', 'style', 'iframe', 'object', 'embed', 'link', 'meta'];
+    blockedTags.forEach((tag) => {
+      template.content.querySelectorAll(tag).forEach((node) => node.remove());
+    });
+
+    template.content.querySelectorAll('*').forEach((el) => {
+      [...el.attributes].forEach((attr) => {
+        const name = attr.name.toLowerCase();
+        const value = attr.value || '';
+        if (name.startsWith('on')) {
+          el.removeAttribute(attr.name);
+          return;
+        }
+        if ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(value)) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
+
+    return template.innerHTML;
+  }
+
   const DEFAULT_FORMATTING = {
     formatBlock: 'p',
     fontSize: '3',
@@ -86,7 +121,7 @@
         <div class="project-item-content" data-project-id="${project.project_id}">
           <span class="icon">📁</span>
           <div class="project-info">
-            <div class="project-name">${project.name}</div>
+            <div class="project-name">${escapeHtml(project.name)}</div>
             <div class="project-meta">${notesCount} note${notesCount !== 1 ? 's' : ''}</div>
           </div>
         </div>
@@ -233,7 +268,17 @@
     if (!modal || !form) return;
 
     const projects = Object.values(window.state.projectsStructure).map(i => i.project).filter(p => p.project_id !== SYSTEM_PROJECT_ID);
-    moveSelect.innerHTML = '<option value="">Move to project...</option>' + projects.map(p => `<option value="${p.project_id}">${p.name}</option>`).join('');
+    moveSelect.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Move to project...';
+    moveSelect.appendChild(defaultOption);
+    projects.forEach((p) => {
+      const option = document.createElement('option');
+      option.value = p.project_id;
+      option.textContent = p.name || '';
+      moveSelect.appendChild(option);
+    });
 
     if (note) {
       document.getElementById('note-props-title').textContent = 'Edit Note';
@@ -412,15 +457,17 @@
 
       const status = note.status || 'draft';
       const statusLabel = status === 'in_review' ? 'Review' : status === 'complete' ? 'Done' : 'Draft';
-      const tagsHtml = tags.length ? `<div class="note-tags-row">${tags.slice(0, 3).map(t => `<span class="writing-tag-chip">${t}</span>`).join('')}</div>` : '';
+      const tagsHtml = tags.length
+        ? `<div class="note-tags-row">${tags.slice(0, 3).map(t => `<span class="writing-tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`
+        : '';
 
       li.innerHTML = `
         <div class="note-item-content" data-note-id="${note.note_id}">
           <span class="icon">📝</span>
           <div class="note-info">
             <div class="note-title-row">
-              <span class="note-title">${title}</span>
-              <span class="note-status-badge ${status}">${statusLabel}</span>
+              <span class="note-title">${escapeHtml(title)}</span>
+              <span class="note-status-badge ${escapeHtml(status)}">${escapeHtml(statusLabel)}</span>
             </div>
             ${tagsHtml}
           </div>
@@ -482,7 +529,7 @@
 
       if (!window.state.currentNote || window.state.currentNote.note_id !== note.note_id) return;
 
-      if (editor) editor.innerHTML = data.content || '<p>Start writing...</p>';
+      if (editor) editor.innerHTML = sanitizeRichHtml(data.content || '<p>Start writing...</p>');
       if (titleInput) titleInput.value = data.title || (data.filename || '').replace(/\.[^/.]+$/, "");
 
       restoreToolbarFromCache(window.state.currentNote);
@@ -552,7 +599,7 @@
     if (!window.state.currentNote) return;
 
     const editor = document.querySelector('.rich-editor');
-    const content = editor ? editor.innerHTML : '';
+    const content = editor ? sanitizeRichHtml(editor.innerHTML) : '';
     const titleInput = document.querySelector('.note-title-input');
     const title = titleInput ? titleInput.value.trim() : '';
     const saveStatus = document.querySelector('.save-status');

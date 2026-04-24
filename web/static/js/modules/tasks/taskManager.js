@@ -114,6 +114,26 @@ TS.taskMgr = {
     );
   },
 
+  // Duplicate a task
+  async duplicate(taskId) {
+    const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
+    if (!task) return;
+    try {
+      const newTask = { ...task };
+      delete newTask.id;
+      delete newTask.task_id;
+      delete newTask._id;
+      newTask.title = task.title + ' (Copy)';
+      newTask.status = 'pending';
+      await TS.api.createTask(newTask);
+      TS.notify.success(`"${task.title}" duplicated`);
+      TS.core.refresh();
+    } catch (e) {
+      TS.notify.error('Failed to duplicate task');
+      console.error(e);
+    }
+  },
+
   // Archive a task
   async archive(taskId) {
     const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));

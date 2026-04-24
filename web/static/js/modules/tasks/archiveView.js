@@ -11,8 +11,17 @@ TS.views.archive = {
     const container = document.getElementById('ts-archive-container');
     if (!container) return;
 
-    const archivedTasks = TS.state.archivedTasks || [];
+    let archivedTasks = TS.state.archivedTasks || [];
     const archivedProjects = TS.state.archivedProjects || [];
+
+    // Deduplicate recurring tasks in archive
+    const recMap = new Map();
+    archivedTasks.forEach(t => {
+      if (t.original_task_id) {
+        if (!recMap.has(t.original_task_id)) recMap.set(t.original_task_id, t);
+      }
+    });
+    archivedTasks = archivedTasks.filter(t => !t.original_task_id || recMap.get(t.original_task_id) === t);
     const isEmpty = archivedTasks.length === 0 && archivedProjects.length === 0;
 
     if (isEmpty) {

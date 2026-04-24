@@ -1,0 +1,77 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  LifeOS — Application Configuration
+#  ────────────────────────────────────────────────────────────────────────────
+#  All application settings, defaults, and constants in one place.
+#  Modify values here instead of editing Python files.
+# ══════════════════════════════════════════════════════════════════════════════
+
+app:
+  name: "LifeOS Integrated"
+  version: "1.0.0"
+
+modules:
+  tasks:
+    enabled: true
+    title: "Tasks"
+    icon: "✓"
+
+  writing:
+    enabled: true
+    title: "Writing Space"
+    icon: "✎"
+
+  archive:
+    enabled: true
+    title: "Archive"
+    icon: "📦"
+
+  templates:
+    enabled: true
+    title: "Templates"
+    icon: "📚"
+
+  ai:
+    enabled: true
+    title: "Assistant"
+    icon: "✦"
+
+ui:
+  dashboard_layout:
+    - "tasks_widget"
+    - "stats_widget"
+    - "quick_note_widget"
+  default_view: "dashboard"
+  show_welcome: true
+
+# Default values for user settings (used when no user settings exist in DB)
+settings_defaults:
+  theme: "dark"
+  taskSortBy: "order"
+  taskCurrentView: "projects"
+  taskCalMode: "month"
+  primaryColor: "#4d7cff"
+  backgroundType: "gradient"
+  backgroundColor: "#0b0f1a"
+  backgroundImage: null
+  showStatsBar: true
+  soundEnabled: true
+  uiOpacity: 1
+
+# Application-wide constants
+constants:
+  system_project_id: "system"
+  default_project_id: "general"
+  default_project_color: "#6366f1"
+  default_project_icon: "📁"
+
+# AI configuration
+ai:
+  provider_env_key: "AI_PROVIDER"
+  default_provider: "gemini"
+  default_mode: "planning"
+  action_tag_pattern: '\\[ACTION:([A-Z_]+)\\](.*?)\\[/ACTION\\]'
+
+# Legacy database paths (kept for reference)
+database:
+  shared_path: "database/tasks.json"
+  notes_path: "database/notes"

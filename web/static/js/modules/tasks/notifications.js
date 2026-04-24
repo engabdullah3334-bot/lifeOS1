@@ -15,17 +15,27 @@ TS.notify = {
 
     const el = document.createElement('div');
     el.className = `ts-toast ${type}`;
-    el.innerHTML = `
-      <span class="ts-toast-icon">${icons[type] || 'ℹ️'}</span>
-      <span class="ts-toast-msg">${msg}</span>
-      ${opts.undoFn ? `<button class="ts-toast-undo" id="ts-toast-undo-btn">Undo</button>` : ''}
-    `;
+
+    const iconEl = document.createElement('span');
+    iconEl.className = 'ts-toast-icon';
+    iconEl.textContent = icons[type] || 'ℹ️';
+
+    const msgEl = document.createElement('span');
+    msgEl.className = 'ts-toast-msg';
+    msgEl.textContent = String(msg ?? '');
+
+    el.appendChild(iconEl);
+    el.appendChild(msgEl);
 
     if (opts.undoFn) {
-      el.querySelector('#ts-toast-undo-btn').addEventListener('click', () => {
+      const undoBtn = document.createElement('button');
+      undoBtn.className = 'ts-toast-undo';
+      undoBtn.textContent = 'Undo';
+      undoBtn.addEventListener('click', () => {
         opts.undoFn();
         this._dismiss(el);
       });
+      el.appendChild(undoBtn);
     }
 
     container.appendChild(el);

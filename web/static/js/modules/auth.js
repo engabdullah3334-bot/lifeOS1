@@ -9,6 +9,13 @@
   const USER_KEY = 'lifeos_user';
   const API = window.API_URL || 'http://localhost:5000/api';
 
+  async function parseApiResponse(res) {
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = null; }
+    return { ok: res.ok, status: res.status, data, rawText: text };
+  }
+
   function getStoredAuth() {
     try {
       const raw = localStorage.getItem(AUTH_KEY);
@@ -95,15 +102,18 @@
           password: password
         })
       });
-      const data = await res.json();
+      const parsed = await parseApiResponse(res);
+      const data = parsed.data || {};
 
-      if (res.ok) {
+      if (parsed.ok) {
         if (window.LifeOSApi) window.LifeOSApi.setToken(data.token);
         setStoredAuth(data.user, remember);
         hideLogin();
         window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: data.user }));
       } else {
-        if (errorEl) errorEl.textContent = data.error || 'Login failed';
+        if (errorEl) {
+          errorEl.textContent = data.error || `Login failed (HTTP ${parsed.status})`;
+        }
       }
     } catch (err) {
       if (errorEl) errorEl.textContent = 'Server connection error. Please try again.';
@@ -147,17 +157,19 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), email: email.trim().toLowerCase(), password })
       });
-      const data = await res.json();
+      const parsedSignup = await parseApiResponse(res);
+      const data = parsedSignup.data || {};
 
-      if (res.ok) {
+      if (parsedSignup.ok) {
         // بعد التسجيل، تسجيل الدخول مباشرة
         const loginRes = await fetch(`${API}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ identifier: email.trim().toLowerCase(), password })
         });
-        const loginData = await loginRes.json();
-        if (loginRes.ok && window.LifeOSApi) {
+        const parsedLogin = await parseApiResponse(loginRes);
+        const loginData = parsedLogin.data || {};
+        if (parsedLogin.ok && window.LifeOSApi) {
           window.LifeOSApi.setToken(loginData.token);
           setStoredAuth(loginData.user, true);
           document.getElementById('login-screen')?.classList.remove('show-signup');
@@ -165,10 +177,12 @@
           window.dispatchEvent(new CustomEvent('lifeos:auth:login', { detail: loginData.user }));
         } else {
           document.getElementById('login-tab')?.click();
-          if (errorEl) errorEl.textContent = 'Account created. You can now login.';
+          if (errorEl) {
+            errorEl.textContent = loginData.error || 'Account created. You can now login.';
+          }
         }
       } else {
-        if (errorEl) errorEl.textContent = data.error || 'Signup failed';
+        if (errorEl) errorEl.textContent = data.error || `Signup failed (HTTP ${parsedSignup.status})`;
       }
     } catch (err) {
       if (errorEl) errorEl.textContent = 'Server connection error.';
