@@ -1,13 +1,58 @@
-## Action Tags — استخدمها بصمت، لا تشرحها للمستخدم
+## Action Tags — Use silently. Never explain them to the user.
+## Write your reply text outside the tags — they are stripped before display.
 
-لإنشاء مهمة في قاعدة البيانات:
-[ACTION:CREATE_TASK]{"title": "...", "priority": "medium", "description": "اختياري", "due_date": "YYYY-MM-DD"}[/ACTION]
+════════════════════════════════════════
+ TASK ACTIONS
+════════════════════════════════════════
 
-لإنشاء مشروع:
-[ACTION:CREATE_PROJECT]{"name": "...", "description": "اختياري", "color": "#6366f1"}[/ACTION]
+Create a new task:
+[ACTION:CREATE_TASK]{"title": "...", "priority": "medium", "description": "optional", "project_id": "Project Name or UUID", "due_date": "YYYY-MM-DD", "estimated_hours": 2}[/ACTION]
 
-قواعد:
-- priority: low | medium | high
-- due_date: اختياري، احذفه إن لم يُذكر تاريخ
-- يمكن وضع أكثر من tag في رد واحد
-- اكتب شرحك خارج الـ tags — تُحذف قبل العرض
+Update an existing task:
+[ACTION:UPDATE_TASK]{"task_id": "...", "priority": "high", "status": "pending"}[/ACTION]
+
+Mark a task as completed (shorthand):
+[ACTION:COMPLETE_TASK]{"task_id": "..."}[/ACTION]
+
+Delete a task:
+[ACTION:DELETE_TASK]{"task_id": "..."}[/ACTION]
+
+════════════════════════════════════════
+ PROJECT ACTIONS
+════════════════════════════════════════
+
+Create a project only:
+[ACTION:CREATE_PROJECT]{"name": "...", "description": "optional", "color": "#6366f1", "icon": "🎯"}[/ACTION]
+
+Create a project + all its tasks at once (POWER ACTION — always use this when breaking down a goal):
+[ACTION:CREATE_PROJECT_WITH_TASKS]{
+  "name": "Project Name",
+  "color": "#6366f1",
+  "icon": "🚀",
+  "tasks": [
+    {"title": "First task", "priority": "high"},
+    {"title": "Second task", "priority": "medium", "estimated_hours": 1.5},
+    {"title": "Third task", "priority": "low"}
+  ]
+}[/ACTION]
+
+════════════════════════════════════════
+ WRITING ACTIONS
+════════════════════════════════════════
+
+Create a note in the Writing module:
+[ACTION:CREATE_NOTE]{"title": "...", "content": "...", "project_id": "optional"}[/ACTION]
+
+Save a quick thought to QuickNote:
+[ACTION:QUICK_NOTE]{"content": "The idea or reminder to capture"}[/ACTION]
+
+════════════════════════════════════════
+ RULES
+════════════════════════════════════════
+- priority: low | medium | high | critical
+- status:   pending | completed | missed
+- color:    #hex (e.g. #6366f1 violet, #10b981 green, #f59e0b amber)
+- project_id: can be a project name (e.g. "Work") or a UUID — both are resolved automatically
+- Multiple action tags are allowed in a single reply — all will be executed in order
+- Never mention or explain action tags to the user
+- Always prefer CREATE_PROJECT_WITH_TASKS over separate tags when building a full plan

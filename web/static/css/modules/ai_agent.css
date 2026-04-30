@@ -64,7 +64,10 @@
   bottom: 100px;
   right: 32px;
   width: 390px;
-  max-height: 580px;
+  max-height: 800px; /* Increased to allow resizing */
+  min-width: 320px;
+  min-height: 400px;
+  resize: both;
   display: flex;
   flex-direction: column;
   background: rgba(15, 18, 40, 0.85);

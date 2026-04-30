@@ -1,162 +1,476 @@
-<h1 align="center">
-  <br>
-  LifeOS
-  <br>
-</h1>
+<div align="center">
 
-<h4 align="center">نظام إدارة إنتاجية متكامل يعمل بالذكاء الاصطناعي (AI-Powered Productivity System)</h4>
+# 🧠 LifeOS
 
-<p align="center">
-  <a href="#مقدمة-عن-المشروع-project-overview">المقدمة</a> •
-  <a href="#لماذا-هذه-الهيكلية-why-this-architecture">لماذا هذه الهيكلية؟</a> •
-  <a href="#الهيكلية-التقنية-system-architecture">الهيكلية التقنية</a> •
-  <a href="#المميزات-الرئيسية-key-features">المميزات</a> •
-  <a href="#هيكل-البيانات-data-schema">هيكل البيانات</a> •
-  <a href="#دليل-التثبيت-والتشغيل-installation--setup">التثبيت</a> •
-  <a href="#خريطة-الطريق-roadmap">خريطة الطريق</a>
-</p>
+### Personal Life Management System
+
+**Version 1.0** &nbsp;|&nbsp; Released 2026-04-26 &nbsp;|&nbsp; Python · Flask · MongoDB
+
+[![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.x-black?style=flat-square&logo=flask)](https://flask.palletsprojects.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=flat-square&logo=mongodb)](https://mongodb.com)
+[![AI](https://img.shields.io/badge/AI-Gemini%20%7C%20Grok%20%7C%20Ollama-purple?style=flat-square)](https://deepmind.google)
+
+</div>
 
 ---
 
-## مقدمة عن المشروع (Project Overview)
-
-**ما هو LifeOS؟**
-LifeOS هو أكثر من مجرد تطبيق لإدارة المهام؛ إنه **نظام تشغيل متكامل لحياتك** مدعوم بالذكاء الاصطناعي. يهدف المشروع إلى الجمع بين إدارة المهام والمشاريع، التدوين (Writing Space)، القوالب (Templates)، وتوجيهات الذكاء الاصطناعي في بيئة واحدة متناغمة ومرنة.
-
-**الفلسفة من وراء المشروع:**
-بدأ LifeOS كنظام تقليدي، لكننا انتقلنا مؤخراً من كتابة الكود المتشابك (Hardcoded Logic) إلى **Architecture مرن يعتمد على البيانات (Data-Driven Architecture)**. الفلسفة الأساسية هي بناء محرك (Engine) عام قادر على استيعاب أي ميزات أو أنماط ذكاء اصطناعي جديدة بمجرد تعديل ملفات التكوين (YAML) بدلاً من إعادة كتابة الشيفرة البرمجية. هذا التحول يجعل النظام قابلاً للتوسع بلا حدود (Infinitely Scalable).
+> 📚 **Documentation:**
+> &nbsp;[README](README.md) (you are here)&nbsp; · &nbsp;[Feature Flows](FEATURE_FLOWS.md) — step-by-step technical walkthrough of every feature&nbsp; · &nbsp;[Architecture Map](lifeos_map.md)
 
 ---
 
-## لماذا هذه الهيكلية؟ (Why this Architecture?)
+## 📖 What is LifeOS?
 
-> [!TIP]
-> **قوة النظام الجديد:** تكمن قوة LifeOS الحالية في فصل البيانات عن المنطق (Decoupling). 
+**LifeOS** is a full-stack personal productivity web application that combines task management, structured note-taking, and a context-aware AI assistant into a single platform.
 
-في الأنظمة التقليدية، إضافة ميزة جديدة تتطلب تغييرات في واجهة المستخدم، مسارات الخادم (Routes)، ونماذج قاعدة البيانات. في LifeOS، الهيكلية مبنية بحيث يكون الـ Core مجرد مشغل (Executor) للتعليمات المعرفة مسبقاً في ملفات الـ Configurations. 
-* **سرعة التطوير:** إضافة نمط AI جديد أو ميزة لا يتطلب سوى كتابة ملف YAML وبرومبت (Prompt).
-* **سهولة الصيانة:** المنطق البرمجي (Core) معزول تماماً، مما يقلل من الأخطاء العرضية (Bugs).
-* **قابلية التوسع:** النظام مستعد للتعامل مع المئات من القوالب وأنماط العمل دون زيادة تعقيد الكود.
+Instead of juggling multiple tools (Notion, Todoist, ChatGPT...) LifeOS gives you one unified workspace where the AI understands your context and can create tasks, projects, and notes directly in your database.
 
----
+### ✨ Core Features
 
-## الهيكلية التقنية (System Architecture)
-
-يعتمد LifeOS على **Decoupled Design** لفصل المنطق (Logic) عن البيانات (Data) والتعليمات (Prompts). إليك تفاصيل الهيكلية:
-
-| المجلد (Directory) | الوظيفة (Function) |
-| --- | --- |
-| 📁 `/configs` | يحتوي على ملفات `YAML` التي تعرّف بنية البيانات (Schemas)، واجهات المستخدم المطلوبة، والأكشنز (Actions). |
-| 📁 `/prompts` | يحتوي على نصوص التوجيه (System Prompts) الخاصة بكل نمط من أنماط الذكاء الاصطناعي لتسهيل تعديلها دون المساس بالكود. |
-| 📁 `/core` | القلب النابض للنظام. يحتوي على محركات معالجة البيانات مثل `Schema Factory` و `Action Registry`. لا يحتوي على أي Business Logic صلب (Hardcoded). |
-| 📁 `/api` | يدير الاتصال مع مزودي الذكاء الاصطناعي (مثل Gemini, Grok, Ollama) وتجريد (Abstract) الردود لتناسب النظام. |
-
-### المكونات الأساسية:
-- **Schema Factory:** يقوم بقراءة ملفات الـ YAML وتحويلها ديناميكياً إلى نماذج بيانات (Models) للتحقق منها ومعالجتها.
-- **Action Registry:** نظام تسجيل يسمح بربط الـ Actions المعرفة في الـ Configs بوظائف (Functions) داخل النظام ليتم تنفيذها عند الطلب.
+| Feature | Description |
+|---------|-------------|
+| **✅ Tasks & Projects** | Full task management with projects, priorities, recurrence, and drag-and-drop ordering |
+| **✍️ Writing Space** | Note editor organized into projects, with quick-capture support |
+| **🤖 AI Agent** | Context-aware assistant that writes directly to your database via Action tags |
+| **📋 Templates** | Ready-made templates for common projects and workflows |
+| **🗄️ Archive** | Archive tasks and notes with full restore capability |
+| **📊 Dashboard** | Daily focus view with statistics widgets |
+| **⚙️ Settings** | Full UI customization — themes, colors, layout preferences |
 
 ---
 
-## المميزات الرئيسية (Key Features)
+## 🏗️ Architecture Overview
 
-- [x] **نظام المهام والمشاريع الديناميكي:** إدارة مهام متقدمة مع دعم التكرار (Recurrence) وربط المهام بالمشاريع.
-- [x] **تعدد أنماط الذكاء الاصطناعي (AI Personas):** 
-  - 🧠 *Planning:* للتخطيط الاستراتيجي.
-  - 🎯 *Coaching:* للتوجيه وتحسين الإنتاجية.
-  - ⚡ *Productivity:* للمساعدة السريعة في إنجاز المهام.
-- [x] **دعم أكثر من مزود AI:** إمكانية التبديل بين نماذج متعددة (Gemini, Grok, Ollama) بسهولة.
-- [x] **نظام القوالب (Templates):** إنشاء واستيراد قوالب جاهزة للمهام والمشاريع بنقرة واحدة.
-- [x] **مساحة التدوين (Writing Space):** محرر متقدم لكتابة الأفكار وتخزينها بتنظيم عالي.
-
----
-
-## هيكل البيانات (Data Schema)
-
-في LifeOS، لا يتم تعريف الجداول أو الكوليكشنز (Collections) داخل كود بايثون بشكل صلب. بدلاً من ذلك، نستخدم ملفات `YAML` لتعريف الحقول مما يضمن مرونة فائقة. 
-
-```yaml
-# مثال مبسط على تعريف كائن في LifeOS
-Task:
-  fields:
-    title:
-      type: string
-      required: true
-    status:
-      type: enum
-      options: [pending, completed]
-    is_recurring:
-      type: boolean
 ```
-يقوم الـ **Schema Factory** بقراءة هذا الملف وتوليد القواعد المطلوبة للـ Validation والتخزين في MongoDB.
+Browser (SPA)
+    ↕  HTTP + JWT
+Flask Server (server.py)
+    ↕  Blueprint call
+routes/*.py          <- HTTP layer only — no business logic
+    ↕  service(db, user_id, data)
+core/*.py            <- Pure business logic — no Flask, no HTTP
+    ↕  CRUD
+MongoDB              <- Single database
+```
+
+### Design Principles
+
+| Principle | How it's applied |
+|-----------|-----------------|
+| **Separation of Concerns** | `routes/` never touches MongoDB — `core/` never touches Flask |
+| **Config-Driven** | No hardcoded values in Python — everything lives in YAML |
+| **Action Registry** | AI communicates with the DB only through registered, validated executors |
+| **Fail-Safe AI** | Provider waterfall (Gemini → Grok → Ollama) — never a hard crash |
+| **Smart Defaults** | `schema_factory` auto-fills missing fields from `schemas.yaml` |
 
 ---
 
-## دليل التثبيت والتشغيل (Installation & Setup)
+## 🚀 Getting Started
 
-لتشغيل المشروع محلياً، اتبع الخطوات التالية:
+### Prerequisites
 
-### 1. إعداد البيئة الافتراضية (Virtual Environment)
+- Python 3.11+
+- MongoDB (local or Atlas)
+- An API key for at least one AI provider (Gemini / Grok) **or** Ollama running locally
+
+### 1. Clone and install
+
 ```bash
-# إنشاء بيئة افتراضية
+git clone <repo-url>
+cd My_App
+
+# Create virtual environment
 python -m venv .venv
 
-# تفعيل البيئة (Windows)
+# Activate
+# Windows:
 .venv\Scripts\activate
-# تفعيل البيئة (Mac/Linux)
+# Linux / macOS:
 source .venv/bin/activate
-```
 
-### 2. تثبيت المتطلبات (Requirements)
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. إعداد متغيرات البيئة (Environment Variables)
-قم بإنشاء ملف `.env` في المسار الرئيسي للمشروع وأضف المفاتيح التالية:
+### 2. Configure environment variables
+
+Create a `.env` file inside the `My_App/` directory:
+
 ```env
-# MongoDB Atlas Connection String
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/lifeos
-# AI Providers API Keys
-GEMINI_API_KEY=your_gemini_key
-GROK_API_KEY=your_grok_key
+# ── Required ─────────────────────────────────
+MONGO_URI=mongodb://localhost:27017
+JWT_SECRET_KEY=replace-this-with-a-long-random-secret
+
+# ── Optional ─────────────────────────────────
+MONGO_DB_NAME=LifeOS_Database
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your-gemini-api-key
+GROK_API_KEY=your-grok-api-key
+FLASK_ENV=development
+CORS_ORIGINS=http://localhost:5000
 ```
 
-### 4. تشغيل الخادم (Run Server)
+> **Warning:** Never commit `.env` to Git. It is already listed in `.gitignore`.
+
+### 3. Start the server
+
 ```bash
+# Make sure MongoDB is running first (Windows service):
+# net start MongoDB
+
 python server.py
 ```
-> [!NOTE]
-> تأكد من إضافة عنوان الـ IP الخاص بك إلى الـ Network Access في **MongoDB Atlas** لتتمكن من الاتصال بقاعدة البيانات محلياً.
 
----
+Open your browser at: **http://localhost:5000**
 
-## خريطة الطريق (Roadmap)
+### 4. Verify everything is working
 
-نحن نطمح لجعل LifeOS المساعد الشخصي الأذكى. خططنا المستقبلية تشمل:
+```
+GET http://localhost:5000/api/status
+```
 
-- 🌐 **ربط بـ APIs خارجية:** التكامل مع Google Calendar, Notion, وغيرها.
-- 👥 **نظام مستخدمين متطور (Multi-tenant):** دعم أكثر من مستخدم مع نظام صلاحيات ومساحات عمل منفصلة.
-- 🧠 **ذاكرة طويلة الأمد للـ AI (Long-term Memory):** تمكين الذكاء الاصطناعي من تذكر تفضيلاتك وتاريخ مهامك (عبر RAG أو Vector Databases).
-
----
-
-## 🛠 ملاحظات تقنية للمطورين
-
-الهيكلية الجديدة صُممت لتكون صديقة للمطورين (Developer-Friendly). 
-
-**لإضافة "أكشن" جديد أو "نمط AI" جديد دون تعديل الكود الأساسي:**
-1. **لإضافة نمط AI:** قم بإنشاء ملف نصي بداخل المجلد `/prompts` (مثل `developer_coach.txt`) يحتوي على توجيهات النظام (System Prompt). سيتم قراءته ديناميكياً وعرضه في واجهة المستخدم.
-2. **لإضافة أكشن (Action):** قم بتعريف الأكشن في ملف الـ `YAML` بداخل مجلد `/configs` واربطه باسم (Identifier). ثم استخدم الـ `Action Registry` في كود الخادم لربط هذا الاسم بوظيفة (Function) محددة.
-
-```python
-# مثال لتسجيل أكشن جديد باستخدام Action Registry
-from core.action_registry import action_registry
-
-@action_registry.register('generate_report')
-def generate_weekly_report(data):
-    # Logic goes here
-    pass
+Expected response:
+```json
+{
+  "db_ok": true,
+  "db_msg": "Connected to LifeOS_Database",
+  "ai_provider": "gemini",
+  "blueprints": ["auth", "tasks", "writing", "settings", "archive", "templates", "ai", "dashboard"],
+  "action_registry": {
+    "count": 8,
+    "actions": [
+      {"name": "COMPLETE_TASK",              "func": "complete_task"},
+      {"name": "CREATE_NOTE",               "func": "create_note"},
+      {"name": "CREATE_PROJECT",            "func": "create_project"},
+      {"name": "CREATE_PROJECT_WITH_TASKS", "func": "create_project_with_tasks"},
+      {"name": "CREATE_TASK",               "func": "create_task"},
+      {"name": "DELETE_TASK",               "func": "delete_task"},
+      {"name": "QUICK_NOTE",                "func": "quick_note"},
+      {"name": "UPDATE_TASK",               "func": "update_task"}
+    ]
+  }
+}
 ```
 
 ---
-<p align="center">صُنع بشغف لزيادة الإنتاجية وبناء المستقبل المشرق 🚀</p>
+
+## 📡 API Reference
+
+> All endpoints except `/api/auth/*` require a JWT token:
+> `Authorization: Bearer <token>`
+
+### 🔐 Auth
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/signup` | Register a new account |
+| `POST` | `/api/auth/login` | Log in |
+| `GET`  | `/api/auth/me` | Get current user info |
+
+```json
+// POST /api/auth/signup
+{
+  "username": "ahmed",
+  "email": "ahmed@example.com",
+  "password": "securepass123"
+}
+
+// POST /api/auth/login
+{
+  "identifier": "ahmed@example.com",
+  "password": "securepass123"
+}
+```
+
+---
+
+### ✅ Tasks
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`    | `/api/tasks`          | Fetch all tasks (recurring tasks are expanded) |
+| `POST`   | `/api/tasks`          | Create a task |
+| `PUT`    | `/api/tasks/:id`      | Update a task |
+| `DELETE` | `/api/tasks/:id`      | Delete a task |
+| `POST`   | `/api/tasks/reorder`  | Reorder tasks |
+
+**Query parameters (GET):**
+- `?archived=true` — archived tasks
+- `?project_id=uuid` — tasks for a specific project
+- `?status=pending` — filter by status
+- `?search=keyword` — search title and description
+
+**Task fields:**
+```json
+{
+  "title": "Task name",
+  "description": "Optional description",
+  "priority": "low | medium | high | critical",
+  "status": "pending | completed | missed",
+  "project_id": "uuid-or-general",
+  "recurrence": "none | daily | weekly | monthly",
+  "recurrence_pattern": ["Mon", "Wed", "Fri"],
+  "execution_day": "2026-04-26",
+  "estimated_hours": 2.5,
+  "tags": ["tag1", "tag2"],
+  "axis_tag": "university | work | sports | goal | learning | entertainment"
+}
+```
+
+---
+
+### 📁 Projects
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`    | `/api/projects`          | List all projects (with task count + progress) |
+| `POST`   | `/api/projects`          | Create a project |
+| `PUT`    | `/api/projects/:id`      | Update a project |
+| `DELETE` | `/api/projects/:id`      | Delete a project (tasks move to "general") |
+| `POST`   | `/api/projects/reorder`  | Reorder projects |
+
+---
+
+### ✍️ Writing
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`    | `/api/notes/structure`                    | Full structure: all projects + their notes |
+| `GET`    | `/api/writing/projects`                   | List writing projects |
+| `POST`   | `/api/writing/projects`                   | Create a writing project |
+| `PUT`    | `/api/writing/projects/:id`               | Update a writing project (name, description, tags) |
+| `DELETE` | `/api/writing/projects/:id`               | Delete a project (cascade-deletes all notes) |
+| `PUT`    | `/api/writing/projects/:id/archive`       | Archive / restore a writing project |
+| `PUT`    | `/api/writing/projects/order`             | Reorder writing projects |
+| `GET`    | `/api/notes`                              | List notes (`?project_id=` `?status=` `?search=` `?archived=`) |
+| `GET`    | `/api/notes/search?q=keyword`             | **NEW** Global full-text search across all notes |
+| `POST`   | `/api/notes`                              | Create a note |
+| `GET`    | `/api/notes/:id`                          | Get a note (includes `stats.word_count`, `stats.read_time_min`) |
+| `PUT`    | `/api/notes/:id`                          | Update note (content, title, status, tags, pinned, is_favorite) |
+| `DELETE` | `/api/notes/:id`                          | Delete a note (permanent) |
+| `POST`   | `/api/notes/:id/duplicate`                | **NEW** Clone note within its project |
+| `PUT`    | `/api/notes/:id/move`                     | Move a note to a different project |
+| `PUT`    | `/api/notes/:id/archive`                  | Archive / restore a note |
+| `PUT`    | `/api/notes/order`                        | Reorder notes within a project |
+| `POST`   | `/api/notes/quick`                        | Append to QuickNote.txt |
+| `GET`    | `/api/notes/content`                      | Read note content by filename (legacy) |
+
+---
+
+### 🤖 AI Agent
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/api/ai/modes` | List available AI modes with metadata |
+| `POST` | `/api/ai/chat`  | Send a message and receive a reply + executed actions |
+
+**Request:**
+```json
+{
+  "mode": "planning | tasks | coaching | productivity",
+  "messages": [
+    {"role": "user",      "content": "Help me plan my study week"},
+    {"role": "assistant", "content": "..."},
+    {"role": "user",      "content": "Add a math review task for tomorrow"}
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "reply": "Done! I've added a math review task for tomorrow ✅",
+  "actions_taken": [
+    {
+      "type":     "task_created",
+      "id":       "uuid",
+      "title":    "Math Review",
+      "priority": "medium",
+      "success":  true
+    }
+  ]
+}
+```
+
+---
+
+### 📋 Templates
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/api/templates`        | List templates (optional `?category=tasks`) |
+| `POST` | `/api/templates/import` | Import a template `{"template_id": "..."}` |
+
+---
+
+### ⚙️ Settings
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/settings` | Get user settings |
+| `PUT` | `/api/settings` | Update settings |
+
+```json
+{
+  "theme": "dark | light",
+  "primaryColor": "#4d7cff",
+  "backgroundType": "gradient | solid | image",
+  "taskSortBy": "order | priority | due_date",
+  "showStatsBar": true,
+  "soundEnabled": true,
+  "uiOpacity": 1
+}
+```
+
+---
+
+## 🤖 How the AI Action System Works
+
+When you chat with the AI and it decides to create a task, it embeds a special tag in its response:
+
+```
+[ACTION:CREATE_TASK]{"title": "Math Review", "priority": "high"}[/ACTION]
+```
+
+The server automatically detects these tags, strips them from the reply, and executes them against MongoDB. The user only sees the clean conversational text.
+
+### Available Actions
+
+| Action | Example |
+|--------|---------|
+| `CREATE_TASK` | `{"title": "...", "priority": "high", "project_id": "Work"}` |
+| `UPDATE_TASK` | `{"task_id": "uuid", "status": "completed"}` |
+| `COMPLETE_TASK` | `{"task_id": "uuid"}` |
+| `DELETE_TASK` | `{"task_id": "uuid"}` |
+| `CREATE_PROJECT` | `{"name": "...", "color": "#6366f1", "icon": "🎯"}` |
+| `CREATE_PROJECT_WITH_TASKS` ⚡ | `{"name": "...", "tasks": [{"title": "..."}, ...]}` |
+| `CREATE_NOTE` | `{"title": "...", "content": "..."}` |
+| `QUICK_NOTE` | `{"content": "Idea to capture"}` |
+
+> **Smart feature:** `"project_id": "Work"` (a name) is automatically resolved to the project UUID.
+
+---
+
+## ➕ Adding a New Action
+
+Adding a new AI action takes 2 steps — no changes to `registry.py` needed.
+
+**Step 1 — Add the executor to `core/actions.py`:**
+```python
+@register_action("MY_ACTION")
+def my_action(db, user_id: str, args: dict) -> dict:
+    """What this action does."""
+    # your logic here
+    return {"type": "my_action_done", "id": "..."}
+```
+
+**Step 2 — Add instructions to `prompts/action_instructions.txt`:**
+```
+Do something:
+[ACTION:MY_ACTION]{"field": "value"}[/ACTION]
+```
+
+That's it. The action is live on the next server start.
+
+---
+
+## 🛠️ Development Guide
+
+### Run in development mode
+
+```bash
+# Add to .env:
+FLASK_ENV=development
+
+# This enables:
+# - Debug-level logging
+# - Detailed error traces in console
+python server.py
+```
+
+### Adding a new database entity
+
+No Python code changes needed — just add to `configs/schemas.yaml`:
+```yaml
+my_entity:
+  collection: "my_collection"
+  id_field: "entity_id"
+  fields:
+    entity_id:
+      type: "uuid"
+      auto: true
+    user_id:
+      type: "string"
+      required: true
+    name:
+      type: "string"
+      required: true
+      default: "Unnamed"
+```
+
+Then use it in Python:
+```python
+from core.schema_factory import build_document
+doc = build_document("my_entity", {"name": "Test"}, db=db, user_id=user_id)
+```
+
+### Recommended MongoDB indexes
+
+```javascript
+db.tasks.createIndex({ user_id: 1, order: 1 })
+db.tasks.createIndex({ user_id: 1, project_id: 1 })
+db.tasks.createIndex({ user_id: 1, status: 1 })
+db.notes.createIndex({ user_id: 1, project_id: 1 })
+db.notes.createIndex({ user_id: 1, last_updated: -1 })
+db.projects.createIndex({ user_id: 1, order: 1 })
+```
+
+---
+
+## 🔒 Security
+
+| Area | Approach |
+|------|----------|
+| Authentication | JWT tokens with 7-day expiry |
+| Passwords | `pbkdf2:sha256` hashing via Werkzeug |
+| CORS | Explicit origins whitelist |
+| Data isolation | Every DB query includes `user_id` — users cannot access each other's data |
+| Secrets | Stored in `.env` only — excluded from Git |
+
+---
+
+## 📦 Dependencies (requirements.txt)
+
+```
+Flask>=3.0.0
+flask-cors>=4.0.0
+flask-jwt-extended>=4.6.0
+pymongo>=4.6.0
+pyyaml>=6.0.1
+werkzeug>=3.0.0
+google-generativeai>=0.8.0
+requests>=2.31.0
+```
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] **V1.2** — Daily Planner with time blocking
+- [ ] **V1.3** — Data export (PDF, Markdown)
+- [ ] **V1.4** — AI Insights — weekly productivity analysis
+- [ ] **V1.5** — Collaboration — shared projects
+- [ ] **V2.0** — Mobile app (React Native)
+
+---
+
+## 📄 License
+
+Private project — all rights reserved.
+
+---
+
+<div align="center">
+  Built with ❤️ — LifeOS V1.0 — 2026
+</div>

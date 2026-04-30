@@ -60,14 +60,44 @@
 
   async function saveToApi(snapshot) {
     const token = window.LifeOSApi?.getToken?.();
-    if (!token) return;
+    if (!token) {
+      console.warn('Settings: no auth token — save skipped');
+      return;
+    }
     try {
-      await fetch(API_BASE + '/settings', {
+      const res = await fetch(API_BASE + '/settings', {
         method: 'PUT',
         headers: getAuthHeaders(true),
         body: JSON.stringify(snapshot)
       });
-    } catch (e) { console.warn('Settings API save error:', e); }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Settings save failed:', res.status, err);
+        _showToast('⚠ فشل حفظ الإعدادات: ' + (err.error || res.status), 'error');
+      }
+    } catch (e) {
+      console.warn('Settings API save error:', e);
+      _showToast('⚠ تعذّر الاتصال بالخادم', 'error');
+    }
+  }
+
+  function _showToast(msg, type = 'info') {
+    // Use app's notification system if available, fallback to console
+    if (window.TS?.notifications?.show) {
+      window.TS.notifications.show(msg, type);
+      return;
+    }
+    // Simple fallback toast
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = [
+      'position:fixed', 'bottom:24px', 'right:24px', 'z-index:99999',
+      'background:#1e2235', 'color:#f2f4ff', 'border:1px solid rgba(255,255,255,0.12)',
+      'border-radius:10px', 'padding:12px 20px', 'font-size:13px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.4)', 'transition:opacity 0.3s',
+    ].join(';');
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 350); }, 3000);
   }
 
   function save() {
@@ -117,8 +147,8 @@
     // UI Opacity (cards, panels)
     root.style.setProperty('--ui-opacity', String(current.uiOpacity));
 
-    // Show/hide stats bar
-    const statsCard = document.querySelector('.dashboard-status-card');
+    // Show/hide stats bar (header card)
+    const statsCard = document.querySelector('.dash-header');
     if (statsCard) {
       statsCard.style.display = current.showStatsBar ? '' : 'none';
     }

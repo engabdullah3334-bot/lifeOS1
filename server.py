@@ -1,5 +1,5 @@
 import os
-import json
+import logging
 from datetime import datetime
 from flask import Flask, render_template, jsonify
 from flask.json.provider import DefaultJSONProvider
@@ -7,6 +7,9 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
+
+# إيقاف رسائل الـ DEBUG الخاصة بـ PyMongo فقط
+logging.getLogger('pymongo').setLevel(logging.WARNING)
 
 def _load_local_env():
     env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -40,6 +43,9 @@ app = Flask(__name__,
 app.json = UpdatedJSONProvider(app)
 app.debug = os.getenv("FLASK_ENV", "").lower() == "development"
 
+if app.debug:
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)s %(name)s: %(message)s")
+
 allowed_origins = [
     origin.strip()
     for origin in os.getenv("CORS_ORIGINS", "").split(",")
@@ -61,16 +67,20 @@ _blueprints = [
     ("routes.archive",   "archive_bp",   "/api"),
     ("routes.templates", "templates_bp", "/api"),
     ("routes.ai",        "ai_bp",        "/api"),
+    ("routes.dashboard", "dashboard_bp", "/api"),
 ]
 
 import importlib
+import traceback as _tb
 for module_path, bp_name, prefix in _blueprints:
     try:
         mod = importlib.import_module(module_path)
         bp = getattr(mod, bp_name)
         app.register_blueprint(bp, url_prefix=prefix)
+        print(f"✓ Loaded {module_path}")
     except Exception as e:
-        print(f"⚠ Failed to load {module_path}: {e}")
+        print(f"✗ Failed to load {module_path}: {e}")
+        _tb.print_exc()
 
 # --- 4. إعدادات الأمان وقاعدة البيانات ---
 jwt_secret = os.getenv("JWT_SECRET_KEY")
@@ -127,9 +137,40 @@ def test_db():
     except Exception as e:
         return jsonify({"status": "Error", "message": str(e)})
 
-# --- 6. نقطة الدخول لـ Vercel ---
-# هذا المتغير هو ما يبحث عنه Vercel لتشغيل التطبيق
-app = app
+
+@app.route('/api/status')
+def api_status():
+    """Dev diagnostic endpoint — shows DB, JWT, blueprint, and action registry status."""
+    import sys
+    from core.registry import get_registry_stats
+
+    blueprints     = list(app.blueprints.keys())
+    db_ok          = False
+    db_msg         = ""
+    registry_stats = {}
+
+    try:
+        db.command("ping")
+        db_ok  = True
+        db_msg = "Connected to " + MONGO_DB_NAME
+    except Exception as e:
+        db_msg = str(e)
+
+    try:
+        registry_stats = get_registry_stats()
+    except Exception:
+        registry_stats = {"count": 0, "actions": [], "error": "registry not loaded"}
+
+    return jsonify({
+        "python":          sys.version,
+        "flask_env":       os.getenv("FLASK_ENV", "not set"),
+        "db_ok":           db_ok,
+        "db_msg":          db_msg,
+        "blueprints":      blueprints,
+        "jwt_ok":          bool(app.config.get("JWT_SECRET_KEY")),
+        "ai_provider":     os.getenv("AI_PROVIDER", "not set"),
+        "action_registry": registry_stats,
+    })
 
 if __name__ == '__main__':
     print("========================================")

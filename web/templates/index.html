@@ -5,32 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Life Manager</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            bg: '#0b0f1a',
-                            surface: '#1a1f35',
-                            border: '#2d3348',
-                            text: '#f2f4ff',
-                            muted: '#a1a6c8'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+
     
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
     
     <!-- Feature CSS Modules -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/dashboard.css') }}?v=5">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/dashboard.css') }}?v=6">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=4">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=5">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
@@ -211,47 +192,55 @@
     {% include 'components/ai_widget.html' %}
 
     <!-- ── API Helper & Auth (must load first) ── -->
-    <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';</script>
-    <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=1"></script>
-    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=2"></script>
+    <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';
+    // User info populated after login by auth.js
+    try {
+      const _raw = localStorage.getItem('lifeos_user');
+      window.__lifeosUser = _raw ? JSON.parse(_raw) : null;
+      // If it parsed to a plain string (legacy format), discard it
+      if (typeof window.__lifeosUser === 'string') window.__lifeosUser = null;
+    } catch(e) { window.__lifeosUser = null; }
+    </script>
+    <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=10"></script>
+    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=10"></script>
 
     <!-- ── Legacy State (for writing module) ── -->
-    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=10"></script>
 
 <!-- ── Task System Modules (load in dependency order) ── -->
-<script src="{{ url_for('static', filename='js/modules/tasks/state.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/api.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/notifications.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/theme.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/taskManager.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/modal.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/dragDrop.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/projectsView.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/dailyView.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/monthlyView.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/archiveView.js') }}?v=8"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/index.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/state.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/api.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/notifications.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/theme.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/taskManager.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/modal.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/dragDrop.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/projectsView.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/dailyView.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/monthlyView.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/archiveView.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/index.js') }}?v=10"></script>
 
 <!-- ── Writing Module ── -->
-<script src="{{ url_for('static', filename='js/modules/writing.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/modules/writing.js') }}?v=10"></script>
 
 <!-- ── Dashboard Module ── -->
-<script src="{{ url_for('static', filename='js/modules/dashboard.js') }}?v=5"></script>
+<script src="{{ url_for('static', filename='js/modules/dashboard.js') }}?v=10"></script>
 
 <!-- ── Settings Module ── -->
-<script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=1"></script>
+<script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=10"></script>
 
 <!-- ── Archive Module ── -->
-<script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=10"></script>
 
 <!-- ── Templates Module ── -->
-<script src="{{ url_for('static', filename='js/modules/templates.js') }}?v=1"></script>
+<script src="{{ url_for('static', filename='js/modules/templates.js') }}?v=10"></script>
 
 <!-- ── AI Agent Module ── -->
-<script src="{{ url_for('static', filename='js/modules/ai_agent.js') }}?v=1"></script>
+<script src="{{ url_for('static', filename='js/modules/ai_agent.js') }}?v=10"></script>
 
 <!-- ── App Entry Point ── -->
-<script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}?v=10"></script>
 
     <script>
         // Show dashboard by default

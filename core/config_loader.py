@@ -13,6 +13,7 @@ Usage:
 import os
 import yaml
 import logging
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,8 @@ _CONFIGS_DIR  = os.path.join(_PROJECT_ROOT, "configs")
 _PROMPTS_DIR  = os.path.join(_PROJECT_ROOT, "prompts")
 
 # ── Caches ────────────────────────────────────────────────────────────────────
-_yaml_cache: dict[str, dict] = {}
-_prompt_cache: dict[str, str] = {}
+_yaml_cache: Dict[str, dict] = {}
+_prompt_cache: Dict[str, str] = {}
 
 
 def load_yaml(filename: str) -> dict:

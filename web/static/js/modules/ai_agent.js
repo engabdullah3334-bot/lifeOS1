@@ -77,8 +77,15 @@
 
     if (!trigger || !widget) return;
 
+    // ── Draggable Trigger ──────────────────────────────────────────────
+    makeFABDraggable(trigger);
+
     // ── Toggle open/close ──────────────────────────────────────────────
-    trigger.addEventListener('click', () => {
+    trigger.addEventListener('click', (e) => {
+      if (trigger.dataset.dragged === 'true') {
+         e.preventDefault();
+         return;
+      }
       state.widgetOpen ? closeWidget() : openWidget();
     });
 
@@ -121,6 +128,73 @@
     sendBtn && sendBtn.addEventListener('click', () => {
       if (!state.widgetLoading && input.value.trim()) sendWidgetMessage();
     });
+
+    // ── Resize Observer for Maximizing ─────────────────────────────────
+    if (typeof ResizeObserver !== 'undefined' && widget) {
+      const ro = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          // If the user drags it large enough, auto-maximize to the full chat page
+          if (entry.contentRect.width > 500 || entry.contentRect.height > 600) {
+             if (state.widgetOpen) {
+               closeWidget();
+               if (window.loadView) window.loadView('ai-chat');
+               // Reset size for next time
+               widget.style.width = '';
+               widget.style.height = '';
+             }
+          }
+        }
+      });
+      ro.observe(widget);
+    }
+  }
+
+  function makeFABDraggable(el) {
+    if (!el) return;
+    let isDragging = false;
+    let startX, startY, initialRight, initialBottom;
+
+    el.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // Only left click
+      isDragging = false;
+      const rect = el.getBoundingClientRect();
+      initialRight = window.innerWidth - rect.right;
+      initialBottom = window.innerHeight - rect.bottom;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    function onMouseMove(e) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          isDragging = true;
+          // Temporarily disable transition so dragging is smooth
+          el.style.transition = 'none';
+      }
+
+      if (isDragging) {
+          let newRight = initialRight - dx;
+          let newBottom = initialBottom - dy;
+          el.style.right = `${newRight}px`;
+          el.style.bottom = `${newBottom}px`;
+      }
+    }
+
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      if (isDragging) {
+        el.dataset.dragged = 'true';
+        setTimeout(() => el.dataset.dragged = 'false', 150);
+        // Restore transition
+        el.style.transition = '';
+      }
+    }
   }
 
   function openWidget() {

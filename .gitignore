@@ -1,4 +1,5 @@
 /.venv
 /run_lifeos.bat
 /.env
-
+/deploy.bat
+/start-lifeos.bat

@@ -14,7 +14,7 @@ modes:
     icon: "🗺️"
     description: "Break down goals into projects & tasks"
     placeholder: "Describe a goal and I'll create a plan..."
-    prompt_file: "planning.txt"
+    prompt_file: "D:/programming/Life_OS/My_App/prompts/planning.txt"
     actions_enabled: true
 
   - id: "tasks"
@@ -22,7 +22,7 @@ modes:
     icon: "✓"
     description: "Create and manage tasks with AI"
     placeholder: "Tell me what you need to do..."
-    prompt_file: "tasks.txt"
+    prompt_file: "D:/programming/Life_OS/My_App/prompts/tasks.txt"
     actions_enabled: true
 
   - id: "coaching"
@@ -30,7 +30,7 @@ modes:
     icon: "🎯"
     description: "Productivity coaching & accountability"
     placeholder: "What's on your mind today?"
-    prompt_file: "coaching.txt"
+    prompt_file: "D:/programming/Life_OS/My_App/prompts/coaching.txt"
     actions_enabled: false
 
   - id: "productivity"
@@ -38,5 +38,5 @@ modes:
     icon: "⚡"
     description: "Optimise your workflow & systems"
     placeholder: "Ask about GTD, time-blocking, focus techniques..."
-    prompt_file: "productivity.txt"
+    prompt_file: "D:/programming/Life_OS/My_App/prompts/productivity.txt"
     actions_enabled: true

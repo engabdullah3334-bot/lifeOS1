@@ -70,7 +70,7 @@ window.Templates = (() => {
         if (!grid) return;
 
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('lifeos_token');
             const res = await fetch(`${window.API_URL}/templates`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -204,7 +204,7 @@ window.Templates = (() => {
         _refreshCardButton(templateId, true);
 
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('lifeos_token');
             const res = await fetch(`${window.API_URL}/templates/import`, {
                 method:  'POST',
                 headers: {

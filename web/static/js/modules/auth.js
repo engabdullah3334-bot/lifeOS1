@@ -36,7 +36,9 @@
     };
     localStorage.setItem(AUTH_KEY, JSON.stringify(data));
     localStorage.setItem(REMEMBER_KEY, remember ? '1' : '0');
-    localStorage.setItem(USER_KEY, user.username);
+    // Save full user object as JSON for other modules
+    localStorage.setItem(USER_KEY, JSON.stringify(data));
+    window.__lifeosUser = data;
   }
 
   function clearAuth() {
@@ -194,11 +196,25 @@
 
   function restoreRememberMe() {
     const remember = localStorage.getItem(REMEMBER_KEY) === '1';
-    const user = localStorage.getItem(USER_KEY);
-    const rememberCheck = document.getElementById('login-remember');
     const identifierInput = document.getElementById('login-identifier');
+    const rememberCheck = document.getElementById('login-remember');
     if (rememberCheck) rememberCheck.checked = remember;
-    if (remember && identifierInput && user) identifierInput.value = user;
+    if (remember && identifierInput) {
+      // Support both legacy plain-string and new JSON-object formats
+      try {
+        const raw = localStorage.getItem(USER_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          identifierInput.value = (typeof parsed === 'object' && parsed?.username)
+            ? parsed.username
+            : raw;  // fallback: use raw string (old format)
+        }
+      } catch (e) {
+        // Old plain-string format
+        const raw = localStorage.getItem(USER_KEY);
+        if (raw) identifierInput.value = raw;
+      }
+    }
   }
 
   function init() {
@@ -253,9 +269,14 @@
     setupLogout();
   });
 
-  window.addEventListener('lifeos:auth:login', () => {
+  window.addEventListener('lifeos:auth:login', (e) => {
     const nameEl = document.getElementById('user-name');
-    if (nameEl) nameEl.textContent = getStoredAuth()?.username || '';
+    const auth = getStoredAuth();
+    if (nameEl) nameEl.textContent = auth?.username || '';
+    // Keep window.__lifeosUser in sync for dashboard greeting
+    window.__lifeosUser = auth;
+    // Trigger dashboard load on login
+    if (window.updateDashboardStats) window.updateDashboardStats();
   });
 
   window.LifeOSAuth = {

@@ -1,64 +1,111 @@
             <!-- Dashboard View -->
             <section id="dashboard" class="content-view dashboard-view active">
-                <!-- Status Header Card -->
-                <div class="dashboard-status-card">
-                    <div class="status-card-brand">
-                        <div class="status-logo">
-                            <span class="logo-icon">◇</span>
+
+                <!-- ── Header Row ───────────────────────────────── -->
+                <div class="dash-layout-block" id="dash-layout-header">
+                    <div class="dash-header">
+                        <div class="dash-header-left">
+                            <div class="dash-logo-wrap">
+                                <span class="dash-logo-icon">◇</span>
+                            </div>
+                            <div>
+                                <h1 class="dash-app-name">LifeOS</h1>
+                                <p class="dash-tagline" id="dashboard-greeting">مرحباً</p>
+                            </div>
                         </div>
-                        <div class="status-brand-text">
-                            <h1 class="status-app-name">LifeOS</h1>
-                            <p class="status-tagline">Focus. Create. Achieve.</p>
-                        </div>
-                    </div>
-                    <div class="status-card-stats">
-                        <div class="stat-item">
-                            <span class="stat-value" id="dash-stat-completed">0</span>
-                            <span class="stat-label">Tasks Done</span>
-                        </div>
-                        <div class="stat-divider"></div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="dash-stat-time">0m</span>
-                            <span class="stat-label">Time Today</span>
-                        </div>
-                        <div class="stat-divider"></div>
-                        <div class="stat-item">
-                            <span class="stat-value stat-status" id="dash-stat-status">Ready</span>
-                            <span class="stat-label">Status</span>
+                        <div class="dash-header-stats">
+                            <div class="dash-stat-pill">
+                                <span class="dash-stat-val" id="dash-stat-done">0</span>
+                                <span class="dash-stat-lbl">مكتملة</span>
+                            </div>
+                            <div class="dash-stat-sep"></div>
+                            <div class="dash-stat-pill">
+                                <span class="dash-stat-val" id="dash-stat-pending">0</span>
+                                <span class="dash-stat-lbl">متبقية</span>
+                            </div>
+                            <div class="dash-stat-sep"></div>
+                            <div class="dash-stat-pill">
+                                <span class="dash-stat-val dash-stat-pct" id="dash-stat-pct">0%</span>
+                                <span class="dash-stat-lbl">الإنجاز</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="welcome-banner">
-                    <h2 id="dashboard-greeting">Good afternoon.</h2>
-                    <p>Focus is key. Here is your overview.</p>
-                </div>
-                
-                <div class="dashboard-grid">
-                    <div class="widget task-widget">
-                        <div class="widget-header">
-                            <h3>Today's Focus</h3>
-                            <button class="widget-add-btn" onclick="document.getElementById('ts-new-task-btn')?.click()" title="Add Task">+</button>
+                <!-- ── Progress Bar ──────────────────────────────── -->
+                <div class="dash-layout-block" id="dash-layout-progress">
+                    <div class="dash-progress-row">
+                        <div class="dash-progress-track">
+                            <div class="dash-progress-fill" id="dash-progress-fill" style="width:0%"></div>
                         </div>
-                        <div class="widget-content" id="dashboard-tasks-list">
-                            <p class="dash-loading">Loading tasks...</p>
-                        </div>
-                    </div>
-
-                    <div class="widget stats-widget">
-                        <h3>Productivity</h3>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill" id="productivity-fill" style="width: 0%"></div>
-                        </div>
-                        <p class="stat-text" id="productivity-text">0% Daily Goal</p>
-                    </div>
-
-                    <div class="widget quick-note-widget">
-                        <div class="widget-header">
-                            <h3>Quick Note</h3>
-                            <button class="widget-save-btn" id="save-quick-note" title="Save">Save</button>
-                        </div>
-                        <textarea id="quick-note-area" placeholder="Capture a thought..." rows="4"></textarea>
+                        <span class="dash-progress-label" id="dash-date-label"></span>
                     </div>
                 </div>
+
+                <!-- ── Projects Grid ────────────────────────────── -->
+                <div class="dash-layout-block" id="dash-layout-projects">
+                    <div class="dash-section-label">المشاريع</div>
+                    <div class="dash-axes-grid" id="dash-axes-grid">
+                        <!-- Populated by dashboard.js -->
+                        <div class="dash-axis-skeleton"></div>
+                        <div class="dash-axis-skeleton"></div>
+                        <div class="dash-axis-skeleton"></div>
+                        <div class="dash-axis-skeleton"></div>
+                        <div class="dash-axis-skeleton"></div>
+                        <div class="dash-axis-skeleton"></div>
+                    </div>
+                </div>
+
+                <!-- ── Bottom Row: Tasks + Quick Note ───────────── -->
+                <div class="dash-layout-block" id="dash-layout-widgets">
+                    <div class="dash-bottom-grid" id="dash-bottom-grid">
+
+                        <!-- Today's Focus Tasks -->
+                        <div class="dash-widget dash-tasks-widget" id="widget-tasks">
+                            <div class="dash-widget-header">
+                                <span class="dash-widget-title">تركيز اليوم</span>
+                                <button class="dash-widget-action"
+                                        onclick="window.loadView?.('tasks')"
+                                        title="عرض كل المهام">←</button>
+                            </div>
+                            <div class="dash-tasks-list" id="dashboard-tasks-list">
+                                <p class="dash-empty">جاري التحميل...</p>
+                            </div>
+                        </div>
+
+                        <!-- Quick Brain Dump -->
+                        <div class="dash-widget dash-note-widget" id="widget-note">
+                            <div class="dash-widget-header">
+                                <span class="dash-widget-title">تفريغ سريع</span>
+                                <button class="dash-widget-action dash-note-save" id="save-quick-note" title="حفظ">✓</button>
+                            </div>
+                            <textarea
+                                id="quick-note-area"
+                                class="dash-note-textarea"
+                                placeholder="اكتب أي فكرة الآن... ستُحفظ تلقائياً"
+                                rows="5"></textarea>
+                            <p class="dash-note-saved" id="dash-note-saved">تم الحفظ ✓</p>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ── Quick Actions ─────────────────────────────── -->
+                <div class="dash-layout-block" id="dash-layout-actions">
+                    <div class="dash-quick-actions" id="dash-quick-actions">
+                        <button class="dash-action-btn" onclick="window.loadView?.('tasks')" id="dash-go-tasks">
+                            <span>✓</span> المهام
+                        </button>
+                        <button class="dash-action-btn" onclick="window.loadView?.('writing')" id="dash-go-writing">
+                            <span>✎</span> الكتابة
+                        </button>
+                        <button class="dash-action-btn" onclick="window.loadView?.('ai-chat')" id="dash-go-ai">
+                            <span>✦</span> AI
+                        </button>
+                        <button class="dash-action-btn" onclick="window.loadView?.('templates')" id="dash-go-templates">
+                            <span>⊞</span> القوالب
+                        </button>
+                    </div>
+                </div>
+
             </section>

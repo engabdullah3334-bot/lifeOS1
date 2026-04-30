@@ -20,86 +20,34 @@
 #    computed       → derived from other fields (handled in code)
 # ══════════════════════════════════════════════════════════════════════════════
 
-task:
-  collection: "tasks"
-  id_field: "task_id"
+
+# ────────────────────────────────────────────────────────────────────────────
+#  User Entity
+# ────────────────────────────────────────────────────────────────────────────
+user:
+  collection: "users"
+  id_field: "user_id"
   fields:
-    task_id:
+    user_id:
       type: "uuid"
       auto: true
 
-    user_id:
+    username:
       type: "string"
       required: true
 
-    title:
+    email:
       type: "string"
       required: true
-      default: "New Task"
 
-    description:
+    password_hash:
       type: "string"
-      default: ""
+      required: true
 
-    project_id:
-      type: "string"
-      default: "general"
 
-    priority:
-      type: "enum"
-      values: ["low", "medium", "high", "critical"]
-      default: "medium"
-
-    status:
-      type: "enum"
-      values: ["pending", "completed"]
-      default: "pending"
-
-    recurrence:
-      type: "enum"
-      values: ["none", "daily", "weekly", "monthly", "custom"]
-      default: "none"
-
-    recurrence_pattern:
-      type: "any"
-      default: null
-
-    is_recurring:
-      type: "computed"
-      rule: "recurrence != 'none'"
-
-    completed_dates:
-      type: "list"
-      default: []
-
-    execution_day:
-      type: "string"
-      default: ""
-
-    start_date:
-      type: "string"
-      default: ""
-
-    end_date:
-      type: "string"
-      default: ""
-
-    order:
-      type: "auto_increment"
-      collection_scope: "user_id"
-
-    tags:
-      type: "list"
-      default: []
-
-    notes:
-      type: "string"
-      default: ""
-
-    isArchived:
-      type: "boolean"
-      default: false
-
+# ────────────────────────────────────────────────────────────────────────────
+#  Project Entity
+# ────────────────────────────────────────────────────────────────────────────
 
 project:
   collection: "projects"
@@ -139,6 +87,170 @@ project:
       default: false
 
 
+# ────────────────────────────────────────────────────────────────────────────
+#  Task Entity
+# ────────────────────────────────────────────────────────────────────────────
+task:
+  collection: "tasks"
+  id_field: "task_id"
+  fields:
+    task_id:
+      # ───── for auto generating task ids ─────
+      type: "uuid"
+      auto: true
+
+    user_id:
+      # ───── for auto generating task to a specific user ─────
+      type: "string"
+      required: true
+
+    title:
+      # ───── for auto generating task title ─────
+      type: "string"
+      required: true
+      default: "New Task"
+
+    description:
+      # ───── for auto generating task description ─────
+      type: "string"
+      default: ""
+
+    project_id:
+      # ───── for auto generating task project id and default to General ─────
+      type: "string"
+      default: "General"
+
+    priority:
+      # ───── for auto generating task priority and default to medium ─────
+      type: "enum"
+      values: ["low", "medium", "high", "critical"]
+      default: "medium"
+
+    status:
+      # ───── for auto generating task status and default to pending ─────
+      type: "enum"
+      values: ["pending", "completed", "missed"]
+      default: "pending"
+
+    recurrence:
+      # ───── for auto generating task recurrence and default to none ─────
+      type: "enum"
+      values: ["none", "daily", "weekly", "monthly", "yearly"]
+      default: "none"
+
+    recurrence_pattern:
+      # ───── for auto generating task recurrence pattern and default to null ─────
+      type: "any"
+      default: null
+
+    is_recurring:
+      # ───── for auto generating task is recurring and default to false ─────
+      type: "computed"
+      rule: "recurrence != 'none'"
+
+    completed_dates:
+      # ───── for auto generating task completed dates and default to empty list ─────
+      type: "list"
+      default: []
+
+    execution_day:
+      # ───── for auto generating task execution day and default to empty string ─────
+      type: "string"
+      default: ""
+
+    start_date:
+      # ───── for auto generating task start date and default to empty string ─────
+      type: "string"
+      default: ""
+
+    end_date:
+      # ───── for auto generating task end date and default to empty string ─────
+      type: "string"
+      default: ""
+
+    order:
+      # ───── for auto generating task order and default to empty string ─────
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    tags:
+      # ───── for auto generating task tags and default to empty list ─────
+      type: "list"
+      default: []
+
+    notes:
+      # ───── for auto generating task notes and default to empty string ─────
+      type: "string"
+      default: ""
+
+    isArchived:
+      # ───── for auto generating task archived and default to false ─────
+      type: "boolean"
+      default: false
+
+    axis_tag:
+      # ───── for auto generating task axis tag and default to empty string ─────
+      type: "string"
+      default: ""
+      # Links task to a life axis (university, work, sports, goal, learning, entertainment)
+      # Matches the 'id' field in app_config.yaml > life_axes
+      # in the future, the axis_tag will be used to search and filter tasks
+
+    estimated_hours:
+      # ───── for auto generating task estimated hours and default to null ─────
+      type: "any"
+      default: null
+      # Expected time in hours (e.g. 1, 1.5, 3)
+      # Used in Daily Planner time tracking
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Note Project Entity
+# ────────────────────────────────────────────────────────────────────────────
+note_project:
+  collection: "note_projects"
+  id_field: "project_id"
+  fields:
+    project_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    name:
+      type: "string"
+      required: true
+
+    description:
+      type: "string"
+      default: ""
+
+    tags:
+      type: "list"
+      default: []
+
+    order:
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    created_at:
+      type: "datetime"
+      auto: true
+
+    archived:
+      type: "boolean"
+      default: false
+
+    is_system:
+      type: "boolean"
+      default: false
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Note Entity
+# ────────────────────────────────────────────────────────────────────────────
 note:
   collection: "notes"
   id_field: "note_id"
@@ -196,64 +308,12 @@ note:
       type: "boolean"
       default: false
 
-
-note_project:
-  collection: "note_projects"
-  id_field: "project_id"
-  fields:
-    project_id:
-      type: "uuid"
-      auto: true
-
-    user_id:
-      type: "string"
-      required: true
-
-    name:
-      type: "string"
-      required: true
-
-    description:
-      type: "string"
-      default: ""
-
-    tags:
-      type: "list"
-      default: []
-
-    order:
-      type: "auto_increment"
-      collection_scope: "user_id"
-
-    created_at:
-      type: "datetime"
-      auto: true
-
-    archived:
+    pinned:
+      # F2: Pin a note to float it to the top of the list
       type: "boolean"
       default: false
 
-    is_system:
+    is_favorite:
+      # F4: Mark a note as a favorite for quick filtering
       type: "boolean"
       default: false
-
-
-user:
-  collection: "users"
-  id_field: "user_id"
-  fields:
-    user_id:
-      type: "uuid"
-      auto: true
-
-    username:
-      type: "string"
-      required: true
-
-    email:
-      type: "string"
-      required: true
-
-    password_hash:
-      type: "string"
-      required: true

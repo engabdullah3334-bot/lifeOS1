@@ -1601,7 +1601,7 @@ select.ts-input option:checked {
 ════════════════════════════════════════ */
 .ts-archive-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
   animation: ts-fade-in 0.4s var(--ts-ease);
 }
@@ -1723,7 +1723,7 @@ select.ts-input option:checked {
   color: var(--ts-text-muted);
 }
 .ts-archive-projects-grid {
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 .ts-btn-danger {
   background: rgba(239, 68, 68, 0.2);

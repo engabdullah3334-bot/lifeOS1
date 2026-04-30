@@ -1,89 +1,118 @@
 """
-core/registry.py — Action Registry
-====================================
-Central registry mapping action names (e.g. CREATE_TASK) to executor functions.
-The AI Agent looks up actions here — no if/else chains needed.
+core/registry.py — Action Registry Infrastructure
+===================================================
+Provides the infrastructure for registering and retrieving AI Action executors.
+
+The actual Action implementations (CREATE_TASK, UPDATE_TASK, ...) live in:
+  → core/actions.py
+
+Full flow:
+  ai_agent.chat()
+    ├── _parse_actions()    → looks up registry.get_action(type)
+    └── _execute_actions()  → calls executor(db, user_id, args)
 
 To add a new action:
-  1. Define your function with signature: def my_action(db, user_id, args) -> dict
-  2. Decorate it: @register_action("MY_ACTION")
-  3. Make sure this module is imported (it's auto-imported by ai_agent.py)
-
-That's it — the AI will be able to use the new action immediately.
+  1. Go to core/actions.py
+  2. Add a function decorated with @register_action("ACTION_NAME")
+  3. Describe it in prompts/action_instructions.txt
+  No changes needed here.
 """
 
 import logging
-from core.schema_factory import build_document
+import time
+from dataclasses import dataclass, field
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
-# ── Registry ──────────────────────────────────────────────────────────────────
 
-_ACTION_REGISTRY: dict[str, callable] = {}
+# ── Action Metadata ────────────────────────────────────────────────────────────
 
+@dataclass
+class ActionEntry:
+    """
+    Metadata stored for each registered action in the Registry.
+    Used for diagnostics, logging, and the /api/status endpoint.
+    """
+    name:          str
+    func:          Callable
+    module:        str
+    registered_at: float = field(default_factory=time.time)
+
+    @property
+    def call_path(self) -> str:
+        return f"{self.module}.{self.func.__name__}"
+
+
+# ── Internal Store ─────────────────────────────────────────────────────────────
+
+_REGISTRY: dict[str, ActionEntry] = {}
+
+
+# ── Public API ─────────────────────────────────────────────────────────────────
 
 def register_action(action_name: str):
-    """Decorator to register an action executor function."""
-    def decorator(func):
-        _ACTION_REGISTRY[action_name] = func
-        logger.debug("Registered action: %s -> %s", action_name, func.__name__)
+    """
+    Decorator to register an executor function for a given action name.
+
+    Usage:
+        @register_action("CREATE_TASK")
+        def create_task(db, user_id: str, args: dict) -> dict:
+            ...
+
+    Executor signature:
+        (db, user_id: str, args: dict) -> dict
+    """
+    def decorator(func: Callable) -> Callable:
+        module = func.__module__
+        entry  = ActionEntry(name=action_name, func=func, module=module)
+        _REGISTRY[action_name] = entry
+        logger.debug("Registered action: %-30s <- %s", action_name, entry.call_path)
         return func
     return decorator
 
 
-def get_action(action_name: str):
-    """Get the executor function for a given action name, or None."""
-    return _ACTION_REGISTRY.get(action_name)
+def get_action(action_name: str) -> Callable | None:
+    """
+    Return the executor function for a given action name, or None if not found.
+    """
+    entry = _REGISTRY.get(action_name)
+    return entry.func if entry else None
 
 
-def get_all_actions() -> dict:
-    """Return a copy of the full action registry."""
-    return dict(_ACTION_REGISTRY)
+def get_all_actions() -> dict[str, Callable]:
+    """Return a snapshot of the registry as {action_name: executor_func}."""
+    return {name: entry.func for name, entry in _REGISTRY.items()}
 
 
 def get_registered_action_names() -> list[str]:
-    """Return sorted list of all registered action names."""
-    return sorted(_ACTION_REGISTRY.keys())
+    """Return a sorted list of all registered action names."""
+    return sorted(_REGISTRY.keys())
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  BUILT-IN ACTION EXECUTORS
-#  ──────────────────────────────────────────────────────────────────────────
-#  Each function: (db, user_id, args) -> dict
-#  Uses schema_factory for document construction — no hardcoded schemas.
-# ══════════════════════════════════════════════════════════════════════════════
+def get_registry_stats() -> dict:
+    """
+    Return registry statistics — used by /api/status and diagnostics.
 
-@register_action("CREATE_TASK")
-def create_task(db, user_id: str, args: dict) -> dict:
-    """Create a task in MongoDB via the AI agent."""
-    # البحث عن المشروع بالاسم لو الـ AI بعت اسم مش ID
-    project_id = args.get("project_id", "general")
-    if project_id != "general" and not len(project_id) > 20:  # لو باعت اسم مش UUID
-        project = db.projects.find_one({"user_id": user_id, "name": project_id})
-        if project:
-            project_id = project["project_id"]
-
-    task_data = {
-        **args,
-        "user_id": user_id,
-        "project_id": project_id,
+    Returns:
+        {
+          "count": int,
+          "actions": [{"name": str, "module": str, "func": str}, ...]
+        }
+    """
+    return {
+        "count": len(_REGISTRY),
+        "actions": [
+            {
+                "name":   name,
+                "module": entry.module,
+                "func":   entry.func.__name__,
+            }
+            for name, entry in sorted(_REGISTRY.items())
+        ],
     }
 
-    task = build_document("task", task_data, db=db, user_id=user_id)
-    db.tasks.insert_one(task)
-    task.pop("_id", None)
-    return {"type": "task_created", "id": task["task_id"], "title": task["title"]}
 
-
-@register_action("CREATE_PROJECT")
-def create_project(db, user_id: str, args: dict) -> dict:
-    """Create a project in MongoDB via the AI agent."""
-    project_data = {
-        **args,
-        "user_id": user_id,
-    }
-
-    project = build_document("project", project_data, db=db, user_id=user_id)
-    db.projects.insert_one(project)
-    project.pop("_id", None)
-    return {"type": "project_created", "id": project["project_id"], "name": project["name"]}
+def is_registered(action_name: str) -> bool:
+    """Quick check whether an action name is registered."""
+    return action_name in _REGISTRY

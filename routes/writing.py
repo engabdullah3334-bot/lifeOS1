@@ -1,15 +1,25 @@
+"""
+routes/writing.py — Writing Blueprint
+HTTP layer only — no business logic here.
+
+V1.1 additions:
+  - GET /api/notes now accepts ?search= ?status= ?archived=
+  - GET /api/notes/search  — global full-text search (F5)
+  - POST /api/notes/:id/duplicate — clone note (F6)
+"""
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from core.writing import WritingService
 
 writing_bp = Blueprint("writing", __name__)
 
+
 def get_db():
     return current_app.config["db"]
 
 
 # ══════════════════════════════════════════════
-#  PROJECTS CRUD (Writing Projects - note containers)
+#  PROJECTS CRUD
 # ══════════════════════════════════════════════
 
 @writing_bp.route("/writing/projects", methods=["GET"])
@@ -21,50 +31,55 @@ def get_projects():
 @writing_bp.route("/writing/projects", methods=["POST"])
 @jwt_required()
 def create_project():
-    project, error, status_code = WritingService.create_project(get_db(), get_jwt_identity(), request.get_json() or {})
+    project, error, status_code = WritingService.create_project(
+        get_db(), get_jwt_identity(), request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(project), status_code
 
 
 @writing_bp.route("/writing/projects/<string:project_id>", methods=["PUT"])
 @jwt_required()
 def update_project(project_id):
-    updated, error, status_code = WritingService.update_project(get_db(), get_jwt_identity(), project_id, request.get_json() or {})
+    updated, error, status_code = WritingService.update_project(
+        get_db(), get_jwt_identity(), project_id, request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(updated)
 
 
 @writing_bp.route("/writing/projects/<string:project_id>", methods=["DELETE"])
 @jwt_required()
 def delete_project(project_id):
-    success, error, status_code = WritingService.delete_project(get_db(), get_jwt_identity(), project_id)
+    success, error, status_code = WritingService.delete_project(
+        get_db(), get_jwt_identity(), project_id
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify({"success": True})
 
 
 @writing_bp.route("/writing/projects/order", methods=["PUT"])
 @jwt_required()
 def update_projects_order():
-    success, error, status_code = WritingService.update_projects_order(get_db(), get_jwt_identity(), request.get_json() or {})
+    success, error, status_code = WritingService.update_projects_order(
+        get_db(), get_jwt_identity(), request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify({"success": True})
 
 
 @writing_bp.route("/writing/projects/<string:project_id>/archive", methods=["PUT"])
 @jwt_required()
 def archive_project(project_id):
-    updated, error, status_code = WritingService.archive_project(get_db(), get_jwt_identity(), project_id, request.get_json() or {})
+    updated, error, status_code = WritingService.archive_project(
+        get_db(), get_jwt_identity(), project_id, request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(updated)
 
 
@@ -81,98 +96,157 @@ def get_structure():
 @writing_bp.route("/notes", methods=["GET"])
 @jwt_required()
 def get_notes():
-    return jsonify(WritingService.get_notes(get_db(), get_jwt_identity(), request.args.get("project_id")))
+    """
+    Query params (all optional):
+      ?project_id=uuid      — filter by project
+      ?status=draft         — filter by status (draft|complete|in_review)
+      ?search=keyword       — search title, content, tags (min 2 chars)
+      ?archived=true        — include archived notes
+    """
+    project_id = request.args.get("project_id")
+    status = request.args.get("status")
+    search = request.args.get("search")
+    include_archived = request.args.get("archived", "false").lower() == "true"
+
+    return jsonify(WritingService.get_notes(
+        get_db(), get_jwt_identity(),
+        project_id=project_id,
+        status=status,
+        search=search,
+        include_archived=include_archived,
+    ))
+
+
+@writing_bp.route("/notes/search", methods=["GET"])
+@jwt_required()
+def search_notes():
+    """
+    F5: Global full-text search across all non-archived notes.
+    GET /api/notes/search?q=keyword
+    Returns lightweight note cards (no content field).
+    """
+    q = request.args.get("q", "").strip()
+    if len(q) < 2:
+        return jsonify([])
+    results = WritingService.search_notes(get_db(), get_jwt_identity(), q)
+    return jsonify(results)
 
 
 @writing_bp.route("/notes/<string:note_id>", methods=["GET"])
 @jwt_required()
 def get_note(note_id):
-    note, error, status_code = WritingService.get_note(get_db(), get_jwt_identity(), note_id)
+    note, error, status_code = WritingService.get_note(
+        get_db(), get_jwt_identity(), note_id
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(note)
 
 
 @writing_bp.route("/notes", methods=["POST"])
 @jwt_required()
 def create_note():
-    note, error, status_code = WritingService.create_note(get_db(), get_jwt_identity(), request.get_json() or {})
+    note, error, status_code = WritingService.create_note(
+        get_db(), get_jwt_identity(), request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(note), status_code
 
 
 @writing_bp.route("/notes/<string:note_id>", methods=["PUT"])
 @jwt_required()
 def update_note(note_id):
-    updated, error, status_code = WritingService.update_note(get_db(), get_jwt_identity(), note_id, request.get_json() or {})
+    updated, error, status_code = WritingService.update_note(
+        get_db(), get_jwt_identity(), note_id, request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(updated)
 
 
 @writing_bp.route("/notes/<string:note_id>/move", methods=["PUT"])
 @jwt_required()
 def move_note(note_id):
-    updated, error, status_code = WritingService.move_note(get_db(), get_jwt_identity(), note_id, request.get_json() or {})
+    updated, error, status_code = WritingService.move_note(
+        get_db(), get_jwt_identity(), note_id, request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify(updated)
 
 
 @writing_bp.route("/notes/order", methods=["PUT"])
 @jwt_required()
 def update_notes_order():
-    success, error, status_code = WritingService.update_notes_order(get_db(), get_jwt_identity(), request.get_json() or {})
+    success, error, status_code = WritingService.update_notes_order(
+        get_db(), get_jwt_identity(), request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify({"success": True})
 
 
 @writing_bp.route("/notes/<string:note_id>", methods=["DELETE"])
 @jwt_required()
 def delete_note(note_id):
-    success, error, status_code = WritingService.delete_note(get_db(), get_jwt_identity(), note_id)
+    success, error, status_code = WritingService.delete_note(
+        get_db(), get_jwt_identity(), note_id
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify({"success": True})
 
 
 @writing_bp.route("/notes/<string:note_id>/archive", methods=["PUT"])
 @jwt_required()
 def archive_note(note_id):
-    archived, error, status_code = WritingService.archive_note(get_db(), get_jwt_identity(), note_id, request.get_json() or {})
+    archived, error, status_code = WritingService.archive_note(
+        get_db(), get_jwt_identity(), note_id, request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-    
     return jsonify({"success": True, "archived": archived})
 
 
+@writing_bp.route("/notes/<string:note_id>/duplicate", methods=["POST"])
+@jwt_required()
+def duplicate_note(note_id):
+    """
+    F6: Clone a note within the same project.
+    POST /api/notes/:id/duplicate
+    Returns the newly created note document.
+    """
+    note, error, status_code = WritingService.duplicate_note(
+        get_db(), get_jwt_identity(), note_id
+    )
+    if error:
+        return jsonify({"error": error}), status_code
+    return jsonify(note), status_code
+
+
 # ══════════════════════════════════════════════
-#  LEGACY: Quick Note content (folder/filename style)
+#  QUICK NOTE
 # ══════════════════════════════════════════════
 
 @writing_bp.route("/notes/content", methods=["GET"])
 @jwt_required()
 def get_note_content():
-    content, error, status_code = WritingService.get_quick_note(get_db(), get_jwt_identity(), request.args)
+    """Legacy endpoint — prefer GET /api/notes/:id for new code."""
+    content, error, status_code = WritingService.get_quick_note(
+        get_db(), get_jwt_identity(), request.args
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify({"content": content})
 
 
 @writing_bp.route("/notes/quick", methods=["POST"])
 @jwt_required()
 def save_quick_note():
-    success, error, status_code = WritingService.save_quick_note(get_db(), get_jwt_identity(), request.get_json() or {})
+    success, error, status_code = WritingService.save_quick_note(
+        get_db(), get_jwt_identity(), request.get_json() or {}
+    )
     if error:
         return jsonify({"error": error}), status_code
-
     return jsonify({"success": True})

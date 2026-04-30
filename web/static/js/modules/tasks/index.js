@@ -170,56 +170,7 @@ TS.core = {
 
   // ── Dashboard Update ──────────────────────────────────────
   _updateDashboard() {
-    // Task count badge (legacy dashboard)
-    const taskCount = TS.state.tasks.filter(t =>
-      t.status !== 'completed' && t.status !== 'archived'
-    ).length;
-    const el = document.getElementById('task-count');
-    if (el) el.textContent = `${taskCount} Active`;
-
-    // Dashboard mini-list — Focus Tasks: highest priority + due today
-    const dashList = document.getElementById('dashboard-tasks-list');
-    if (dashList) {
-      dashList.innerHTML = '';
-      const todayStr = TS.utils.toDateStr(new Date());
-      const PRIORITY_ORDER = { critical: 4, high: 3, medium: 2, low: 1 };
-
-      const focusTasks = TS.state.tasks
-        .filter(t => t.status !== 'completed' && t.status !== 'archived')
-        .filter(t => {
-          const due = t.execution_day || t.end_date;
-          return due && due === todayStr;
-        })
-        .sort((a, b) => (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0))
-        .slice(0, 6);
-
-      if (focusTasks.length === 0) {
-        dashList.innerHTML = '<p class="dash-empty-msg">No tasks due today. Add one or focus on what matters.</p>';
-        return;
-      }
-
-      focusTasks.forEach(task => {
-        const item = document.createElement('div');
-        item.className = `mini-task-item p-${task.priority}`;
-        item.innerHTML = `
-          <div class="mini-task-check" onclick="TS.taskMgr.complete('${task.task_id}'); window.updateDashboard?.()"></div>
-          <span class="mini-task-title">${task.title}</span>
-          <span class="mini-task-priority">${TS.utils.priorityLabel(task.priority)}</span>
-        `;
-        dashList.appendChild(item);
-      });
-    }
-
-    // Productivity bar
-    const total     = TS.state.tasks.length;
-    const completed = TS.state.tasks.filter(t => t.status === 'completed').length;
-    const pct       = total ? Math.round(completed / total * 100) : 0;
-    const fill      = document.getElementById('productivity-fill');
-    const text      = document.getElementById('productivity-text');
-    if (fill) fill.style.width = `${pct}%`;
-    if (text) text.textContent = `${pct}% Daily Goal`;
-
-    // Update stats header
+    // Update stats header via the new dashboard.js logic
     if (window.updateDashboardStats) window.updateDashboardStats();
   },
 };

@@ -63,14 +63,11 @@ def reorder_projects():
     user_id = get_jwt_identity()
     payload = request.get_json() or {}
     ordered_ids = payload.get("ordered_ids")
-    if not isinstance(ordered_ids, list):
-        return jsonify({"error": "ordered_ids array is required"}), 400
 
-    for idx, pid in enumerate(ordered_ids):
-        db.projects.update_one(
-            {"project_id": pid, "user_id": user_id},
-            {"$set": {"order": idx}},
-        )
+    success, error = ProjectService.reorder_projects(db, user_id, ordered_ids)
+    if not success:
+        return jsonify({"error": error}), 400
+
     return jsonify({"success": True})
 
 # ══════════════════════════════════════════════
@@ -136,14 +133,9 @@ def reorder_tasks():
     user_id = get_jwt_identity()
     payload = request.get_json() or {}
     ordered_ids = payload.get("ordered_ids")
-    if not isinstance(ordered_ids, list):
-        return jsonify({"error": "ordered_ids array is required"}), 400
 
-    for idx, tid in enumerate(ordered_ids):
-        if "|" in tid:
-            tid = tid.split("|", 1)[0]
-        db.tasks.update_one(
-            {"task_id": tid, "user_id": user_id},
-            {"$set": {"order": idx}},
-        )
+    success, error = TaskService.reorder_tasks(db, user_id, ordered_ids)
+    if not success:
+        return jsonify({"error": error}), 400
+
     return jsonify({"success": True})

@@ -1,415 +1,334 @@
 /* =============================================================
-   LifeOS — Dashboard Module (Modern & Premium)
-   Status Card, Focus Tasks, Quick Notes, Responsive UI
+   LifeOS — Dashboard v2  (Life Axes + Daily Focus)
    ============================================================= */
 
-/* ─── Dashboard View ───────────────────────────────────────── */
+/* ── View container ─────────────────────────────────────────── */
 .dashboard-view {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding: 28px 36px 40px;
-  animation: dashFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 22px;
+  padding: 28px 36px 48px;
+  animation: dashIn 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes dashIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
 }
 
-@keyframes dashFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ─── Status Header Card ───────────────────────────────────── */
-.dashboard-status-card {
+/* ── Header row ─────────────────────────────────────────────── */
+.dash-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 24px;
-  padding: 24px 32px;
-  opacity: var(--ui-opacity, 1);
-  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  backdrop-filter: blur(20px);
+  gap: 20px;
+  padding: 22px 28px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.03);
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  resize: both;
+  overflow: hidden;
+  min-height: 80px;
+  min-width: 300px;
+  cursor: grab;
 }
+.dash-header:active { cursor: grabbing; }
 
-.dashboard-status-card:hover {
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
-}
+.dash-header-left { display:flex; align-items:center; gap:16px; }
 
-/* Brand (Logo + Name) */
-.status-card-brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.status-logo {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.dash-logo-wrap {
+  width: 50px; height: 50px;
+  display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, #27f5ff, #4d7cff, #9b4dff);
   border-radius: 14px;
   box-shadow: 0 4px 20px rgba(79,124,255,0.35);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s;
 }
+.dash-logo-wrap:hover { transform: scale(1.06); }
+.dash-logo-icon { font-size: 22px; color: #fff; }
 
-.status-logo:hover {
-  transform: scale(1.05);
-}
-
-.status-logo .logo-icon {
-  font-size: 24px;
-  color: #fff;
-  font-weight: 700;
-}
-
-.status-brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.status-app-name {
-  font-family: var(--font-heading);
-  font-size: 24px;
-  font-weight: 700;
+.dash-app-name {
+  font-size: 22px; font-weight: 700;
   background: linear-gradient(135deg, #27f5ff, #9b4dff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -0.5px;
 }
+.dash-tagline { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
-.status-tagline {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-/* Stats Row */
-.status-card-stats {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 80px;
-}
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
+.dash-header-stats { display:flex; align-items:center; gap:18px; }
+.dash-stat-pill { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:64px; }
+.dash-stat-val {
+  font-size: 20px; font-weight: 700;
   color: var(--text-primary);
   font-family: var(--font-heading);
 }
+.dash-stat-val.dash-stat-pct { color: #27f5ff; }
+.dash-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; }
+.dash-stat-sep { width:1px; height:32px; background: rgba(255,255,255,0.1); }
 
-.stat-value.stat-status {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--success);
-  text-transform: capitalize;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.stat-divider {
-  width: 1px;
-  height: 36px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 1px;
-}
-
-/* ─── Welcome Banner ───────────────────────────────────────── */
-.welcome-banner {
-  padding: 8px 0;
-}
-
-.welcome-banner h2 {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.welcome-banner p {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-/* ─── Dashboard Grid ───────────────────────────────────────── */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  grid-template-rows: auto auto;
-  gap: 20px;
-}
-
-.task-widget {
-  grid-row: span 2;
-}
-
-/* ─── Widget Base ───────────────────────────────────────────── */
-.widget {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+/* ── Progress bar ───────────────────────────────────────────── */
+.dash-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  resize: both;
+  overflow: hidden;
+  cursor: grab;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 16px;
-  padding: 20px 24px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: var(--ui-opacity, 1);
+  border: 1px solid rgba(255,255,255,0.05);
+  min-height: 50px;
+  min-width: 200px;
 }
-
-.widget:hover {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.1);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-}
-
-.widget-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.widget-header h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: 0.3px;
-}
-
-.widget-add-btn,
-.widget-save-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(99,102,241,0.15);
-  border: 1px solid rgba(99,102,241,0.3);
-  color: #a5b4fc;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.widget-add-btn:hover,
-.widget-save-btn:hover {
-  background: rgba(99,102,241,0.3);
-  border-color: rgba(99,102,241,0.5);
-  transform: scale(1.08);
-}
-
-.widget-save-btn {
-  width: auto;
-  padding: 6px 14px;
-  font-size: 12px;
-}
-
-.widget-content {
-  min-height: 80px;
-}
-
-/* ─── Focus Tasks List ─────────────────────────────────────── */
-.mini-task-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px;
-  border-left: 3px solid rgba(99,102,241,0.5);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.mini-task-item:hover {
-  background: rgba(255,255,255,0.07);
-  transform: translateX(4px);
-  border-left-color: rgba(99,102,241,0.8);
-}
-
-.mini-task-item.p-critical { border-left-color: #ef4444; }
-.mini-task-item.p-high     { border-left-color: #f97316; }
-.mini-task-item.p-medium   { border-left-color: #eab308; }
-.mini-task-item.p-low      { border-left-color: #3b82f6; }
-
-.mini-task-check {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255,255,255,0.25);
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.mini-task-item:hover .mini-task-check {
-  border-color: var(--success);
-  background: rgba(48,209,88,0.15);
-}
-
-.mini-task-title {
+.dash-progress-row:active { cursor: grabbing; }
+.dash-progress-track {
   flex: 1;
-  font-size: 14px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.mini-task-priority {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background: rgba(255,255,255,0.06);
-}
-
-.dash-empty-msg,
-.dash-loading {
-  color: var(--text-muted);
-  font-size: 13px;
-  padding: 16px 0;
-  line-height: 1.5;
-}
-
-/* ─── Stats Widget ──────────────────────────────────────────── */
-.stats-widget h3 {
-  margin-bottom: 14px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.stat-bar {
-  height: 10px;
+  height: 6px;
   background: rgba(255,255,255,0.08);
   border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 12px;
 }
-
-.stat-bar-fill {
+.dash-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #27f5ff, #4d7cff, #9b4dff);
   border-radius: 10px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
 }
+.dash-progress-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 
-.stat-text {
-  font-size: 13px;
+/* ── Section label ──────────────────────────────────────────── */
+.dash-section-label {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: grab;
+  margin-bottom: 8px;
 }
 
-/* ─── Quick Note Widget ─────────────────────────────────────── */
-.quick-note-widget textarea {
+/* ── Life Axes Grid ─────────────────────────────────────────── */
+.dash-axes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+/* Skeleton loading */
+.dash-axis-skeleton {
+  height: 120px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+@keyframes skeletonPulse {
+  0%,100% { opacity: 0.5; }
+  50%      { opacity: 1;   }
+}
+
+/* Axis card */
+.dash-axis-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-left: 3px solid var(--axis-color, #4d7cff);
+  border-radius: 16px;
+  padding: 16px 18px;
+  cursor: grab;
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dash-axis-card:active { cursor: grabbing; }
+.dash-axis-card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: var(--axis-color, #4d7cff);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+}
+
+.dash-axis-top { display:flex; align-items:center; gap:10px; }
+.dash-axis-icon { font-size: 20px; flex-shrink:0; }
+.dash-axis-info { flex:1; display:flex; flex-direction:column; gap:2px; }
+.dash-axis-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.dash-axis-range { font-size: 11px; color: var(--text-muted); }
+.dash-axis-pct { font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.dash-axis-pct.complete { color: #30d158; }
+
+.dash-axis-bar-track {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dash-axis-bar-fill {
+  height: 100%;
+  background: var(--axis-color, #4d7cff);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  opacity: 0.85;
+}
+
+.dash-axis-preview { display:flex; flex-direction:column; gap:5px; }
+.dash-axis-task {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.dash-axis-task.done { opacity: 0.45; text-decoration: line-through; }
+.dash-axis-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.dash-axis-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
+.dash-axis-more  { font-size: 11px; color: var(--text-muted); padding-top: 2px; }
+
+/* ── Bottom grid ────────────────────────────────────────────── */
+.dash-bottom-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+}
+
+/* ── Widget base ────────────────────────────────────────────── */
+.dash-widget {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.22s ease;
+  cursor: grab;
+}
+.dash-widget:active { cursor: grabbing; }
+.dash-widget:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+}
+.dash-widget-header { display:flex; align-items:center; justify-content:space-between; }
+.dash-widget-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.dash-widget-action {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: #a5b4fc;
+  border-radius: 9px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dash-widget-action:hover { background: rgba(99,102,241,0.28); transform: scale(1.1); }
+.dash-note-save { color: #30d158; border-color: rgba(48,209,88,0.3); background: rgba(48,209,88,0.1); }
+.dash-note-save:hover { background: rgba(48,209,88,0.25); }
+
+/* ── Task rows ──────────────────────────────────────────────── */
+.dash-tasks-list { display:flex; flex-direction:column; gap:6px; }
+.dash-task-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border-left: 2px solid var(--p-color, #6366f1);
+  background: rgba(255,255,255,0.03);
+  transition: all 0.18s ease;
+}
+.dash-task-row:hover { background: rgba(255,255,255,0.06); transform: translateX(3px); }
+.dash-task-row.done { opacity: 0.45; }
+.dash-task-check {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: #30d158;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  background: transparent;
+}
+.dash-task-check:hover { border-color: #30d158; background: rgba(48,209,88,0.15); }
+.dash-task-name { flex:1; font-size: 13px; color: var(--text-primary); font-weight: 500; }
+.dash-task-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* ── Quick note ─────────────────────────────────────────────── */
+.dash-note-textarea {
   width: 100%;
-  min-height: 100px;
-  padding: 14px 16px;
+  flex: 1;
+  min-height: 110px;
+  padding: 12px 14px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
   font-family: var(--font-body);
   resize: vertical;
   outline: none;
+  transition: border-color 0.2s ease;
+  line-height: 1.6;
+  cursor: text;
+}
+.dash-note-textarea::placeholder { color: var(--text-muted); }
+.dash-note-textarea:focus { border-color: rgba(99,102,241,0.4); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+.dash-note-saved {
+  font-size: 12px; color: #30d158;
+  transition: opacity 0.3s ease;
+  text-align: right;
+}
+
+/* ── Quick actions bar ──────────────────────────────────────── */
+.dash-quick-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dash-action-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: grab;
   transition: all 0.2s ease;
 }
-
-.quick-note-widget textarea::placeholder {
-  color: var(--text-muted);
+.dash-action-btn:active { cursor: grabbing; }
+.dash-action-btn span { font-size: 15px; }
+.dash-action-btn:hover {
+  background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.3);
+  color: var(--text-primary);
+  transform: translateY(-2px);
 }
 
-.quick-note-widget textarea:focus {
-  border-color: rgba(99,102,241,0.4);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+.dash-empty { color: var(--text-muted); font-size: 13px; padding: 8px 0; }
+
+/* ── Sortable Ghost ─────────────────────────────────────────── */
+.sortable-ghost {
+  opacity: 0.4;
+  background: rgba(99, 102, 241, 0.1) !important;
+  border: 1px dashed rgba(99, 102, 241, 0.5) !important;
+  transform: scale(0.98);
 }
 
-/* ─── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .dashboard-status-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .status-card-stats {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-
-  .task-widget {
-    grid-row: span 1;
-  }
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  /* No specific tweaks needed for grid anymore */
 }
-
+@media (max-width: 860px) {
+  .dash-bottom-grid { grid-template-columns: 1fr; }
+}
 @media (max-width: 640px) {
-  .dashboard-view {
-    padding: 20px 20px 28px;
-  }
-
-  .dashboard-status-card {
-    padding: 20px;
-    gap: 20px;
-  }
-
-  .status-logo {
-    width: 44px;
-    height: 44px;
-  }
-
-  .status-app-name {
-    font-size: 20px;
-  }
-
-  .status-card-stats {
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .stat-divider {
-    display: none;
-  }
-
-  .stat-item {
-    min-width: 70px;
-  }
-
-  .stat-value {
-    font-size: 18px;
-  }
-
-  .widget {
-    padding: 16px 18px;
-  }
-
-  .mini-task-item {
-    padding: 10px 12px;
-  }
+  .dashboard-view { padding: 18px 18px 36px; gap: 16px; }
+  .dash-header { flex-direction: column; align-items: flex-start; }
+  .dash-axes-grid { gap: 10px; }
+  .dash-quick-actions { gap: 8px; }
+  .dash-action-btn { padding: 9px 14px; font-size: 12px; }
+}
+@media (max-width: 420px) {
+  /* Smaller mobile specific tweaks */
 }

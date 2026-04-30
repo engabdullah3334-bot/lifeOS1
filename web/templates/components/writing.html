@@ -1,174 +1,271 @@
             <!-- Writing View -->
             <section id="writing" class="content-view" style="display: none;">
                 <div class="writing-layout">
+
                     <!-- Projects Column -->
                     <div class="sf-column projects-col" id="projects-sidebar">
                         <div class="col-header">
-                            <h3>Projects</h3>
-                            <div>
-                                <button class="add-btn" id="new-project-btn" title="New Project">+</button>
-                                <button class="toggle-sidebar-btn" id="toggle-projects" title="Hide Projects">◀</button>
+                            <h3>📁 Projects</h3>
+                            <div class="col-header-actions">
+                                <button class="add-btn" id="new-project-btn" data-tip="New Project">＋</button>
+                                <button class="toggle-sidebar-btn" id="toggle-projects" data-tip="Hide sidebar">◀</button>
                             </div>
                         </div>
                         <div class="writing-quick-filter">
-                            <input type="text" id="writing-search" class="writing-search-input" placeholder="Search projects & notes..." autocomplete="off">
+                            <input type="text" id="writing-search" class="writing-search-input" placeholder="🔍  Search..." autocomplete="off">
                         </div>
-                        <ul class="project-list" id="project-list">
-                            <!-- Dynamic Projects -->
-                        </ul>
+                        <ul class="project-list" id="project-list"></ul>
                     </div>
 
                     <!-- Notes Column -->
                     <div class="sf-column notes-col" id="notes-sidebar" style="visibility: hidden;">
                         <div class="col-header">
-                            <h3>Notes</h3>
-                            <div>
-                                <button class="add-btn" id="new-note-btn" title="New Note">+</button>
-                                <button class="toggle-sidebar-btn" id="toggle-notes" title="Hide Notes">◀</button>
+                            <h3>📝 Notes</h3>
+                            <div class="col-header-actions">
+                                <button class="add-btn" id="new-note-btn" data-tip="New Note (Ctrl+N)">＋</button>
+                                <button class="toggle-sidebar-btn" id="toggle-notes" data-tip="Hide sidebar">◀</button>
                             </div>
                         </div>
-                        <ul class="note-list" id="note-list">
-                            <!-- Dynamic Notes -->
-                        </ul>
+                        <!-- Status Filter Bar -->
+                        <div class="note-filter-bar">
+                            <button class="note-filter-btn active" id="note-filter-all"       data-tip="All notes">All</button>
+                            <button class="note-filter-btn"        id="note-filter-draft"     data-tip="Drafts only">✏</button>
+                            <button class="note-filter-btn"        id="note-filter-review"    data-tip="In Review">👁</button>
+                            <button class="note-filter-btn"        id="note-filter-complete"  data-tip="Completed">✓</button>
+                            <button class="note-filter-btn"        id="note-filter-favorites" data-tip="Favorites">⭐</button>
+                        </div>
+                        <ul class="note-list" id="note-list"></ul>
                     </div>
-                    
-                    <div class="restore-actions" style="position: absolute; top: 15px; right: 20px; z-index: 100;">
-                        <button class="restore-sidebar-btn" id="restore-projects" style="display:none; background: #1a1f35; border: 1px solid #2d3348; color: #a1a6c8; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-right: 5px;" title="Show Projects">📁</button>
-                        <button class="restore-sidebar-btn" id="restore-notes" style="display:none; background: #1a1f35; border: 1px solid #2d3348; color: #a1a6c8; padding: 5px 10px; border-radius: 6px; cursor: pointer;" title="Show Notes">📄</button>
+
+                    <!-- Restore Buttons -->
+                    <div class="restore-actions">
+                        <button class="restore-sidebar-btn" id="restore-projects" style="display:none;" data-tip="Show Projects">📁</button>
+                        <button class="restore-sidebar-btn" id="restore-notes"    style="display:none;" data-tip="Show Notes">📄</button>
                     </div>
 
                     <!-- Editor Column -->
                     <div class="sf-column editor-col" id="editor-column" style="visibility: hidden;">
+
+                        <!-- Compact Editor Header -->
                         <div class="editor-header">
-                            <button class="mobile-drawer-btn" id="mobile-projects-btn" title="Projects" aria-label="Open projects">📁</button>
-                            <input type="text" class="note-title-input" placeholder="Note title...">
+                            <button class="mobile-drawer-btn" id="mobile-projects-btn" data-tip="Projects">📁</button>
+                            <input type="text" class="note-title-input" placeholder="Untitled note..." id="note-title-input" spellcheck="false">
                             <div class="header-actions">
-                                <button class="icon-btn" id="rename-note-btn" title="Edit name">✎</button>
-                                <button class="icon-btn" id="delete-note-btn" title="Delete note">🗑</button>
-                                <span class="save-status">Saved</span>
-                                <button class="close-note-btn" id="close-note-btn" title="Close">&times;</button>
+                                <span class="save-status" data-tip="Auto-save status">✓  Saved</span>
+                                <button class="icon-btn" id="duplicate-note-btn" data-tip="Duplicate (Ctrl+D)">⧉</button>
+                                <button class="icon-btn" id="export-note-md-btn" data-tip="Export Markdown (Ctrl+E)">↓ MD</button>
+                                <button class="icon-btn" id="export-note-txt-btn" data-tip="Export Plain Text">↓ TXT</button>
+                                <button class="icon-btn danger-btn" id="delete-note-btn" data-tip="Delete note">🗑</button>
+                                <button class="icon-btn close-note-btn" id="close-note-btn" data-tip="Close (Esc)">&times;</button>
                             </div>
                         </div>
-                        
+
+                        <!-- PRIMARY Toolbar (always visible, compact) -->
                         <div class="rich-toolbar" id="rich-toolbar">
                             <div class="toolbar-group">
-                                <button class="toolbar-btn" data-command="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
-                                <button class="toolbar-btn" data-command="italic" title="Italic (Ctrl+I)"><em>I</em></button>
-                                <button class="toolbar-btn" data-command="underline" title="Underline"><u>U</u></button>
-                                <button class="toolbar-btn" data-command="strikeThrough" title="Strikethrough"><s>S</s></button>
-                                <div style="position: relative; display: flex;">
-                                    <button class="toolbar-btn" id="font-color-btn" title="Text Color">
-                                        <span style="border-bottom: 3px solid currentColor;">A</span>
+                                <button class="toolbar-btn" data-command="bold"          data-tip="Bold (Ctrl+B)"><strong>B</strong></button>
+                                <button class="toolbar-btn" data-command="italic"        data-tip="Italic (Ctrl+I)"><em>I</em></button>
+                                <button class="toolbar-btn" data-command="underline"     data-tip="Underline (Ctrl+U)"><u>U</u></button>
+                                <button class="toolbar-btn" data-command="strikeThrough" data-tip="Strikethrough"><s>S</s></button>
+                                <div style="position:relative;display:flex;">
+                                    <button class="toolbar-btn" id="font-color-btn" data-tip="Text Color">
+                                        <span style="border-bottom:3px solid currentColor;">A</span>
                                     </button>
-                                    <input type="color" id="font-color-picker" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;" value="#f2f4ff">
+                                    <input type="color" id="font-color-picker" style="position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;" value="#e8eaf6">
+                                </div>
+                                <div style="position:relative;display:flex;">
+                                    <button class="toolbar-btn" id="highlight-btn" data-tip="Highlight">
+                                        <span style="background:#ffec3d;color:#111;padding:1px 3px;border-radius:2px;font-size:.82em;">H</span>
+                                    </button>
+                                    <input type="color" id="highlight-color-picker" style="position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;" value="#ffec3d">
                                 </div>
                             </div>
                             <div class="toolbar-separator"></div>
+
                             <div class="toolbar-group">
-                                <button class="toolbar-btn" data-command="justifyLeft" title="Align Left">☰</button>
-                                <button class="toolbar-btn" data-command="justifyCenter" title="Align Center">☷</button>
-                                <button class="toolbar-btn" data-command="justifyRight" title="Align Right">☰</button>
-                                <button class="toolbar-btn" data-command="justifyFull" title="Justify">☰</button>
-                            </div>
-                            <div class="toolbar-separator"></div>
-                            <div class="toolbar-group">
-                                <button class="toolbar-btn" id="toggle-text-direction" title="Toggle LTR/RTL">⇄</button>
-                            </div>
-                            <div class="toolbar-separator"></div>
-                            <div class="toolbar-group">
-                                <select class="toolbar-select" id="format-block">
-                                    <option value="p">Normal</option>
-                                    <option value="h1">Heading 1</option>
-                                    <option value="h2">Heading 2</option>
-                                    <option value="h3">Heading 3</option>
-                                    <option value="pre">Code Block</option>
+                                <select class="toolbar-select" id="format-block" data-tip="Paragraph style">
+                                    <option value="p">¶ Normal</option>
+                                    <option value="h1">H1</option>
+                                    <option value="h2">H2</option>
+                                    <option value="h3">H3</option>
+                                    <option value="blockquote">❝ Quote</option>
+                                    <option value="pre">⌨ Code</option>
                                 </select>
                             </div>
                             <div class="toolbar-separator"></div>
+
                             <div class="toolbar-group">
-                                <select class="toolbar-select" id="font-family" style="min-width: 120px;">
-                                    <option value="inherit">Default Font</option>
+                                <select class="toolbar-select" id="font-family" style="min-width:100px;" data-tip="Font">
+                                    <option value="inherit">Default</option>
                                     <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                                    <option value="'Inter', sans-serif">Inter</option>
+                                    <option value="'Georgia', serif">Georgia</option>
                                     <option value="'Times New Roman', serif">Times New Roman</option>
                                     <option value="'Courier New', monospace">Courier New</option>
-                                    <option value="'Georgia', serif">Georgia</option>
-                                    <option value="'Verdana', sans-serif">Verdana</option>
                                 </select>
-                            </div>
-                            <div class="toolbar-separator"></div>
-                            <div class="toolbar-group">
-                                <select class="toolbar-select" id="font-size">
+                                <select class="toolbar-select" id="font-size" style="min-width:60px;" data-tip="Font size">
                                     <option value="1">10px</option>
                                     <option value="2">13px</option>
-                                    <option value="3" selected>16px</option>
-                                    <option value="4">18px</option>
+                                    <option value="3">16px</option>
+                                    <option value="4" selected>18px</option>
                                     <option value="5">24px</option>
                                     <option value="6">32px</option>
-                                    <option value="7">48px</option>
                                 </select>
                             </div>
                             <div class="toolbar-separator"></div>
+
+                            <!-- Alignment (fixed SVG icons) -->
                             <div class="toolbar-group">
-                                <button class="toolbar-btn" id="toggle-view-mode" title="List/Thumbnail View">⊞</button>
-                                <button class="toolbar-btn" id="toggle-focus-mode" title="Focus Mode">⛶</button>
+                                <button class="toolbar-btn" data-command="justifyLeft"   data-tip="Align Left">
+                                    <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor"><rect y="0" width="13" height="1.8" rx="0.9"/><rect y="3" width="8" height="1.8" rx="0.9"/><rect y="6" width="13" height="1.8" rx="0.9"/><rect y="9" width="6" height="1.8" rx="0.9"/></svg>
+                                </button>
+                                <button class="toolbar-btn" data-command="justifyCenter" data-tip="Align Center">
+                                    <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor"><rect y="0" width="13" height="1.8" rx="0.9"/><rect x="2.5" y="3" width="8" height="1.8" rx="0.9"/><rect y="6" width="13" height="1.8" rx="0.9"/><rect x="3" y="9" width="7" height="1.8" rx="0.9"/></svg>
+                                </button>
+                                <button class="toolbar-btn" data-command="justifyRight"  data-tip="Align Right">
+                                    <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor"><rect y="0" width="13" height="1.8" rx="0.9"/><rect x="5" y="3" width="8" height="1.8" rx="0.9"/><rect y="6" width="13" height="1.8" rx="0.9"/><rect x="7" y="9" width="6" height="1.8" rx="0.9"/></svg>
+                                </button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+
+                            <!-- Undo/Redo -->
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" data-command="undo" data-tip="Undo (Ctrl+Z)">↩</button>
+                                <button class="toolbar-btn" data-command="redo" data-tip="Redo (Ctrl+Y)">↪</button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+
+                            <!-- More button → secondary panel -->
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" id="toolbar-more-btn" data-tip="More tools">• • •</button>
+                                <button class="toolbar-btn" id="toggle-focus-mode"  data-tip="Focus Mode (Ctrl+Shift+F)">⛶</button>
+                                <button class="toolbar-btn" id="toggle-bg-settings" data-tip="Editor Background">🎨</button>
+                            </div>
+                        </div>
+
+                        <!-- SECONDARY Toolbar (hidden, slides down on More click) -->
+                        <div class="rich-toolbar-secondary" id="rich-toolbar-secondary">
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" data-command="insertUnorderedList" data-tip="Bullet List">• List</button>
+                                <button class="toolbar-btn" data-command="insertOrderedList"   data-tip="Numbered List">1. List</button>
+                                <button class="toolbar-btn" data-command="indent"              data-tip="Indent">→|</button>
+                                <button class="toolbar-btn" data-command="outdent"             data-tip="Outdent">|←</button>
                             </div>
                             <div class="toolbar-separator"></div>
                             <div class="toolbar-group">
-                                <button class="toolbar-btn" id="toggle-bg-settings" title="Background Settings">🎨</button>
+                                <button class="toolbar-btn" id="insert-link-btn"       data-tip="Insert Link (Ctrl+K)">🔗 Link</button>
+                                <button class="toolbar-btn" id="insert-hr-btn"         data-tip="Horizontal Rule">― HR</button>
+                                <button class="toolbar-btn" id="insert-date-btn"       data-tip="Insert today's date">📅 Date</button>
+                                <button class="toolbar-btn" id="insert-time-btn"       data-tip="Insert current time">🕐 Time</button>
+                                <button class="toolbar-btn" id="toggle-text-direction" data-tip="Toggle LTR / RTL">⇄ Dir</button>
+                            </div>
+                            <div class="toolbar-separator"></div>
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" data-command="justifyFull" data-tip="Justify">
+                                    <svg width="13" height="11" viewBox="0 0 13 11" fill="currentColor"><rect y="0" width="13" height="1.8" rx="0.9"/><rect y="3" width="13" height="1.8" rx="0.9"/><rect y="6" width="13" height="1.8" rx="0.9"/><rect y="9" width="13" height="1.8" rx="0.9"/></svg>
+                                </button>
+                                <button class="toolbar-btn" id="toggle-view-mode" data-tip="List / Grid view">⊞</button>
                             </div>
                         </div>
-                        
-                        <div class="bg-settings-panel" id="bg-settings-panel" style="display: none;">
+
+                        <!-- Premium Background Settings Panel -->
+                        <div class="bg-settings-panel modern-glass-panel" id="bg-settings-panel" style="display:none;">
                             <div class="bg-panel-header">
-                                <h4>Background Settings</h4>
-                                <button class="close-panel-btn" id="close-bg-settings">×</button>
+                                <div class="bg-panel-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                                    <span>Editor Theme</span>
+                                </div>
+                                <button class="close-panel-btn" id="close-bg-settings" data-tip="Close">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+                                </button>
                             </div>
-                            <div class="bg-section">
-                                <label>Solid Colors</label>
-                                <div class="color-presets">
-                                    <button class="color-dot" data-bg="#0b0f1a" title="Default Dark"></button>
-                                    <button class="color-dot" data-bg="#000000" title="Pure Black"></button>
-                                    <button class="color-dot" data-bg="#1a1a1a" title="Charcoal"></button>
-                                    <button class="color-dot" data-bg="#0f172a" title="Slate Blue"></button>
-                                    <input type="color" id="custom-bg-color" class="color-input" title="Custom Color">
+                            
+                            <!-- Tabs Navigation -->
+                            <div class="bg-tabs">
+                                <button class="bg-tab active" data-target="bg-tab-solid">Solid</button>
+                                <button class="bg-tab" data-target="bg-tab-gradient">Gradient</button>
+                                <button class="bg-tab" data-target="bg-tab-image">Image</button>
+                            </div>
+
+                            <!-- Solid Tab -->
+                            <div class="bg-tab-content active" id="bg-tab-solid">
+                                <div class="preset-grid">
+                                    <button class="color-preset color-dot" data-bg="#1a1b26" data-tip="Tokyo Night" style="background:#1a1b26;"></button>
+                                    <button class="color-preset color-dot" data-bg="#1e1e2e" data-tip="Mocha" style="background:#1e1e2e;"></button>
+                                    <button class="color-preset color-dot" data-bg="#0f111a" data-tip="Deep Void" style="background:#0f111a;"></button>
+                                    <button class="color-preset color-dot" data-bg="#181825" data-tip="Macchiato" style="background:#181825;"></button>
+                                    <button class="color-preset color-dot" data-bg="#11111b" data-tip="Crust" style="background:#11111b;"></button>
+                                    <button class="color-preset color-dot" data-bg="#0f172a" data-tip="Slate" style="background:#0f172a;"></button>
+                                    <button class="color-preset color-dot" data-bg="#282a36" data-tip="Dracula" style="background:#282a36;"></button>
+                                    <button class="color-preset color-dot" data-bg="#24283b" data-tip="Storm" style="background:#24283b;"></button>
+                                    <button class="color-preset color-dot light-preset" data-bg="#faf8f5" data-tip="Paper" style="background:#faf8f5;"></button>
+                                    <button class="color-preset color-dot light-preset" data-bg="#f4f1ea" data-tip="Parchment" style="background:#f4f1ea;"></button>
+                                </div>
+                                <div class="custom-color-wrapper">
+                                    <span>Custom Color</span>
+                                    <div class="custom-color-picker-btn">
+                                        <input type="color" id="custom-bg-color" class="color-input" value="#1a1b26">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="bg-section">
-                                <label>Gradients</label>
-                                <div class="gradient-presets">
-                                    <button class="gradient-preview" data-bg="linear-gradient(135deg, #0f0c29, #302b63, #24243e)" title="Deep Space"></button>
-                                    <button class="gradient-preview" data-bg="linear-gradient(to right, #232526, #414345)" title="Midnight"></button>
+
+                            <!-- Gradient Tab -->
+                            <div class="bg-tab-content" id="bg-tab-gradient">
+                                <div class="gradient-grid">
+                                    <button class="gradient-preset gradient-preview" data-bg="linear-gradient(135deg, #1a1b26 0%, #24283b 100%)" data-tip="Tokyo Storm" style="background: linear-gradient(135deg, #1a1b26 0%, #24283b 100%);"></button>
+                                    <button class="gradient-preset gradient-preview" data-bg="linear-gradient(135deg, #11111b 0%, #1e1e2e 100%)" data-tip="Mocha Deep" style="background: linear-gradient(135deg, #11111b 0%, #1e1e2e 100%);"></button>
+                                    <button class="gradient-preset gradient-preview" data-bg="linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" data-tip="Cosmic" style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);"></button>
+                                    <button class="gradient-preset gradient-preview" data-bg="linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)" data-tip="Ocean Depth" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);"></button>
+                                    <button class="gradient-preset gradient-preview" data-bg="linear-gradient(135deg, #1f1c2c 0%, #928dab 100%)" data-tip="Silver Night" style="background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%);"></button>
+                                    <button class="gradient-preset gradient-preview light-preset" data-bg="linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)" data-tip="Cloud" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);"></button>
                                 </div>
                             </div>
-                            <div class="bg-section">
-                                <label>Custom Image</label>
-                                <div class="image-upload-area">
-                                    <button class="btn-secondary" id="upload-bg-btn">Upload Image</button>
-                                    <input type="file" id="bg-image-input" accept="image/*" style="display: none;">
-                                    <button class="btn-text" id="remove-bg-image">Remove</button>
+
+                            <!-- Image Tab -->
+                            <div class="bg-tab-content" id="bg-tab-image">
+                                <div class="image-upload-wrapper" id="upload-bg-btn">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                    <span>Click to upload image</span>
+                                    <span class="upload-hint">JPG, PNG, WebP (Max 5MB)</span>
                                 </div>
-                                <div class="overlay-control" style="margin-top: 10px;">
-                                    <label>Overlay Opacity</label>
-                                    <input type="range" id="bg-overlay-opacity" min="0" max="1" step="0.1" value="0.7">
+                                <input type="file" id="bg-image-input" accept="image/*" style="display:none;">
+                                
+                                <div class="image-controls">
+                                    <div class="opacity-control">
+                                        <div class="opacity-header">
+                                            <span>Image Dimming</span>
+                                            <span id="opacity-val">50%</span>
+                                        </div>
+                                        <input type="range" id="bg-overlay-opacity" min="0" max="1" step="0.05" value="0.5" class="premium-slider">
+                                    </div>
+                                    <button class="btn-danger-outline" id="remove-bg-image">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                                        Remove Image
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- Editor Area -->
                         <div class="editor-container">
                             <div class="editor-bg-overlay"></div>
-                            <div class="rich-editor" contenteditable="true" spellcheck="true" id="rich-editor">
-                                <p>Start writing...</p>
-                            </div>
+                            <div class="rich-editor" contenteditable="false" spellcheck="true" id="rich-editor"></div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Project Properties Modal -->
-                <div id="project-props-modal" class="writing-props-overlay" aria-hidden="true">
+                        <!-- Word Count Footer -->
+                        <div class="editor-footer">
+                            <span id="word-count-indicator" class="word-count-indicator">0 words · 1 min read</span>
+                        </div>
+
+                    </div><!-- /editor-col -->
+                </div><!-- /writing-layout -->
+
+                <!-- Project Modal -->
+                <div id="project-props-modal" class="writing-props-overlay modal" aria-hidden="true">
                     <div class="writing-props-modal">
                         <div class="writing-props-header">
                             <h3 id="project-props-title">Project</h3>
-                            <button type="button" class="writing-props-close" id="project-props-close" aria-label="Close">×</button>
+                            <button type="button" class="writing-props-close" id="project-props-close" data-tip="Close">×</button>
                         </div>
                         <form id="project-props-form" class="writing-props-form">
                             <input type="hidden" id="project-props-id" value="">
@@ -178,34 +275,34 @@
                             </div>
                             <div class="writing-props-field">
                                 <label for="project-props-tags">Tags</label>
-                                <input type="text" id="project-props-tags" placeholder="tag1, tag2, tag3">
+                                <input type="text" id="project-props-tags" placeholder="work, personal, ideas">
                             </div>
                             <div class="writing-props-field">
                                 <label for="project-props-desc">Description</label>
-                                <textarea id="project-props-desc" rows="3" placeholder="Brief description"></textarea>
+                                <textarea id="project-props-desc" rows="3" placeholder="Brief description..."></textarea>
                             </div>
                             <div class="writing-props-actions">
                                 <button type="button" class="writing-props-cancel" id="project-props-cancel">Cancel</button>
-                                <button type="submit" class="writing-props-submit">Save</button>
+                                <button type="submit" class="writing-props-submit">💾 Save</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <!-- Note Properties Modal -->
-                <div id="note-props-modal" class="writing-props-overlay" aria-hidden="true">
+                <!-- Note Modal -->
+                <div id="note-props-modal" class="writing-props-overlay modal" aria-hidden="true">
                     <div class="writing-props-modal">
                         <div class="writing-props-header">
                             <h3 id="note-props-title">Note</h3>
-                            <button type="button" class="writing-props-close" id="note-props-close" aria-label="Close">×</button>
+                            <button type="button" class="writing-props-close" id="note-props-close" data-tip="Close">×</button>
                         </div>
                         <form id="note-props-form" class="writing-props-form">
                             <input type="hidden" id="note-props-id" value="">
                             <div class="writing-props-field">
-                                <label for="note-props-name">Name <span class="required">*</span></label>
+                                <label for="note-props-name">Title <span class="required">*</span></label>
                                 <input type="text" id="note-props-name" required placeholder="Note title">
                             </div>
-                            <div class="writing-props-field note-project-ref" id="note-props-project-wrap">
+                            <div class="writing-props-field">
                                 <label>Project</label>
                                 <div class="writing-props-ref" id="note-props-project-name">—</div>
                                 <select id="note-props-move-project" class="writing-props-select">
@@ -215,9 +312,9 @@
                             <div class="writing-props-field">
                                 <label for="note-props-status">Status</label>
                                 <select id="note-props-status" class="writing-props-select">
-                                    <option value="draft">Draft</option>
-                                    <option value="in_review">In review</option>
-                                    <option value="complete">Complete</option>
+                                    <option value="draft">✏ Draft</option>
+                                    <option value="in_review">👁 In Review</option>
+                                    <option value="complete">✓ Complete</option>
                                 </select>
                             </div>
                             <div class="writing-props-field">
@@ -226,13 +323,14 @@
                             </div>
                             <div class="writing-props-field">
                                 <label for="note-props-desc">Description</label>
-                                <textarea id="note-props-desc" rows="3" placeholder="Brief description"></textarea>
+                                <textarea id="note-props-desc" rows="2" placeholder="Brief description..."></textarea>
                             </div>
                             <div class="writing-props-actions">
                                 <button type="button" class="writing-props-cancel" id="note-props-cancel">Cancel</button>
-                                <button type="submit" class="writing-props-submit">Save</button>
+                                <button type="submit" class="writing-props-submit">💾 Save</button>
                             </div>
                         </form>
                     </div>
                 </div>
+
             </section>

@@ -79,6 +79,18 @@ class ProjectService:
         )
         return True, None
 
+    @staticmethod
+    def reorder_projects(db, user_id, ordered_ids: list):
+        """Update the display order of projects by their IDs."""
+        if not isinstance(ordered_ids, list):
+            return False, "ordered_ids array is required"
+        for idx, pid in enumerate(ordered_ids):
+            db.projects.update_one(
+                {"project_id": pid, "user_id": user_id},
+                {"$set": {"order": idx}},
+            )
+        return True, None
+
 
 class TaskService:
     @staticmethod
@@ -168,6 +180,12 @@ class TaskService:
                 inst["task_id"] = f"{task['task_id']}|{date_str}"
                 inst["original_task_id"] = task["task_id"]
                 inst["execution_day"] = date_str
+                
+                if "start_date" in inst and inst["start_date"]:
+                    inst["start_date"] = date_str
+                if "end_date" in inst and inst["end_date"]:
+                    inst["end_date"] = date_str
+                    
                 inst["status"] = inst_status
                 instances.append(inst)
                 
@@ -224,8 +242,22 @@ class TaskService:
     def delete_task(db, user_id, tid):
         if "|" in tid:
             tid = tid.split("|")[0]
-            
+
         result = db.tasks.delete_one({"task_id": tid, "user_id": user_id})
         if result.deleted_count == 0:
             return False, "Task not found"
+        return True, None
+
+    @staticmethod
+    def reorder_tasks(db, user_id, ordered_ids: list):
+        """Update the display order of tasks by their IDs."""
+        if not isinstance(ordered_ids, list):
+            return False, "ordered_ids array is required"
+        for idx, tid in enumerate(ordered_ids):
+            if "|" in tid:
+                tid = tid.split("|", 1)[0]
+            db.tasks.update_one(
+                {"task_id": tid, "user_id": user_id},
+                {"$set": {"order": idx}},
+            )
         return True, None

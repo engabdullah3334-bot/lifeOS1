@@ -6,8 +6,8 @@
 # ══════════════════════════════════════════════════════════════════════════════
 
 app:
-  name: "LifeOS Integrated"
-  version: "1.0.0"
+  name: "LifeOS"
+  version: "2.0.0"
 
 modules:
   tasks:
@@ -71,7 +71,54 @@ ai:
   default_mode: "planning"
   action_tag_pattern: '\\[ACTION:([A-Z_]+)\\](.*?)\\[/ACTION\\]'
 
-# Legacy database paths (kept for reference)
-database:
-  shared_path: "database/tasks.json"
-  notes_path: "database/notes"
+# ── Life Axes — Core pillars that structure the user's day
+# These are semi-permanent and define how tasks/time are categorized.
+# To add a new axis: add an entry below and create matching tasks with the axis_tag.
+life_axes:
+  - id: "university"
+    label: "الجامعة"
+    icon: "🎓"
+    color: "#4d7cff"
+    min_hours: 5
+    max_hours: 9
+    priority: 1
+
+  - id: "work"
+    label: "العمل"
+    icon: "💼"
+    color: "#10b981"
+    min_hours: 1
+    max_hours: 3
+    priority: 2
+
+  - id: "sports"
+    label: "الرياضة"
+    icon: "💪"
+    color: "#f97316"
+    min_hours: 1
+    max_hours: 2
+    priority: 3
+
+  - id: "goal"
+    label: "الهدف"
+    icon: "🎯"
+    color: "#9b4dff"
+    min_hours: 0
+    max_hours: 1
+    priority: 4
+
+  - id: "learning"
+    label: "التعلم والكتابة"
+    icon: "📚"
+    color: "#27f5ff"
+    min_hours: 1
+    max_hours: 2
+    priority: 5
+
+  - id: "entertainment"
+    label: "الترفيه"
+    icon: "🎮"
+    color: "#eab308"
+    min_hours: 0
+    max_hours: 2.5
+    priority: 6
