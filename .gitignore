@@ -4,3 +4,4 @@
 /deploy.bat
 /start-lifeos.bat
 /.vscode
+/__pycache__
