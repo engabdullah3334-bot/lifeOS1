@@ -1,6 +1,7 @@
 import os
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
 from flask import Flask, render_template, jsonify
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
@@ -8,25 +9,12 @@ from flask_jwt_extended import JWTManager
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 
+# تحميل الإعدادات من ملف .env
+load_dotenv()
+
 # إيقاف رسائل الـ DEBUG الخاصة بـ PyMongo فقط
 logging.getLogger('pymongo').setLevel(logging.WARNING)
 
-def _load_local_env():
-    env_path = os.path.join(os.path.dirname(__file__), ".env")
-    if not os.path.exists(env_path):
-        return
-    with open(env_path, "r", encoding="utf-8") as f:
-        for raw in f:
-            line = raw.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, value = line.split("=", 1)
-            key = key.strip()
-            value = value.strip().strip('"').strip("'")
-            if key and key not in os.environ:
-                os.environ[key] = value
-
-_load_local_env()
 
 # --- 1. إعداد محول الـ JSON للتاريخ ---
 class UpdatedJSONProvider(DefaultJSONProvider):
@@ -95,24 +83,29 @@ jwt = JWTManager(app)
 # رابط قاعدة البيانات
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:
-    raise RuntimeError(
-        "Missing MONGO_URI. Set it in environment variables or in My_App/.env"
-    )
-MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "LifeOS_Database")
+    print("⚠️ تحذير: لم يتم العثور على رابط Atlas في ملف .env، يتم الاتصال بالمحلي!")
+    MONGO_URI = "mongodb://localhost:27017"
+
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "LifeOS")
 
 def _connect_mongo(uri, db_name):
     try:
+        # إخفاء كلمة المرور في رسالة السجل لأسباب أمنية
+        masked_uri = uri.split('@')[-1] if '@' in uri else uri
+        print(f"⌛ Connecting to MongoDB: {masked_uri}...")
+        
         mongo_client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        # التحقق من الاتصال فعلياً
         mongo_client.admin.command("ping")
+        print("✓ MongoDB Connected Successfully!")
         return mongo_client[db_name]
     except ServerSelectionTimeoutError as exc:
         raise RuntimeError(
-            "Could not connect to local MongoDB at mongodb://localhost:27017. "
-            "Make sure MongoDB service is running on Windows. "
-            f"Original error: {exc}"
+            f"Could not connect to MongoDB at {uri.split('@')[-1] if '@' in uri else uri}. "
+            "Please check your internet connection and MongoDB Atlas whitelist (IP Access List)."
         ) from exc
     except PyMongoError as exc:
-        raise RuntimeError(f"MongoDB connection error: {exc}") from exc
+        raise RuntimeError(f"MongoDB Error: {exc}") from exc
 
 db = _connect_mongo(MONGO_URI, MONGO_DB_NAME)
 app.config["db"] = db

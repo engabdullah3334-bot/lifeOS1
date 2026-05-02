@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Life Manager</title>
     
 
@@ -33,6 +33,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 </head>
 <body>
     {% include 'components/login.html' %}
@@ -216,8 +220,7 @@
 <script src="{{ url_for('static', filename='js/modules/tasks/modal.js') }}?v=10"></script>
 <script src="{{ url_for('static', filename='js/modules/tasks/dragDrop.js') }}?v=10"></script>
 <script src="{{ url_for('static', filename='js/modules/tasks/projectsView.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/dailyView.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/monthlyView.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='js/modules/tasks/calendarView.js') }}?v=10"></script>
 <script src="{{ url_for('static', filename='js/modules/tasks/archiveView.js') }}?v=10"></script>
 <script src="{{ url_for('static', filename='js/modules/tasks/index.js') }}?v=10"></script>
 

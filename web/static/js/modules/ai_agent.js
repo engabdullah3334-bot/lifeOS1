@@ -91,8 +91,47 @@
 
     closeBtn && closeBtn.addEventListener('click', closeWidget);
 
+    // ── Context Menu & Long Press (Delete functionality) ────────────────
+    const deleteBtn = document.getElementById('ai-widget-delete');
+
+    // Right Click
+    trigger.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showDeleteBtn();
+    });
+
+    // Long Press (Mobile)
+    let pressTimer;
+    trigger.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(showDeleteBtn, 600);
+    }, { passive: true });
+    trigger.addEventListener('touchend', () => clearTimeout(pressTimer));
+    trigger.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+    function showDeleteBtn() {
+      if (!deleteBtn) return;
+      deleteBtn.style.display = 'flex';
+      // Auto-hide delete button after 4 seconds if not clicked
+      setTimeout(() => {
+        if (deleteBtn) deleteBtn.style.display = 'none';
+      }, 4000);
+    }
+
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        if (confirm('هل تريد إخفاء مساعد الـ AI تماماً؟ (سيختفي حتى تعيد تحميل الصفحة)')) {
+          trigger.style.display = 'none';
+          deleteBtn.style.display = 'none';
+          closeWidget();
+        }
+      });
+    }
+
     // Close on outside click
     document.addEventListener('click', (e) => {
+      if (deleteBtn && !deleteBtn.contains(e.target) && e.target !== trigger) {
+        deleteBtn.style.display = 'none';
+      }
       if (
         state.widgetOpen &&
         !widget.contains(e.target) &&

@@ -47,10 +47,10 @@ def get_dashboard():
     from core.task import TaskService
     all_tasks = TaskService.get_tasks(db, user_id, archived=False)
 
-    # Today's tasks: execution_day == today OR no execution_day (inbox)
+    # Today's tasks: strictly tasks scheduled for today
     today_tasks = [
         t for t in all_tasks
-        if t.get("execution_day") == today or not t.get("execution_day")
+        if t.get("execution_day") == today or t.get("start_date") == today
     ]
 
     total   = len(today_tasks)

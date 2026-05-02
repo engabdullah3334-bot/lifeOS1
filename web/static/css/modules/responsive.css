@@ -141,6 +141,27 @@
   .content-view {
     padding: 16px 12px;
   }
+
+  /* Prevent auto-zoom on iOS/Android inputs */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Larger touch targets for buttons */
+  button, .sidebar-nav a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Hide scrollbars but allow scrolling */
+  .archive-scroll-area, .ai-chat-messages {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .archive-scroll-area::-webkit-scrollbar, .ai-chat-messages::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ════════════════════════════════════════
@@ -158,5 +179,10 @@
 
   .content-view {
     padding: 12px 8px;
+  }
+
+  /* Stack dashboard stats on very small screens */
+  .dashboard-stats {
+    grid-template-columns: 1fr !important;
   }
 }

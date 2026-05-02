@@ -283,7 +283,36 @@ GET /api/tasks is called
 
 ---
 
-### 3c. Complete Recurring Task Instance
+### 3c. Calendar Rendering Flow (FullCalendar TimeGrid)
+
+```
+User opens Calendar Tab
+         │
+         ▼
+[Browser — calendarView.js]
+  1. FullCalendar triggers events() callback
+  2. Extracts start and end dates from current view (e.g., current week)
+  3. Calls: GET /api/tasks?start=YYYY-MM-DD&end=YYYY-MM-DD
+         │
+         ▼
+[core/task.py — TaskService.get_tasks()]
+  1. Parses window_start and window_end from query string
+  2. Uses them to limit recurring task generation
+  3. Returns raw and recurring tasks strictly within the requested timeframe
+         │
+         ▼
+[Browser — calendarView.js]
+  1. Filters out unscheduled tasks (where execution_day and start_date are missing)
+  2. Maps task fields to FullCalendar Event object:
+     - start: execution_day + "T" + start_time
+     - end: execution_day + "T" + end_time
+     - allDay: true (if start_time is missing)
+  3. Renders scheduled tasks onto the TimeGrid
+```
+
+---
+
+### 3d. Complete Recurring Task Instance
 
 ```
 User clicks ✓ on a recurring task instance (e.g. "2026-04-26")

@@ -100,6 +100,8 @@ TS.modal = {
     get('ts-task-start').value      = task?.start_date  || '';
     get('ts-task-end').value        = task?.end_date    || '';
     get('ts-task-exec-day').value   = task?.execution_day || '';
+    get('ts-task-start-time').value = task?.start_time  || '';
+    get('ts-task-end-time').value   = task?.end_time    || '';
     get('ts-task-reminder').value   = task?.reminder    || '';
     
     const recurrence = task?.recurrence || 'none';
@@ -154,6 +156,8 @@ TS.modal = {
       start_date:    get('ts-task-start').value    || null,
       end_date:      get('ts-task-end').value      || null,
       execution_day: get('ts-task-exec-day').value || null,
+      start_time:    get('ts-task-start-time').value || null,
+      end_time:      get('ts-task-end-time').value   || null,
       reminder:      get('ts-task-reminder').value || null,
       tags,
       notes:         get('ts-task-notes').value.trim(),

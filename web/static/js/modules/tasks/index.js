@@ -19,8 +19,7 @@ TS.core = {
     TS.modal.init();
 
     // 4. Init view-specific listeners
-    TS.views.daily.init();
-    TS.views.monthly.init();
+    TS.views.calendar.init();
 
     // 5. Wire toolbar controls
     this._bindToolbar();
@@ -78,13 +77,13 @@ TS.core = {
 
   // ── View Switching ────────────────────────────────────────
   async switchView(view, initial = false) {
-    if (!['projects','daily','monthly','archive'].includes(view)) view = 'projects';
+    if (!['projects','calendar','archive'].includes(view)) view = 'projects';
 
     TS.state.currentView = view;
     TS.state.save();
 
     // Hide all panels
-    ['projects','daily','monthly','archive'].forEach(v => {
+    ['projects','calendar','archive'].forEach(v => {
       const panel = document.getElementById(`ts-panel-${v}`);
       if (panel) panel.style.display = 'none';
     });
@@ -125,8 +124,7 @@ TS.core = {
   _renderCurrentView() {
     const v = TS.state.currentView;
     if (v === 'projects') TS.views.projects.render();
-    if (v === 'daily')    TS.views.daily.render();
-    if (v === 'monthly')  TS.views.monthly.render();
+    if (v === 'calendar') TS.views.calendar.render();
     if (v === 'archive')  TS.views.archive.render();
   },
 

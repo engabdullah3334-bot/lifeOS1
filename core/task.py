@@ -94,7 +94,7 @@ class ProjectService:
 
 class TaskService:
     @staticmethod
-    def get_tasks(db, user_id, archived=False, project_id=None, status=None, search=None):
+    def get_tasks(db, user_id, archived=False, project_id=None, status=None, search=None, window_start=None, window_end=None):
         query = {"user_id": user_id}
         query["isArchived"] = True if archived else {"$ne": True}
 
@@ -112,14 +112,36 @@ class TaskService:
         
         processed_tasks = []
         today = datetime.now()
-        window_start = (today - timedelta(days=30)).date()
-        window_end = (today + timedelta(days=60)).date()
+        
+        # Parse window_start
+        if window_start:
+            if isinstance(window_start, str):
+                try:
+                    w_start = datetime.fromisoformat(window_start[:10]).date()
+                except ValueError:
+                    w_start = (today - timedelta(days=30)).date()
+            else:
+                w_start = window_start
+        else:
+            w_start = (today - timedelta(days=30)).date()
+
+        # Parse window_end
+        if window_end:
+            if isinstance(window_end, str):
+                try:
+                    w_end = datetime.fromisoformat(window_end[:10]).date()
+                except ValueError:
+                    w_end = (today + timedelta(days=60)).date()
+            else:
+                w_end = window_end
+        else:
+            w_end = (today + timedelta(days=60)).date()
 
         for task in tasks:
             is_recurring = task.get("is_recurring", False) or task.get("recurrence", "none") != "none"
             
             if is_recurring and task.get("recurrence", "none") != "none":
-                instances = TaskService._generate_occurrences(task, window_start, window_end)
+                instances = TaskService._generate_occurrences(task, w_start, w_end)
                 for inst in instances:
                     if status and inst.get("status") != status:
                         continue

@@ -252,7 +252,7 @@ flowchart TD
 
     projects["📁 projects\n─────────────\nproject_id (UUID)\nuser_id\nname, color, icon\ndescription\norder, isArchived"]
 
-    tasks["✅ tasks\n─────────────\ntask_id (UUID)\nuser_id, project_id\ntitle, description\nstatus (pending|completed|missed)\npriority (low|medium|high|critical)\nexecution_day, start_date, end_date\nrecurrence, recurrence_pattern\ncompleted_dates []\nis_recurring (computed)\nestimated_hours, axis_tag\ntags [], notes\norder, isArchived"]
+    tasks["✅ tasks\n─────────────\ntask_id (UUID)\nuser_id, project_id\ntitle, description\nstatus (pending|completed|missed)\npriority (low|medium|high|critical)\nexecution_day, start_date, end_date\nstart_time, end_time\nrecurrence, recurrence_pattern\ncompleted_dates []\nis_recurring (computed)\nestimated_hours, axis_tag\ntags [], notes\norder, isArchived"]
 
     note_projects["📂 note_projects\n─────────────\nproject_id (UUID)\nuser_id\nname, description\ntags [], order\narchived, is_system\ncreated_at"]
 
@@ -277,7 +277,7 @@ flowchart TD
 
     subgraph Modules["static/js/modules/"]
         M1["auth.js         <- Login/Signup UI"]
-        M2["tasks/          <- Tasks page modules"]
+        M2["tasks/          <- Tasks page modules (projectsView.js, calendarView.js)"]
         M3["writing.js      <- Writing Space"]
         M4["ai_agent.js     <- AI Chat UI"]
         M5["templates.js    <- Templates Gallery"]
@@ -336,6 +336,17 @@ flowchart TD
 ---
 
 ## 9. ✅ Changelog
+
+### V1.2 — 2026-05-01 (Calendar & Time Blocking)
+
+| Change | File | Type |
+|---|---|---|
+| Replace daily/monthly views with Notion-style FullCalendar | `tasks.html`, `tasks.css`, `index.js` | ✨ New |
+| Implement Time Blocking view (`timeGridWeek`) | `calendarView.js` | ✨ New |
+| Add `start_time` and `end_time` to tasks | `schemas.yaml`, `modal.js` | ✨ Enhancement |
+| Remove legacy views | `dailyView.js`, `monthlyView.js` | 🗑️ Delete |
+| Support dynamic date ranges (`window_start`, `window_end`) | `core/task.py`, `routes/tasks.py` | ⚡ Perf |
+| Filter unscheduled tasks from Today's Focus | `routes/dashboard.py` | 🐛 Fix |
 
 ### V1.1 — 2026-04-29 (Writing Space Overhaul)
 

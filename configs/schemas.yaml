@@ -163,8 +163,16 @@ task:
       type: "string"
       default: ""
 
+    start_time:
+      type: "string"
+      default: ""
+
     end_date:
       # ───── for auto generating task end date and default to empty string ─────
+      type: "string"
+      default: ""
+
+    end_time:
       type: "string"
       default: ""
 
@@ -202,6 +210,12 @@ task:
       default: null
       # Expected time in hours (e.g. 1, 1.5, 3)
       # Used in Daily Planner time tracking
+    exception_dates:
+      # ───── for auto generating task exception dates and default to empty list ─────
+      type: "list"
+      default: []
+      # Dates when the task should not be executed (e.g. holidays, sick days, etc.)
+    
 
 
 # ────────────────────────────────────────────────────────────────────────────

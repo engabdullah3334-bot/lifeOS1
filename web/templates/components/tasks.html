@@ -10,11 +10,8 @@
       <button class="ts-tab active" data-view="projects">
         <span class="ts-tab-icon">🗂️</span> Projects
       </button>
-      <button class="ts-tab" data-view="daily">
-        <span class="ts-tab-icon">📅</span> Daily
-      </button>
-      <button class="ts-tab" data-view="monthly">
-        <span class="ts-tab-icon">🗓️</span> Monthly
+      <button class="ts-tab" data-view="calendar">
+        <span class="ts-tab-icon">📅</span> Calendar
       </button>
       <button class="ts-tab" data-view="archive">
         <span class="ts-tab-icon">📦</span> Archive
@@ -88,52 +85,10 @@
       </div>
     </div>
 
-    <!-- ░░ DAILY VIEW ░░ -->
-    <div class="ts-panel" id="ts-panel-daily" style="display: none">
-      <!-- Week Strip -->
-      <div class="ts-week-strip" id="ts-week-strip">
-        <button class="ts-icon-btn" id="ts-week-prev">◀</button>
-        <div class="ts-week-grid" id="ts-week-grid"></div>
-        <button class="ts-icon-btn" id="ts-week-next">▶</button>
-      </div>
-      <!-- Daily Task List -->
-      <div class="ts-daily-header">
-        <h3 id="ts-daily-title">Today's Tasks</h3>
-        <span class="ts-badge" id="ts-daily-count">0</span>
-      </div>
-      <div id="ts-daily-list" class="ts-daily-list">
-        <!-- Rendered by JS: dailyView.js -->
-      </div>
-      <div class="ts-empty" id="ts-daily-empty" style="display: none">
-        <div class="ts-empty-icon">✅</div>
-        <h3>All clear!</h3>
-        <p>No tasks scheduled for this day</p>
-      </div>
-    </div>
-
-    <!-- ░░ MONTHLY VIEW ░░ -->
-    <div class="ts-panel" id="ts-panel-monthly" style="display: none">
-      <div class="ts-cal-controls">
-        <div class="ts-cal-nav">
-          <button class="ts-icon-btn" id="ts-cal-prev">◀</button>
-          <h3 id="ts-cal-label">February 2026</h3>
-          <button class="ts-icon-btn" id="ts-cal-next">▶</button>
-          <button class="ts-btn ts-btn-ghost" id="ts-cal-today">Today</button>
-        </div>
-        <select id="ts-cal-mode" class="ts-select">
-          <option value="month">Month</option>
-          <option value="week">Week</option>
-        </select>
-      </div>
-      <!-- Day Headers -->
-      <div class="ts-cal-day-headers" id="ts-cal-day-headers">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
-        <span>Thu</span><span>Fri</span><span>Sat</span>
-      </div>
-      <!-- Calendar Grid -->
-      <div class="ts-cal-grid" id="ts-cal-grid">
-        <!-- Rendered by JS: monthlyView.js -->
-      </div>
+    <!-- ░░ CALENDAR VIEW ░░ -->
+    <div class="ts-panel" id="ts-panel-calendar" style="display: none">
+      <!-- Calendar Container for FullCalendar.js -->
+      <div id="ts-calendar-container" class="ts-calendar-container"></div>
     </div>
 
     <!-- ░░ ARCHIVE VIEW ░░ -->
@@ -244,10 +199,20 @@
           </select>
         </div>
 
-        <!-- Execution Day -->
-        <div class="ts-form-group">
-          <label>Execution Day</label>
-          <input type="date" id="ts-task-exec-day" class="ts-input" />
+        <!-- Execution Day & Time -->
+        <div class="ts-form-row">
+          <div class="ts-form-group">
+            <label>Execution Day</label>
+            <input type="date" id="ts-task-exec-day" class="ts-input" />
+          </div>
+          <div class="ts-form-group">
+            <label>Start Time</label>
+            <input type="time" id="ts-task-start-time" class="ts-input" />
+          </div>
+          <div class="ts-form-group">
+            <label>End Time</label>
+            <input type="time" id="ts-task-end-time" class="ts-input" />
+          </div>
         </div>
 
         <!-- Start Date -->

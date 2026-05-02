@@ -30,7 +30,8 @@ Instead of juggling multiple tools (Notion, Todoist, ChatGPT...) LifeOS gives yo
 
 | Feature | Description |
 |---------|-------------|
-| **✅ Tasks & Projects** | Full task management with projects, priorities, recurrence, and drag-and-drop ordering |
+| **✅ Tasks & Projects** | Full task management, priorities, recurrence, and drag-and-drop ordering |
+| **📅 Calendar** | Notion-style calendar with Time Blocking (`timeGridWeek`) and priority tagging |
 | **✍️ Writing Space** | Note editor organized into projects, with quick-capture support |
 | **🤖 AI Agent** | Context-aware assistant that writes directly to your database via Action tags |
 | **📋 Templates** | Ready-made templates for common projects and workflows |
@@ -212,6 +213,8 @@ Expected response:
   "recurrence": "none | daily | weekly | monthly",
   "recurrence_pattern": ["Mon", "Wed", "Fri"],
   "execution_day": "2026-04-26",
+  "start_time": "14:30",
+  "end_time": "16:00",
   "estimated_hours": 2.5,
   "tags": ["tag1", "tag2"],
   "axis_tag": "university | work | sports | goal | learning | entertainment"
@@ -457,7 +460,6 @@ requests>=2.31.0
 
 ## 🗺️ Roadmap
 
-- [ ] **V1.2** — Daily Planner with time blocking
 - [ ] **V1.3** — Data export (PDF, Markdown)
 - [ ] **V1.4** — AI Insights — weekly productivity analysis
 - [ ] **V1.5** — Collaboration — shared projects

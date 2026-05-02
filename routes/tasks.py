@@ -84,8 +84,19 @@ def get_tasks():
     project_id = request.args.get("project_id")
     status = request.args.get("status")
     search = request.args.get("search", "").strip().lower()
+    start = request.args.get("start")
+    end = request.args.get("end")
 
-    tasks = TaskService.get_tasks(db, user_id, archived=archived, project_id=project_id, status=status, search=search)
+    tasks = TaskService.get_tasks(
+        db, 
+        user_id, 
+        archived=archived, 
+        project_id=project_id, 
+        status=status, 
+        search=search,
+        window_start=start,
+        window_end=end
+    )
     return jsonify(tasks)
 
 @tasks_bp.route("/tasks", methods=["POST"])
