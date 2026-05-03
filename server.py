@@ -1,4 +1,6 @@
 import os
+import certifi
+
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
@@ -94,7 +96,7 @@ def _connect_mongo(uri, db_name):
         masked_uri = uri.split('@')[-1] if '@' in uri else uri
         print(f"⌛ Connecting to MongoDB: {masked_uri}...")
         
-        mongo_client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        mongo_client = MongoClient(uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
         # التحقق من الاتصال فعلياً
         mongo_client.admin.command("ping")
         print("✓ MongoDB Connected Successfully!")

@@ -25,8 +25,18 @@ def signup():
     if error:
         return jsonify({"error": error}), status_code
 
+    # توليد توكن فوراً بعد التسجيل لتجنب الـ 401 في الواجهة الأمامية
+    token = create_access_token(
+        identity=user_doc["user_id"],
+        additional_claims={
+            "username": user_doc["username"],
+            "email": user_doc["email"],
+        },
+    )
+
     return jsonify({
         "message": "تم إنشاء الحساب بنجاح",
+        "token": token,
         "user": user_doc,
     }), 201
 
