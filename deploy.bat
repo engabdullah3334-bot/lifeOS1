@@ -1,3 +1,6 @@
+@echo off
 git add .
-git commit -m "2.0.0"
-git pull origin main --force
+git commit -m "update"
+git pull origin main --rebase
+git push origin main
+echo Done!
