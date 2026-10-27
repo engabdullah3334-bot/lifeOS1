@@ -1,0 +1,204 @@
+/**
+ * tasks/index.js — Task System Entry Point
+ * Initializes all modules, wires toolbar events, and bootstraps the app.
+ * Exposes: window.TS.core
+ */
+console.log("Executing tasks/index.js script body");
+
+var TS = window.TS = window.TS || {};
+
+TS.core = {
+  async init() {
+    // 1. Load saved preferences
+    try { await TS.state.load(); } catch(e) { console.error(e); }
+
+    // 2. Apply theme
+    TS.theme.init();
+
+    // 3. Init modals & close handlers
+    TS.modal.init();
+
+    // 4. Init view-specific listeners
+    TS.views.calendar.init();
+
+    // 5. Wire toolbar controls
+    this._bindToolbar();
+
+    // 6. Fetch data and render
+    await this.loadData();
+    this.switchView(TS.state.currentView, true);
+    this._updateDashboard();
+
+    // 7. Check reminders
+    try { TS.notify.checkReminders(); } catch(e) { console.error(e); }
+  },
+
+  // ── Data Loading ─────────────────────────────────────────
+  async loadData() {
+    try {
+      if (!window.LifeOSAuth?.isAuthenticated()) {
+        console.warn('[TS] Not authenticated, skip loading data');
+        return;
+      }
+
+      const [projects, tasks] = await Promise.all([
+        TS.api.getProjects(),
+        TS.api.getTasks({
+          sort:   TS.state.sortBy,
+          status: TS.state.filterStatus,
+          search: TS.state.searchQuery,
+        }),
+      ]);
+
+      // Safety check: ensure we got arrays
+      TS.state.projects = Array.isArray(projects) ? projects : [];
+      TS.state.tasks    = Array.isArray(tasks) ? tasks : [];
+
+      if (!Array.isArray(projects)) {
+        console.error('[TS] getProjects returned non-array:', projects);
+      }
+
+      // Keep legacy window.state.tasks in sync for dashboard widget
+      if (window.state) window.state.tasks = TS.state.tasks;
+    } catch(e) {
+      console.error('[TS] Failed to load data:', e);
+      TS.notify.error('Could not load tasks. Is the server running?');
+      TS.state.projects = [];
+      TS.state.tasks = [];
+    }
+  },
+
+  // ── Refresh — reload data & re-render current view ───────
+  async refresh() {
+    await this.loadData();
+    this._renderCurrentView();
+    this._updateDashboard();
+  },
+
+  // ── View Switching ────────────────────────────────────────
+  async switchView(view, initial = false) {
+    if (!['projects','calendar','archive'].includes(view)) view = 'projects';
+
+    TS.state.currentView = view;
+    TS.state.save();
+
+    // Hide all panels
+    ['projects','calendar','archive'].forEach(v => {
+      const panel = document.getElementById(`ts-panel-${v}`);
+      if (panel) panel.style.display = 'none';
+    });
+
+    // Show target panel
+    const target = document.getElementById(`ts-panel-${view}`);
+    if (target) target.style.display = 'block';
+
+    // Update tab active state
+    document.querySelectorAll('.ts-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.view === view);
+    });
+
+    if (view === 'archive') await this.loadArchiveData();
+    this._renderCurrentView();
+  },
+
+  async loadArchiveData() {
+    try {
+      const [archivedTasks, archivedProjects] = await Promise.all([
+        TS.api.getTasks({ archived: true }),
+        TS.api.getProjects({ archived: true }),
+      ]);
+      TS.state.archivedTasks = Array.isArray(archivedTasks) ? archivedTasks : [];
+      TS.state.archivedProjects = Array.isArray(archivedProjects) ? archivedProjects : [];
+    } catch (e) {
+      console.error('[TS] Failed to load archive:', e);
+      TS.state.archivedTasks = [];
+      TS.state.archivedProjects = [];
+    }
+  },
+
+  async refreshArchive() {
+    await this.loadArchiveData();
+    if (TS.state.currentView === 'archive') TS.views.archive.render();
+  },
+
+  _renderCurrentView() {
+    const v = TS.state.currentView;
+    if (v === 'projects') TS.views.projects.render();
+    if (v === 'calendar') TS.views.calendar.render();
+    if (v === 'archive')  TS.views.archive.render();
+  },
+
+  // ── Toolbar Wiring ────────────────────────────────────────
+  _bindToolbar() {
+    // View tabs
+    document.getElementById('ts-view-tabs')?.addEventListener('click', e => {
+      const tab = e.target.closest('.ts-tab');
+      if (tab?.dataset.view) this.switchView(tab.dataset.view);
+    });
+
+    // Search (debounced)
+    let _searchTimer;
+    document.getElementById('ts-search')?.addEventListener('input', e => {
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(async () => {
+        TS.state.searchQuery = e.target.value.trim();
+        await this.refresh();
+      }, 300);
+    });
+
+    // Sort
+    document.getElementById('ts-sort')?.addEventListener('change', async e => {
+      TS.state.sortBy = e.target.value;
+      TS.state.save();
+      await this.refresh();
+    });
+
+    // Filter by status
+    document.getElementById('ts-filter-status')?.addEventListener('change', async e => {
+      TS.state.filterStatus = e.target.value;
+      await this.refresh();
+    });
+
+    // Restore saved sort/filter selections in UI
+    const sortEl    = document.getElementById('ts-sort');
+    const filterEl  = document.getElementById('ts-filter-status');
+    if (sortEl)   sortEl.value   = TS.state.sortBy;
+    if (filterEl) filterEl.value = TS.state.filterStatus || '';
+  },
+
+  // ── Dashboard Update ──────────────────────────────────────
+  _updateDashboard() {
+    // Update stats header via the new dashboard.js logic
+    if (window.updateDashboardStats) window.updateDashboardStats();
+  },
+};
+
+// ── Boot on DOMContentLoaded ──────────────────────────────────
+// (called from main.js after the section is loaded)
+window.initTaskSystem = async () => {
+    console.log("index.js: initTaskSystem called");
+    try {
+        await TS.core.init();
+    } catch(e) {
+        console.error("TASK SYSTEM INIT ERROR:", e);
+        alert("INIT ERROR: " + e.message + "\n" + e.stack);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if already authenticated (auth.js might have restored session)
+    if (window.LifeOSAuth?.isAuthenticated()) {
+        window.initTaskSystem();
+    }
+});
+
+// Also initialize on login event
+window.addEventListener('lifeos:auth:login', () => {
+    console.log("TS: Detected login, initializing system...");
+    window.initTaskSystem();
+});
+
+// Legacy compatibility — other parts of app can still call these
+window.fetchTasks    = () => TS.core.refresh();
+window.renderTasks   = () => TS.core._renderCurrentView();
+window.updateDashboard = () => TS.core._updateDashboard();

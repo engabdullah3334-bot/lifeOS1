@@ -1,0 +1,205 @@
+            <!-- Dashboard View -->
+            <section id="dashboard" class="content-view dashboard-view active">
+              <div class="dash-grid">
+
+                <!-- ═══════════ Center workspace ═══════════ -->
+                <div class="dash-main-col" id="dash-main-col">
+
+                    <!-- ── Greeting + KPI cards ──────────────────────── -->
+                    <div class="dash-layout-block" id="dash-layout-header">
+                        <div class="dash-greeting">
+                            <div class="dash-greeting-text">
+                                <h2 class="dash-app-name" id="dashboard-greeting">مرحباً</h2>
+                                <p class="dash-tagline">إليك ما يحدث في يومك.</p>
+                            </div>
+                            <div class="dash-date-pill">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+                                <span id="dash-today-label"></span>
+                            </div>
+                        </div>
+
+                        <div class="dash-header dash-kpis">
+                            <div class="dash-kpi kpi-green">
+                                <div class="dash-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg></div>
+                                <div class="dash-kpi-body">
+                                    <span class="dash-stat-lbl">مكتملة</span>
+                                    <span class="dash-stat-val" id="dash-stat-done">0</span>
+                                    <span class="dash-kpi-trend">↑ مهام منجزة</span>
+                                </div>
+                            </div>
+                            <div class="dash-kpi kpi-violet">
+                                <div class="dash-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 9h8M8 13h8M8 17h4"/></svg></div>
+                                <div class="dash-kpi-body">
+                                    <span class="dash-stat-lbl">متبقية</span>
+                                    <span class="dash-stat-val" id="dash-stat-pending">0</span>
+                                    <span class="dash-kpi-trend neutral">قيد التنفيذ</span>
+                                </div>
+                            </div>
+                            <div class="dash-kpi kpi-blue">
+                                <div class="dash-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+                                <div class="dash-kpi-body">
+                                    <span class="dash-stat-lbl">الإنجاز</span>
+                                    <span class="dash-stat-val dash-stat-pct" id="dash-stat-pct">0%</span>
+                                    <span class="dash-kpi-trend">↑ من هدف اليوم</span>
+                                </div>
+                            </div>
+                            <div class="dash-kpi kpi-amber">
+                                <div class="dash-kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+                                <div class="dash-kpi-body">
+                                    <span class="dash-stat-lbl">المشاريع</span>
+                                    <span class="dash-stat-val" id="dash-stat-projects">0</span>
+                                    <span class="dash-kpi-trend neutral">مشاريع نشطة</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Progress Bar ──────────────────────────────── -->
+                    <div class="dash-layout-block" id="dash-layout-progress">
+                        <div class="dash-progress-row">
+                            <span class="dash-progress-title">تقدّم اليوم</span>
+                            <div class="dash-progress-track">
+                                <div class="dash-progress-fill" id="dash-progress-fill" style="width:0%"></div>
+                            </div>
+                            <span class="dash-progress-label" id="dash-date-label"></span>
+                        </div>
+                    </div>
+
+                    <!-- ── Projects Grid ────────────────────────────── -->
+                    <div class="dash-layout-block" id="dash-layout-projects">
+                        <div class="dash-section-label">المشاريع</div>
+                        <div class="dash-axes-grid" id="dash-axes-grid">
+                            <!-- Populated by dashboard.js -->
+                            <div class="dash-axis-skeleton"></div>
+                            <div class="dash-axis-skeleton"></div>
+                            <div class="dash-axis-skeleton"></div>
+                            <div class="dash-axis-skeleton"></div>
+                            <div class="dash-axis-skeleton"></div>
+                            <div class="dash-axis-skeleton"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Bottom Row: Tasks + Quick Note ───────────── -->
+                    <div class="dash-layout-block" id="dash-layout-widgets">
+                        <div class="dash-bottom-grid" id="dash-bottom-grid">
+
+                            <!-- Today's Focus Tasks -->
+                            <div class="dash-widget dash-tasks-widget" id="widget-tasks">
+                                <div class="dash-widget-header">
+                                    <span class="dash-widget-title">تركيز اليوم</span>
+                                    <button class="dash-widget-action"
+                                            onclick="window.loadView?.('tasks')"
+                                            title="عرض كل المهام">←</button>
+                                </div>
+                                <div class="dash-tasks-list" id="dashboard-tasks-list">
+                                    <p class="dash-empty">جاري التحميل...</p>
+                                </div>
+                            </div>
+
+                            <!-- Quick Brain Dump -->
+                            <div class="dash-widget dash-note-widget" id="widget-note">
+                                <div class="dash-widget-header">
+                                    <span class="dash-widget-title">تفريغ سريع</span>
+                                    <button class="dash-widget-action dash-note-save" id="save-quick-note" title="حفظ">✓</button>
+                                </div>
+                                <textarea
+                                    id="quick-note-area"
+                                    class="dash-note-textarea"
+                                    placeholder="اكتب أي فكرة الآن... ستُحفظ تلقائياً"
+                                    rows="5"></textarea>
+                                <p class="dash-note-saved" id="dash-note-saved">تم الحفظ ✓</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ── Quick Actions ─────────────────────────────── -->
+                    <div class="dash-layout-block" id="dash-layout-actions">
+                        <div class="dash-section-label">إجراءات سريعة</div>
+                        <div class="dash-quick-actions" id="dash-quick-actions">
+                            <button class="dash-action-btn qa-green" onclick="window.loadView?.('tasks')" id="dash-go-tasks">
+                                <span>✓</span> المهام
+                            </button>
+                            <button class="dash-action-btn qa-blue" onclick="window.loadView?.('writing')" id="dash-go-writing">
+                                <span>✎</span> الكتابة
+                            </button>
+                            <button class="dash-action-btn qa-violet" onclick="window.loadView?.('ai-chat')" id="dash-go-ai">
+                                <span>✦</span> AI
+                            </button>
+                            <button class="dash-action-btn qa-amber" onclick="window.loadView?.('templates')" id="dash-go-templates">
+                                <span>⊞</span> القوالب
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ═══════════ Right panel ═══════════ -->
+                <aside class="dash-right-panel" id="dash-right-panel" aria-label="Inspiration and activity">
+
+                    <div class="rp-card rp-ai">
+                        <div class="rp-crystal" aria-hidden="true">
+                            <svg viewBox="0 0 120 120">
+                                <defs>
+                                    <linearGradient id="crystalG" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0" stop-color="#e9d5ff"/>
+                                        <stop offset=".5" stop-color="#a78bfa"/>
+                                        <stop offset="1" stop-color="#6d28d9"/>
+                                    </linearGradient>
+                                </defs>
+                                <ellipse cx="60" cy="62" rx="50" ry="14" fill="none" stroke="rgba(167,139,250,.55)" stroke-width="1.5" transform="rotate(-18 60 62)"/>
+                                <path d="M60 14 84 52 60 108 36 52z" fill="url(#crystalG)"/>
+                                <path d="M60 14 84 52 60 60 36 52z" fill="rgba(255,255,255,.35)"/>
+                                <path d="M60 60 84 52 60 108z" fill="rgba(0,0,0,.18)"/>
+                            </svg>
+                        </div>
+                        <p class="rp-ai-text">Turn your thoughts into something real.</p>
+                        <button type="button" class="rp-ai-btn" id="dash-open-ai" onclick="window.loadView?.('ai-chat')">Open AI Assistant <span>→</span></button>
+                    </div>
+
+                    <div class="rp-card rp-donut-card">
+                        <div class="rp-title">Productivity</div>
+                        <div class="rp-donut-wrap">
+                            <svg class="rp-donut" viewBox="0 0 120 120" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="donutG" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0" stop-color="#c084fc"/>
+                                        <stop offset="1" stop-color="#6366f1"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="60" cy="60" r="48" class="rp-donut-track"/>
+                                <circle cx="60" cy="60" r="48" class="rp-donut-fill" id="dash-donut-fill" stroke-dasharray="301.6" stroke-dashoffset="301.6" transform="rotate(-90 60 60)"/>
+                            </svg>
+                            <div class="rp-donut-center">
+                                <span class="rp-donut-pct" id="dash-donut-pct">0%</span>
+                                <span class="rp-donut-lbl">Daily Goal</span>
+                            </div>
+                        </div>
+                        <ul class="rp-legend">
+                            <li><i style="background:#10b981"></i>Done<b id="dash-legend-done">0</b></li>
+                            <li><i style="background:#8b5cf6"></i>Remaining<b id="dash-legend-pending">0</b></li>
+                            <li><i style="background:#f59e0b"></i>Projects<b id="dash-legend-projects">0</b></li>
+                        </ul>
+                    </div>
+
+                    <div class="rp-card rp-quote">
+                        <div class="rp-title">Today's Inspiration</div>
+                        <p class="rp-quote-text" id="dash-quote-text">"Small steps every day lead to big results."</p>
+                        <span class="rp-quote-author" id="dash-quote-author">— Unknown</span>
+                    </div>
+
+                    <div class="rp-card rp-activity">
+                        <div class="rp-title">Recent Activity</div>
+                        <ul class="rp-activity-list" id="dash-activity-list">
+                            <li class="rp-activity-empty">No activity yet</li>
+                        </ul>
+                    </div>
+
+                    <div class="rp-card rp-focus">
+                        <p>A focused mind builds a better tomorrow.</p>
+                        <button type="button" class="rp-focus-go" id="dash-focus-go" onclick="window.loadView?.('tasks')" aria-label="Open tasks">→</button>
+                    </div>
+
+                </aside>
+              </div>
+            </section>

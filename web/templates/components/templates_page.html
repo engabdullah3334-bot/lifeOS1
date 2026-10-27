@@ -1,0 +1,58 @@
+<!-- ══════════════════════════════════════════════════════════════
+     LifeOS — Templates Page Component
+     ══════════════════════════════════════════════════════════════ -->
+<div id="templates" class="content-view templates-view" style="display: none;">
+
+    <!-- ── Hero Banner ──────────────────────────────────────── -->
+    <div class="templates-hero">
+        <div class="templates-hero-left">
+            <h2>Template Gallery</h2>
+            <p>Jump-start your workflow with ready-made templates for tasks, writing, and organization. Import any template directly into the right section.</p>
+        </div>
+        <div class="templates-hero-icon">🗂️</div>
+    </div>
+
+    <!-- ── Category Tabs ────────────────────────────────────── -->
+    <div class="templates-tabs" id="tmpl-tabs" role="tablist" aria-label="Template categories">
+        <button class="tmpl-tab active" data-category="all" role="tab" aria-selected="true">
+            <span class="tmpl-tab-icon">✦</span>
+            All Templates
+            <span class="tmpl-tab-count" id="tmpl-count-all">0</span>
+        </button>
+        <button class="tmpl-tab" data-category="tasks" role="tab" aria-selected="false">
+            <span class="tmpl-tab-icon">✓</span>
+            Productivity &amp; Tasks
+            <span class="tmpl-tab-count" id="tmpl-count-tasks">0</span>
+        </button>
+        <button class="tmpl-tab" data-category="writing" role="tab" aria-selected="false">
+            <span class="tmpl-tab-icon">✎</span>
+            Writing
+            <span class="tmpl-tab-count" id="tmpl-count-writing">0</span>
+        </button>
+        <button class="tmpl-tab" data-category="archive" role="tab" aria-selected="false">
+            <span class="tmpl-tab-icon">📦</span>
+            Archive
+            <span class="tmpl-tab-count" id="tmpl-count-archive">0</span>
+        </button>
+    </div>
+
+    <!-- ── Templates Grid ───────────────────────────────────── -->
+    <div class="templates-grid" id="tmpl-grid" role="list" aria-label="Templates list">
+        <!-- Cards injected by templates.js -->
+        <div class="tmpl-loading">
+            <div class="tmpl-spinner"></div>
+            <p>Loading templates…</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Import Toast Notification ─────────────────────────── -->
+<div id="tmpl-toast" role="alert" aria-live="polite">
+    <span class="tmpl-toast-icon" id="tmpl-toast-icon">✅</span>
+    <div class="tmpl-toast-body">
+        <div class="tmpl-toast-title" id="tmpl-toast-title">Template Imported!</div>
+        <div class="tmpl-toast-msg"  id="tmpl-toast-msg">Your template is ready.</div>
+    </div>
+    <button class="tmpl-toast-goto" id="tmpl-toast-goto">Go →</button>
+</div>

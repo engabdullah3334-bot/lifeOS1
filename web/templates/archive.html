@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Archive Hub — LifeOS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="archive-page">
+    {% include 'components/login.html' %}
+
+    <div class="app-container" id="app-container" style="display: none;">
+        <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+        {% include 'components/sidebar.html' %}
+
+        <main class="main-content archive-main">
+
+            <header class="top-bar">
+                <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">☰</button>
+                <h1 id="page-title">Archive Hub</h1>
+                <div class="user-profile">
+                    <span id="user-name" class="user-name"></span>
+                    <button type="button" id="btn-logout" class="logout-btn" title="Logout">Logout</button>
+                    <div class="avatar"></div>
+                </div>
+            </header>
+
+            <div class="archive-content">
+                <div class="archive-search-wrap">
+                    <span class="archive-search-icon">🔍</span>
+                    <input type="text" id="archive-search" class="archive-search-input" placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
+                </div>
+
+                <div class="archive-two-cols">
+                    <!-- Writing Section (left on desktop) -->
+                    <section class="archive-section archive-section-writing" aria-label="Writing Archive">
+                        <h2 class="archive-section-title">
+                            <span class="archive-section-icon">✎</span>
+                            Writing & Drafts Archive
+                        </h2>
+                        <div id="writing-archive-container" class="archive-blocks archive-scroll-area">
+                            <!-- Grouped by tags/topic, rendered by JS -->
+                        </div>
+                        <div id="archive-writing-empty" class="archive-empty" style="display: none;">
+                            <p>No archived drafts or writing projects.</p>
+                        </div>
+                    </section>
+
+                    <!-- Tasks Section (right on desktop) -->
+                    <section class="archive-section archive-section-tasks" aria-label="Tasks Archive">
+                        <h2 class="archive-section-title">
+                            <span class="archive-section-icon">✓</span>
+                            Tasks & Projects Archive
+                        </h2>
+                        <div id="task-archive-container" class="archive-blocks archive-scroll-area">
+                            <!-- Grouped by project or date, rendered by JS -->
+                        </div>
+                        <div id="archive-tasks-empty" class="archive-empty" style="display: none;">
+                            <p>No archived tasks or task projects.</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';</script>
+    <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=2"></script>
+
+    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=1"></script>
+    <script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>
+
+</body>
+</html>

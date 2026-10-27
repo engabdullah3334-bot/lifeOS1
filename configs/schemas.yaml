@@ -1,0 +1,333 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  LifeOS — Entity Schemas
+#  ────────────────────────────────────────────────────────────────────────────
+#  All data structures (Task, Project, Note, etc.) are defined here.
+#  The schema_factory reads this file to build MongoDB documents dynamically.
+#
+#  To add a new field to any entity:
+#    1. Add it below under the appropriate entity
+#    2. That's it — the code will pick it up automatically
+#
+#  Field types:
+#    uuid           → auto-generated UUID string
+#    string         → text field
+#    boolean        → true/false
+#    enum           → one of the listed 'values'
+#    list           → array
+#    any            → no type validation
+#    datetime       → auto-set to current timestamp
+#    auto_increment → auto-calculated order number
+#    computed       → derived from other fields (handled in code)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  User Entity
+# ────────────────────────────────────────────────────────────────────────────
+user:
+  collection: "users"
+  id_field: "user_id"
+  fields:
+    user_id:
+      type: "uuid"
+      auto: true
+
+    username:
+      type: "string"
+      required: true
+
+    email:
+      type: "string"
+      required: true
+
+    password_hash:
+      type: "string"
+      required: true
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Project Entity
+# ────────────────────────────────────────────────────────────────────────────
+
+project:
+  collection: "projects"
+  id_field: "project_id"
+  fields:
+    project_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    name:
+      type: "string"
+      required: true
+      default: "New Project"
+
+    color:
+      type: "string"
+      default: "#6366f1"
+
+    icon:
+      type: "string"
+      default: "📁"
+
+    description:
+      type: "string"
+      default: ""
+
+    order:
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    isArchived:
+      type: "boolean"
+      default: false
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Task Entity
+# ────────────────────────────────────────────────────────────────────────────
+task:
+  collection: "tasks"
+  id_field: "task_id"
+  fields:
+    task_id:
+      # ───── for auto generating task ids ─────
+      type: "uuid"
+      auto: true
+
+    user_id:
+      # ───── for auto generating task to a specific user ─────
+      type: "string"
+      required: true
+
+    title:
+      # ───── for auto generating task title ─────
+      type: "string"
+      required: true
+      default: "New Task"
+
+    description:
+      # ───── for auto generating task description ─────
+      type: "string"
+      default: ""
+
+    project_id:
+      # ───── for auto generating task project id and default to General ─────
+      type: "string"
+      default: "General"
+
+    priority:
+      # ───── for auto generating task priority and default to medium ─────
+      type: "enum"
+      values: ["low", "medium", "high", "critical"]
+      default: "medium"
+
+    status:
+      # ───── for auto generating task status and default to pending ─────
+      type: "enum"
+      values: ["pending", "completed", "missed"]
+      default: "pending"
+
+    recurrence:
+      # ───── for auto generating task recurrence and default to none ─────
+      type: "enum"
+      values: ["none", "daily", "weekly", "monthly", "yearly"]
+      default: "none"
+
+    recurrence_pattern:
+      # ───── for auto generating task recurrence pattern and default to null ─────
+      type: "any"
+      default: null
+
+    is_recurring:
+      # ───── for auto generating task is recurring and default to false ─────
+      type: "computed"
+      rule: "recurrence != 'none'"
+
+    completed_dates:
+      # ───── for auto generating task completed dates and default to empty list ─────
+      type: "list"
+      default: []
+
+    execution_day:
+      # ───── for auto generating task execution day and default to empty string ─────
+      type: "string"
+      default: ""
+
+    start_date:
+      # ───── for auto generating task start date and default to empty string ─────
+      type: "string"
+      default: ""
+
+    start_time:
+      type: "string"
+      default: ""
+
+    end_date:
+      # ───── for auto generating task end date and default to empty string ─────
+      type: "string"
+      default: ""
+
+    end_time:
+      type: "string"
+      default: ""
+
+    order:
+      # ───── for auto generating task order and default to empty string ─────
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    tags:
+      # ───── for auto generating task tags and default to empty list ─────
+      type: "list"
+      default: []
+
+    notes:
+      # ───── for auto generating task notes and default to empty string ─────
+      type: "string"
+      default: ""
+
+    isArchived:
+      # ───── for auto generating task archived and default to false ─────
+      type: "boolean"
+      default: false
+
+    axis_tag:
+      # ───── for auto generating task axis tag and default to empty string ─────
+      type: "string"
+      default: ""
+      # Links task to a life axis (university, work, sports, goal, learning, entertainment)
+      # Matches the 'id' field in app_config.yaml > life_axes
+      # in the future, the axis_tag will be used to search and filter tasks
+
+    estimated_hours:
+      # ───── for auto generating task estimated hours and default to null ─────
+      type: "any"
+      default: null
+      # Expected time in hours (e.g. 1, 1.5, 3)
+      # Used in Daily Planner time tracking
+    exception_dates:
+      # ───── for auto generating task exception dates and default to empty list ─────
+      type: "list"
+      default: []
+      # Dates when the task should not be executed (e.g. holidays, sick days, etc.)
+    
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Note Project Entity
+# ────────────────────────────────────────────────────────────────────────────
+note_project:
+  collection: "note_projects"
+  id_field: "project_id"
+  fields:
+    project_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    name:
+      type: "string"
+      required: true
+
+    description:
+      type: "string"
+      default: ""
+
+    tags:
+      type: "list"
+      default: []
+
+    order:
+      type: "auto_increment"
+      collection_scope: "user_id"
+
+    created_at:
+      type: "datetime"
+      auto: true
+
+    archived:
+      type: "boolean"
+      default: false
+
+    is_system:
+      type: "boolean"
+      default: false
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#  Note Entity
+# ────────────────────────────────────────────────────────────────────────────
+note:
+  collection: "notes"
+  id_field: "note_id"
+  fields:
+    note_id:
+      type: "uuid"
+      auto: true
+
+    user_id:
+      type: "string"
+      required: true
+
+    project_id:
+      type: "string"
+      required: true
+
+    title:
+      type: "string"
+      default: "New Note"
+
+    filename:
+      type: "string"
+      default: ""
+
+    content:
+      type: "string"
+      default: ""
+
+    status:
+      type: "enum"
+      values: ["draft", "complete", "in_review"]
+      default: "draft"
+
+    tags:
+      type: "list"
+      default: []
+
+    description:
+      type: "string"
+      default: ""
+
+    order:
+      type: "auto_increment"
+      collection_scope: ["user_id", "project_id"]
+
+    created_at:
+      type: "datetime"
+      auto: true
+
+    last_updated:
+      type: "datetime"
+      auto: true
+
+    archived:
+      type: "boolean"
+      default: false
+
+    pinned:
+      # F2: Pin a note to float it to the top of the list
+      type: "boolean"
+      default: false
+
+    is_favorite:
+      # F4: Mark a note as a favorite for quick filtering
+      type: "boolean"
+      default: false
