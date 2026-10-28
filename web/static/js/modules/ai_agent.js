@@ -304,6 +304,9 @@
       state.widgetMessages[state.widgetMode].push({ role: 'assistant', content: data.reply });
       renderWidgetMessages();
       renderWidgetActions(data.actions_taken || []);
+      if (data.actions_taken && window.LifeAction) {
+        window.LifeAction.handleAiActions(data.actions_taken);
+      }
     } catch (err) {
       appendWidgetError(err.message || 'Connection error. Please try again.');
     } finally {
@@ -355,7 +358,25 @@
       const typeLabel = a.type === 'task_created' ? '✓ Task Created' : '📁 Project Created';
       const chip = document.createElement('div');
       chip.className = 'ai-action-chip';
-      chip.innerHTML = `<span class="ai-chip-icon">${a.type === 'task_created' ? '✓' : '📁'}</span>${typeLabel}: <strong>${escapeHtml(label)}</strong>`;
+      chip.style.cursor = 'pointer';
+      chip.title = 'انقر لعرض العنصر';
+      chip.innerHTML = `<span class="ai-chip-icon">${a.type === 'task_created' ? '✓' : '📁'}</span>${typeLabel}: <strong>${escapeHtml(label)}</strong> <span style="font-size:10px;opacity:0.7;margin-left:4px;">↗</span>`;
+      
+      chip.addEventListener('click', () => {
+        if (a.type === 'task_created') {
+          window.loadView?.('tasks');
+          setTimeout(() => {
+            const el = document.querySelector(`[data-task-id="${a.id}"]`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              window.LifeAction?.highlightTaskCard(a.id, true);
+            }
+          }, 150);
+        } else if (a.type === 'project_created') {
+          window.loadView?.('tasks');
+        }
+      });
+
       chips.appendChild(chip);
     });
 
@@ -496,6 +517,9 @@
       state.chatPageMessages[state.chatPageMode].push({ role: 'assistant', content: data.reply });
       renderChatPage();
       renderChatPageActions(data.actions_taken || []);
+      if (data.actions_taken && window.LifeAction) {
+        window.LifeAction.handleAiActions(data.actions_taken);
+      }
     } catch (err) {
       appendChatPageError(err.message || 'Connection error. Please try again.');
     } finally {
@@ -538,7 +562,25 @@
       const label = a.title || a.name || 'Item';
       const chip  = document.createElement('div');
       chip.className = 'ai-action-chip';
-      chip.innerHTML = `<span class="ai-chip-icon">${a.type === 'task_created' ? '✓' : '📁'}</span>${a.type === 'task_created' ? 'Task Created' : 'Project Created'}: <strong>${escapeHtml(label)}</strong>`;
+      chip.style.cursor = 'pointer';
+      chip.title = 'انقر لعرض العنصر';
+      chip.innerHTML = `<span class="ai-chip-icon">${a.type === 'task_created' ? '✓' : '📁'}</span>${a.type === 'task_created' ? 'Task Created' : 'Project Created'}: <strong>${escapeHtml(label)}</strong> <span style="font-size:10px;opacity:0.7;margin-left:4px;">↗</span>`;
+      
+      chip.addEventListener('click', () => {
+        if (a.type === 'task_created') {
+          window.loadView?.('tasks');
+          setTimeout(() => {
+            const el = document.querySelector(`[data-task-id="${a.id}"]`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              window.LifeAction?.highlightTaskCard(a.id, true);
+            }
+          }, 150);
+        } else if (a.type === 'project_created') {
+          window.loadView?.('tasks');
+        }
+      });
+
       chips.appendChild(chip);
     });
 

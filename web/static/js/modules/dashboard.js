@@ -151,6 +151,10 @@
   }
 
   async function toggleTask(id, date, isDone) {
+    if (window.LifeAction) {
+      window.LifeAction.instantToggleComplete(id);
+    }
+
     const token = localStorage.getItem('lifeos_token');
     if (!token) return;
     try {
@@ -159,7 +163,7 @@
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
         body: JSON.stringify({ status: isDone ? 'pending' : 'completed' }),
       });
-      loadDashboard();
+      if (!window.LifeAction) loadDashboard();
     } catch(e) { console.error('Toggle failed', e); }
   }
 
@@ -221,6 +225,14 @@
     async function save() {
       const content = area.value.trim();
       if (!content) return;
+      area.value = ''; // Instant clear (0ms)
+      if (msg) {
+        msg.textContent = 'تم الحفظ فورياً ✓';
+        msg.style.opacity = '1';
+        setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+      }
+      window.LifeAction?.playChime?.('add');
+
       const token = localStorage.getItem('lifeos_token');
       if (!token) return;
       try {
@@ -229,8 +241,6 @@
           headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
           body: JSON.stringify({ content }),
         });
-        area.value = '';
-        if (msg) { msg.style.opacity='1'; setTimeout(() => { msg.style.opacity='0'; }, 2000); }
       } catch(e) { console.error('Quick note error', e); }
     }
   }

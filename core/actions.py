@@ -132,6 +132,7 @@ def create_task(db, user_id: str, args: dict) -> dict:
         "project_id": task.get("project_id"),
         "priority":   task.get("priority"),
         "status":     task.get("status"),
+        "task":       task,
     }
 
 
@@ -162,6 +163,7 @@ def update_task(db, user_id: str, args: dict) -> dict:
         "id":     task["task_id"],
         "title":  task["title"],
         "status": task.get("status"),
+        "task":   task,
     }
 
 
@@ -183,9 +185,11 @@ def complete_task(db, user_id: str, args: dict) -> dict:
 
     logger.info("AI completed task '%s' (id=%s)", task["title"], task["task_id"])
     return {
-        "type":  "task_completed",
-        "id":    task["task_id"],
-        "title": task["title"],
+        "type":   "task_completed",
+        "id":     task["task_id"],
+        "title":  task["title"],
+        "status": "completed",
+        "task":   task,
     }
 
 
@@ -228,10 +232,11 @@ def create_project(db, user_id: str, args: dict) -> dict:
 
     logger.info("AI created project '%s' (id=%s)", project["name"], project["project_id"])
     return {
-        "type":  "project_created",
-        "id":    project["project_id"],
-        "title": project["name"],
-        "color": project.get("color"),
+        "type":    "project_created",
+        "id":      project["project_id"],
+        "title":   project["name"],
+        "color":   project.get("color"),
+        "project": project,
     }
 
 
@@ -272,6 +277,7 @@ def create_project_with_tasks(db, user_id: str, args: dict) -> dict:
 
     # Create each task and link it to the project
     created_tasks = []
+    created_tasks_full = []
     failed_tasks  = []
 
     for task_args in tasks_data:
@@ -279,6 +285,7 @@ def create_project_with_tasks(db, user_id: str, args: dict) -> dict:
         task, error = TaskService.create_task(db, user_id, task_input)
         if task:
             created_tasks.append({"id": task["task_id"], "title": task["title"]})
+            created_tasks_full.append(task)
         else:
             failed_tasks.append({"title": task_args.get("title", "?"), "error": error})
             logger.warning("Failed to create task '%s': %s", task_args.get("title"), error)
@@ -293,6 +300,8 @@ def create_project_with_tasks(db, user_id: str, args: dict) -> dict:
         "project_name":  project["name"],
         "tasks_created": len(created_tasks),
         "tasks":         created_tasks,
+        "tasks_full":    created_tasks_full,
+        "project":       project,
         "tasks_failed":  failed_tasks,
     }
 
@@ -333,6 +342,7 @@ def create_note(db, user_id: str, args: dict) -> dict:
         "id":         note["note_id"],
         "title":      note["title"],
         "project_id": note.get("project_id"),
+        "note":       note,
     }
 
 

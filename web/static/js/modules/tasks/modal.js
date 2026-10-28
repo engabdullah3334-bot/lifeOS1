@@ -172,6 +172,16 @@ TS.modal = {
     }
 
     const editingId = get('ts-task-editing-id').value;
+    this.close('ts-task-modal'); // Close modal immediately (0ms)
+
+    if (window.LifeAction) {
+      if (editingId) {
+        window.LifeAction.instantUpdateTask(editingId, payload);
+      } else {
+        window.LifeAction.instantAddTask(payload);
+      }
+      return;
+    }
 
     try {
       if (editingId) {
@@ -181,7 +191,6 @@ TS.modal = {
         await TS.api.createTask(payload);
         TS.notify.success('Task created');
       }
-      this.close('ts-task-modal');
       TS.core.refresh();
     } catch(e) {
       TS.notify.error('Failed to save task');
@@ -227,6 +236,12 @@ TS.modal = {
     };
 
     const editingId = get('ts-proj-editing-id').value;
+    this.close('ts-project-modal'); // Close modal immediately (0ms)
+
+    if (window.LifeAction && !editingId) {
+      window.LifeAction.instantAddProject(payload);
+      return;
+    }
 
     try {
       if (editingId) {
@@ -236,7 +251,6 @@ TS.modal = {
         await TS.api.createProject(payload);
         TS.notify.success('Project created');
       }
-      this.close('ts-project-modal');
       TS.core.refresh();
     } catch(e) {
       TS.notify.error('Failed to save project');

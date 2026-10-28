@@ -198,13 +198,17 @@ TS.views.projects = {
   async _quickAdd(input, projectId) {
     const title = input.value.trim();
     if (!title) return;
-    try {
-      await TS.api.createTask({ title, project_id: projectId });
-      input.value = '';
-      TS.notify.success('Task added');
-      await TS.core.refresh();
-    } catch(e) {
-      TS.notify.error('Failed to add task');
+    input.value = ''; // Instant clear
+    if (window.LifeAction) {
+      window.LifeAction.instantAddTask({ title, project_id: projectId });
+    } else {
+      try {
+        await TS.api.createTask({ title, project_id: projectId });
+        TS.notify.success('Task added');
+        await TS.core.refresh();
+      } catch(e) {
+        TS.notify.error('Failed to add task');
+      }
     }
   },
 

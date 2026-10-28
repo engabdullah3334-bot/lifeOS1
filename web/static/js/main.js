@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Writing module init ────────────────────────────────
     if (window.fetchProjectsStructure) window.fetchProjectsStructure();
-    if (window.loadQuickNote)          window.loadQuickNote();
+    if (window.loadQuickNote) window.loadQuickNote();
     setupWritingListeners();
 
     // ── Task System Bootstrap ──────────────────────────────
@@ -40,7 +40,7 @@ function setupSidebar() {
     if (window.innerWidth > 768) {
         const isCollapsed = localStorage.getItem('lifeos_sidebar_collapsed') === 'true';
         if (isCollapsed) sidebar?.classList.add('collapsed');
-        
+
         const savedWidth = localStorage.getItem('lifeos_sidebar_width');
         if (savedWidth && !isCollapsed && sidebar) {
             sidebar.style.width = savedWidth + 'px';
@@ -72,7 +72,7 @@ function setupSidebar() {
         sidebar?.classList.toggle('collapsed');
         const isNowCollapsed = sidebar?.classList.contains('collapsed');
         localStorage.setItem('lifeos_sidebar_collapsed', isNowCollapsed);
-        
+
         if (!isNowCollapsed) {
             const savedWidth = localStorage.getItem('lifeos_sidebar_width') || 260;
             sidebar.style.width = savedWidth + 'px';
@@ -98,7 +98,7 @@ function setupSidebar() {
     document.addEventListener('mousemove', (e) => {
         if (!isResizing) return;
         let newWidth = e.clientX;
-        
+
         if (newWidth < 140) {
             if (!sidebar.classList.contains('collapsed')) {
                 sidebar.classList.add('collapsed');
@@ -123,7 +123,7 @@ function setupSidebar() {
             // Re-enable transitions
             sidebar.style.transition = '';
             document.querySelector('.main-content').style.transition = '';
-            
+
             const isNowCollapsed = sidebar.classList.contains('collapsed');
             localStorage.setItem('lifeos_sidebar_collapsed', isNowCollapsed);
             if (!isNowCollapsed) {
@@ -142,7 +142,7 @@ function setupSidebar() {
 // ── Navigation ──────────────────────────────────────────────
 function setupNavigation() {
     const navLinksContainer = document.querySelector('.nav-links');
-    
+
     // Setup SortableJS for navigation items
     if (typeof Sortable !== 'undefined' && navLinksContainer) {
         Sortable.create(navLinksContainer, {
@@ -191,11 +191,11 @@ function setupNavigation() {
     // Handle initial route
     const initialPath = window.location.pathname;
     const pathViewMap = {
-        '/archive':   'archive',
+        '/archive': 'archive',
         '/templates': 'templates',
-        '/ai':        'ai-chat',
+        '/ai': 'ai-chat',
     };
-    
+
     if (pathViewMap[initialPath]) {
         const view = pathViewMap[initialPath];
         loadView(view);
@@ -208,18 +208,18 @@ function setupNavigation() {
 function loadView(viewName) {
     if (!viewName) return;
     window.state.view = viewName;
-    
+
     // Hide all views
     document.querySelectorAll('.content-view').forEach(el => el.style.display = 'none');
-    
+
     // Show target view
     const targetId = (viewName === 'archive') ? 'archive' : viewName;
     const target = document.getElementById(targetId);
-    
+
     if (target) {
         // ai-chat uses flex column layout; tasks use flex too
         const isFlexView = target.classList.contains('ts-view') ||
-                           target.classList.contains('ai-chat-view');
+            target.classList.contains('ai-chat-view');
         target.style.display = isFlexView ? 'flex' : 'block';
     }
 
@@ -230,13 +230,13 @@ function loadView(viewName) {
 
     const titles = {
         'dashboard': 'Dashboard',
-        'tasks':     'Task Manager',
-        'writing':   'Writing Space',
-        'archive':   'Archive Hub',
+        'tasks': 'Task Manager',
+        'writing': 'Writing Space',
+        'archive': 'Archive Hub',
         'templates': 'Template Gallery',
-        'ai-chat':   'AI Chat',
+        'ai-chat': 'AI Chat',
     };
-    
+
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = titles[viewName] || 'LifeOS';
 
@@ -266,13 +266,13 @@ function loadView(viewName) {
 // ── Writing Space Listeners ─────────────────────────────────
 function setupWritingListeners() {
     const handlers = {
-        'new-project-btn':      () => window.createProject?.(),
-        'new-note-btn':         () => window.createNote?.(),
-        'close-note-btn':       () => window.closeNote?.(),
-        'rename-note-btn':      () => window.renameNote?.(),
-        'toggle-text-direction':() => window.toggleTextDirection?.(),
-        'toggle-view-mode':     () => window.toggleViewMode?.(),
-        'toggle-focus-mode':    () => window.toggleFocusMode?.(),
+        'new-project-btn': () => window.createProject?.(),
+        'new-note-btn': () => window.createNote?.(),
+        'close-note-btn': () => window.closeNote?.(),
+        'rename-note-btn': () => window.renameNote?.(),
+        'toggle-text-direction': () => window.toggleTextDirection?.(),
+        'toggle-view-mode': () => window.toggleViewMode?.(),
+        'toggle-focus-mode': () => window.toggleFocusMode?.(),
     };
 
     Object.entries(handlers).forEach(([id, fn]) => {

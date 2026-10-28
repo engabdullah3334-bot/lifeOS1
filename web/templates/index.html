@@ -1,301 +1,338 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life OS — Your Life. Supercharged.</title>
-    <meta name="description" content="Life OS — plan, focus, create and achieve with tasks, writing, templates and an AI copilot in one place.">
-    <meta name="theme-color" content="#05050a">
-    
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Life OS — Your Life. Supercharged.</title>
+  <meta name="description"
+    content="Life OS — plan, focus, create and achieve with tasks, writing, templates and an AI copilot in one place.">
+  <meta name="theme-color" content="#05050a">
 
-    
-    <!-- Core Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
-    
-    <!-- Feature CSS Modules -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/dashboard.css') }}?v=6">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=4">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=5">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/templates.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/ai_agent.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/login.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
 
-    <!-- Life OS Design System (must load last) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/nexora.css') }}?v=1">
 
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
 
-    <!-- SortableJS (Drag & Drop) -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <!-- Feature CSS Modules -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/dashboard.css') }}?v=6">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/tasks.css') }}?v=4">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/writing.css') }}?v=5">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/settings.css') }}?v=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/archive_page.css') }}?v=2">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/templates.css') }}?v=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/ai_agent.css') }}?v=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/login.css') }}?v=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/life_action.css') }}?v=1">
 
-    <!-- Flatpickr (Date Picker) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Life OS Design System (must load last) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/nexora.css') }}?v=1">
 
-    <!-- FullCalendar -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- SortableJS (Drag & Drop) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+  <!-- Flatpickr (Date Picker) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <!-- FullCalendar -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
 </head>
+
 <body>
-    {% include 'components/login.html' %}
+  {% include 'components/login.html' %}
 
-    <div class="app-container" id="app-container" style="display: none;">
-        <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+  <div class="app-container" id="app-container" style="display: none;">
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
 
-        <!-- Global Top Bar -->
-        <header class="top-bar">
-            <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">☰</button>
+    <!-- Global Top Bar -->
+    <header class="top-bar">
+      <button type="button" class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">☰</button>
 
-            <div class="top-brand">
-                <span class="brand-mark" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 14.6 9.4 22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z"/></svg>
-                </span>
-                <span class="brand-name">Life OS</span>
-                <span class="brand-tagline">Your Life. Supercharged.</span>
-            </div>
+      <div class="top-brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2 14.6 9.4 22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z" />
+          </svg>
+        </span>
+        <span class="brand-name">Life OS</span>
+        <span class="brand-tagline">Your Life. Supercharged.</span>
+      </div>
 
-            <h1 id="page-title">Dashboard</h1>
+      <h1 id="page-title">Dashboard</h1>
 
-            <div class="top-search" id="top-search" role="search">
-                <svg class="top-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                <input type="text" id="global-search" placeholder="Search anything..." autocomplete="off" aria-label="Search anything">
-                <kbd class="top-search-kbd">Ctrl K</kbd>
-                <div class="top-search-results" id="global-search-results" role="listbox"></div>
-            </div>
+      <div class="top-search" id="top-search" role="search">
+        <svg class="top-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input type="text" id="global-search" placeholder="Search anything..." autocomplete="off"
+          aria-label="Search anything">
+        <kbd class="top-search-kbd">Ctrl K</kbd>
+        <div class="top-search-results" id="global-search-results" role="listbox"></div>
+      </div>
 
-            <div class="top-actions">
-                <button type="button" class="top-icon-btn" id="btn-notifications" title="Pending tasks" aria-label="Notifications">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
-                    <span class="top-badge" id="notif-badge" style="display:none">0</span>
-                </button>
-                <button type="button" class="top-icon-btn" id="btn-appearance" title="Appearance" aria-label="Customize appearance">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-                </button>
-                <div class="user-profile">
-                    <div class="avatar" id="user-avatar"></div>
-                    <span id="user-name" class="user-name"></span>
-                    <button type="button" id="btn-logout" class="logout-btn" title="Logout">Logout</button>
-                </div>
-            </div>
-        </header>
-
-        <div class="app-body">
-        {% include 'components/sidebar.html' %}
-
-        <main class="main-content">
-
-            <!-- Components -->
-            {% include 'components/dashboard.html' %}
-            {% include 'components/tasks.html' %}
-            {% include 'components/writing.html' %}
-            {% include 'components/templates_page.html' %}
-
-            <!-- AI Chat Page -->
-            <div id="ai-chat" class="content-view ai-chat-view" style="display: none;">
-
-              <!-- Top bar -->
-              <div class="ai-chat-topbar">
-                <div class="ai-chat-topbar-left">
-                  <div class="ai-chat-icon">✈️</div>
-                  <div>
-                    <div class="ai-chat-heading">LifeOS AI</div>
-                    <div class="ai-chat-subtitle">Your personal productivity co-pilot</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Mode tabs -->
-              <div class="ai-chat-mode-tabs" role="tablist" aria-label="AI Modes">
-                <button class="ai-chat-tab active" data-mode="planning" role="tab" aria-selected="true" id="ai-chat-tab-planning">
-                  <span class="ai-chat-tab-icon">🗺️</span>
-                  Planning
-                  <span class="ai-chat-tab-desc">Break goals into plans</span>
-                </button>
-                <button class="ai-chat-tab" data-mode="tasks" role="tab" aria-selected="false" id="ai-chat-tab-tasks">
-                  <span class="ai-chat-tab-icon">✓</span>
-                  Tasks
-                  <span class="ai-chat-tab-desc">Create &amp; manage tasks</span>
-                </button>
-                <button class="ai-chat-tab" data-mode="coaching" role="tab" aria-selected="false" id="ai-chat-tab-coaching">
-                  <span class="ai-chat-tab-icon">🎯</span>
-                  Coaching
-                  <span class="ai-chat-tab-desc">Accountability &amp; mindset</span>
-                </button>
-                <button class="ai-chat-tab" data-mode="productivity" role="tab" aria-selected="false" id="ai-chat-tab-productivity">
-                  <span class="ai-chat-tab-icon">⚡</span>
-                  Productivity
-                  <span class="ai-chat-tab-desc">Optimise your workflow</span>
-                </button>
-              </div>
-
-              <!-- Messages -->
-              <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite">
-
-                <!-- Welcome state -->
-                <div class="ai-chat-welcome" id="ai-chat-welcome-state">
-                  <div class="ai-chat-welcome-icon">✈️</div>
-                  <div class="ai-chat-welcome-title">What would you like to accomplish?</div>
-                  <div class="ai-chat-welcome-sub">
-                    Choose a mode above and start a conversation. I can plan projects,
-                    create tasks, coach you, or help optimise your workflow.
-                  </div>
-                  <div class="ai-suggestion-chips" id="ai-chat-suggestions">
-                    <button class="ai-suggestion-chip" type="button">Help me plan a new project</button>
-                    <button class="ai-suggestion-chip" type="button">Break this goal into tasks: launch my blog</button>
-                    <button class="ai-suggestion-chip" type="button">Create a weekly sprint plan</button>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- Typing indicator -->
-              <div class="ai-typing" id="ai-chat-typing" aria-label="AI is thinking" style="margin: 0 36px 8px;">
-                <div class="ai-typing-dot"></div>
-                <div class="ai-typing-dot"></div>
-                <div class="ai-typing-dot"></div>
-              </div>
-
-              <!-- Input area -->
-              <div class="ai-chat-input-area">
-                <div class="ai-chat-input-wrap">
-                  <textarea
-                    class="ai-chat-input"
-                    id="ai-chat-input"
-                    placeholder="Describe a goal and I'll create a plan..."
-                    rows="1"
-                    aria-label="Message input"
-                    autocomplete="off"
-                  ></textarea>
-                  <button
-                    class="ai-chat-send-btn"
-                    id="ai-chat-send"
-                    type="button"
-                    aria-label="Send message"
-                    disabled
-                  >
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-            <!-- /AI Chat Page -->
-            
-            <div id="archive" class="content-view" style="display: none;">
-                <div class="archive-content">
-                    <div class="archive-search-wrap">
-                        <span class="archive-search-icon">🔍</span>
-                        <input type="text" id="archive-search" class="archive-search-input" placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
-                    </div>
-
-                    <div class="archive-two-cols">
-                        <section class="archive-section archive-section-writing" aria-label="Writing Archive">
-                            <h2 class="archive-section-title">
-                                <span class="archive-section-icon">✎</span>
-                                Writing & Drafts Archive
-                            </h2>
-                            <div id="writing-archive-container" class="archive-blocks archive-scroll-area"></div>
-                            <div id="archive-writing-empty" class="archive-empty" style="display: none;">
-                                <p>No archived drafts or writing projects.</p>
-                            </div>
-                        </section>
-
-                        <section class="archive-section archive-section-tasks" aria-label="Tasks Archive">
-                            <h2 class="archive-section-title">
-                                <span class="archive-section-icon">✓</span>
-                                Tasks & Projects Archive
-                            </h2>
-                            <div id="task-archive-container" class="archive-blocks archive-scroll-area"></div>
-                            <div id="archive-tasks-empty" class="archive-empty" style="display: none;">
-                                <p>No archived tasks or task projects.</p>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-            </div>
-        </main>
+      <div class="top-actions">
+        <div class="life-action-status-badge" title="Instant Real-time Reactivity Active (Life Action)">
+          <span class="life-action-status-dot"></span> Life Action
         </div>
+        <button type="button" class="top-icon-btn" id="btn-notifications" title="Pending tasks"
+          aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+            <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+          </svg>
+          <span class="top-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+        <button type="button" class="top-icon-btn" id="btn-appearance" title="Appearance"
+          aria-label="Customize appearance">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+            <circle cx="16" cy="7" r="2" />
+            <circle cx="8" cy="17" r="2" />
+          </svg>
+        </button>
+        <div class="user-profile">
+          <div class="avatar" id="user-avatar"></div>
+          <span id="user-name" class="user-name"></span>
+          <button type="button" id="btn-logout" class="logout-btn" title="Logout">Logout</button>
+        </div>
+      </div>
+    </header>
 
-        <!-- Mobile bottom tab bar -->
-        <nav class="mobile-tabbar" id="mobile-tabbar" aria-label="Quick navigation">
-            <button type="button" class="mtab active" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/></svg><span>Home</span></button>
-            <button type="button" class="mtab" data-tab="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.5 3 3 5-6"/></svg><span>Tasks</span></button>
-            <button type="button" class="mtab" data-tab="writing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><span>Notes</span></button>
-            <button type="button" class="mtab" id="mtab-more"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg><span>More</span></button>
-        </nav>
+    <div class="app-body">
+      {% include 'components/sidebar.html' %}
 
+      <main class="main-content">
+
+        <!-- Components -->
+        {% include 'components/dashboard.html' %}
+        {% include 'components/tasks.html' %}
+        {% include 'components/writing.html' %}
+        {% include 'components/templates_page.html' %}
+
+        <!-- AI Chat Page -->
+        <div id="ai-chat" class="content-view ai-chat-view" style="display: none;">
+
+          <!-- Top bar -->
+          <div class="ai-chat-topbar">
+            <div class="ai-chat-topbar-left">
+              <div class="ai-chat-icon">✈️</div>
+              <div>
+                <div class="ai-chat-heading">LifeOS AI</div>
+                <div class="ai-chat-subtitle">Your personal productivity co-pilot</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode tabs -->
+          <div class="ai-chat-mode-tabs" role="tablist" aria-label="AI Modes">
+            <button class="ai-chat-tab active" data-mode="planning" role="tab" aria-selected="true"
+              id="ai-chat-tab-planning">
+              <span class="ai-chat-tab-icon">🗺️</span>
+              Planning
+              <span class="ai-chat-tab-desc">Break goals into plans</span>
+            </button>
+            <button class="ai-chat-tab" data-mode="tasks" role="tab" aria-selected="false" id="ai-chat-tab-tasks">
+              <span class="ai-chat-tab-icon">✓</span>
+              Tasks
+              <span class="ai-chat-tab-desc">Create &amp; manage tasks</span>
+            </button>
+            <button class="ai-chat-tab" data-mode="coaching" role="tab" aria-selected="false" id="ai-chat-tab-coaching">
+              <span class="ai-chat-tab-icon">🎯</span>
+              Coaching
+              <span class="ai-chat-tab-desc">Accountability &amp; mindset</span>
+            </button>
+            <button class="ai-chat-tab" data-mode="productivity" role="tab" aria-selected="false"
+              id="ai-chat-tab-productivity">
+              <span class="ai-chat-tab-icon">⚡</span>
+              Productivity
+              <span class="ai-chat-tab-desc">Optimise your workflow</span>
+            </button>
+          </div>
+
+          <!-- Messages -->
+          <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite">
+
+            <!-- Welcome state -->
+            <div class="ai-chat-welcome" id="ai-chat-welcome-state">
+              <div class="ai-chat-welcome-icon">✈️</div>
+              <div class="ai-chat-welcome-title">What would you like to accomplish?</div>
+              <div class="ai-chat-welcome-sub">
+                Choose a mode above and start a conversation. I can plan projects,
+                create tasks, coach you, or help optimise your workflow.
+              </div>
+              <div class="ai-suggestion-chips" id="ai-chat-suggestions">
+                <button class="ai-suggestion-chip" type="button">Help me plan a new project</button>
+                <button class="ai-suggestion-chip" type="button">Break this goal into tasks: launch my blog</button>
+                <button class="ai-suggestion-chip" type="button">Create a weekly sprint plan</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Typing indicator -->
+          <div class="ai-typing" id="ai-chat-typing" aria-label="AI is thinking" style="margin: 0 36px 8px;">
+            <div class="ai-typing-dot"></div>
+            <div class="ai-typing-dot"></div>
+            <div class="ai-typing-dot"></div>
+          </div>
+
+          <!-- Input area -->
+          <div class="ai-chat-input-area">
+            <div class="ai-chat-input-wrap">
+              <textarea class="ai-chat-input" id="ai-chat-input" placeholder="Describe a goal and I'll create a plan..."
+                rows="1" aria-label="Message input" autocomplete="off"></textarea>
+              <button class="ai-chat-send-btn" id="ai-chat-send" type="button" aria-label="Send message" disabled>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+        <!-- /AI Chat Page -->
+
+        <div id="archive" class="content-view" style="display: none;">
+          <div class="archive-content">
+            <div class="archive-search-wrap">
+              <span class="archive-search-icon">🔍</span>
+              <input type="text" id="archive-search" class="archive-search-input"
+                placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
+            </div>
+
+            <div class="archive-two-cols">
+              <section class="archive-section archive-section-writing" aria-label="Writing Archive">
+                <h2 class="archive-section-title">
+                  <span class="archive-section-icon">✎</span>
+                  Writing & Drafts Archive
+                </h2>
+                <div id="writing-archive-container" class="archive-blocks archive-scroll-area"></div>
+                <div id="archive-writing-empty" class="archive-empty" style="display: none;">
+                  <p>No archived drafts or writing projects.</p>
+                </div>
+              </section>
+
+              <section class="archive-section archive-section-tasks" aria-label="Tasks Archive">
+                <h2 class="archive-section-title">
+                  <span class="archive-section-icon">✓</span>
+                  Tasks & Projects Archive
+                </h2>
+                <div id="task-archive-container" class="archive-blocks archive-scroll-area"></div>
+                <div id="archive-tasks-empty" class="archive-empty" style="display: none;">
+                  <p>No archived tasks or task projects.</p>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
-    {% include 'components/settings.html' %}
+    <!-- Mobile bottom tab bar -->
+    <nav class="mobile-tabbar" id="mobile-tabbar" aria-label="Quick navigation">
+      <button type="button" class="mtab active" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.5 12 3l9 7.5" />
+          <path d="M5 9.5V20h5v-6h4v6h5V9.5" />
+        </svg><span>Home</span></button>
+      <button type="button" class="mtab" data-tab="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
+          <path d="m8 12.5 3 3 5-6" />
+        </svg><span>Tasks</span></button>
+      <button type="button" class="mtab" data-tab="writing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+          <path d="M14 3v5h5" />
+        </svg><span>Notes</span></button>
+      <button type="button" class="mtab" id="mtab-more"><svg viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="5" cy="12" r="1.8" />
+          <circle cx="12" cy="12" r="1.8" />
+          <circle cx="19" cy="12" r="1.8" />
+        </svg><span>More</span></button>
+    </nav>
 
-    {# AI floating widget — lives outside app-container so it overlays everything #}
-    {% include 'components/ai_widget.html' %}
+  </div>
 
-    <!-- ── API Helper & Auth (must load first) ── -->
-    <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';
+  {% include 'components/settings.html' %}
+
+  {# AI floating widget — lives outside app-container so it overlays everything #}
+  {% include 'components/ai_widget.html' %}
+
+  <!-- ── API Helper & Auth (must load first) ── -->
+  <script>window.API_URL = (window.location.origin || 'http://localhost:5000') + '/api';
     // User info populated after login by auth.js
     try {
       const _raw = localStorage.getItem('lifeos_user');
       window.__lifeosUser = _raw ? JSON.parse(_raw) : null;
       // If it parsed to a plain string (legacy format), discard it
       if (typeof window.__lifeosUser === 'string') window.__lifeosUser = null;
-    } catch(e) { window.__lifeosUser = null; }
-    </script>
-    <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=10"></script>
-    <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=10"></script>
+    } catch (e) { window.__lifeosUser = null; }
+  </script>
+  <script src="{{ url_for('static', filename='js/modules/apiHelper.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/auth.js') }}?v=10"></script>
 
-    <!-- ── Legacy State (for writing module) ── -->
-    <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=10"></script>
+  <!-- ── Legacy State (for writing module) ── -->
+  <script src="{{ url_for('static', filename='js/modules/state.js') }}?v=10"></script>
 
-<!-- ── Task System Modules (load in dependency order) ── -->
-<script src="{{ url_for('static', filename='js/modules/tasks/state.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/api.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/notifications.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/theme.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/taskManager.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/modal.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/dragDrop.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/projectsView.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/calendarView.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/archiveView.js') }}?v=10"></script>
-<script src="{{ url_for('static', filename='js/modules/tasks/index.js') }}?v=10"></script>
+  <!-- ── Life Action Real-Time Engine (Instant Reactivity) ── -->
+  <script src="{{ url_for('static', filename='js/modules/life_action.js') }}?v=1"></script>
 
-<!-- ── Writing Module ── -->
-<script src="{{ url_for('static', filename='js/modules/writing.js') }}?v=10"></script>
+  <!-- ── Task System Modules (load in dependency order) ── -->
+  <script src="{{ url_for('static', filename='js/modules/tasks/state.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/api.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/notifications.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/theme.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/taskManager.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/modal.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/dragDrop.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/projectsView.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/calendarView.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/archiveView.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='js/modules/tasks/index.js') }}?v=10"></script>
 
-<!-- ── Dashboard Module ── -->
-<script src="{{ url_for('static', filename='js/modules/dashboard.js') }}?v=10"></script>
+  <!-- ── Writing Module ── -->
+  <script src="{{ url_for('static', filename='js/modules/writing.js') }}?v=10"></script>
 
-<!-- ── Settings Module ── -->
-<script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=10"></script>
+  <!-- ── Dashboard Module ── -->
+  <script src="{{ url_for('static', filename='js/modules/dashboard.js') }}?v=10"></script>
 
-<!-- ── Archive Module ── -->
-<script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=10"></script>
+  <!-- ── Settings Module ── -->
+  <script src="{{ url_for('static', filename='js/modules/settings.js') }}?v=10"></script>
 
-<!-- ── Templates Module ── -->
-<script src="{{ url_for('static', filename='js/modules/templates.js') }}?v=10"></script>
+  <!-- ── Archive Module ── -->
+  <script src="{{ url_for('static', filename='js/modules/archive_page.js') }}?v=10"></script>
 
-<!-- ── AI Agent Module ── -->
-<script src="{{ url_for('static', filename='js/modules/ai_agent.js') }}?v=10"></script>
+  <!-- ── Templates Module ── -->
+  <script src="{{ url_for('static', filename='js/modules/templates.js') }}?v=10"></script>
 
-<!-- ── App Entry Point ── -->
-<script src="{{ url_for('static', filename='js/main.js') }}?v=10"></script>
+  <!-- ── AI Agent Module ── -->
+  <script src="{{ url_for('static', filename='js/modules/ai_agent.js') }}?v=10"></script>
 
-<!-- ── Life OS Shell (search, quick actions, mobile tab bar) ── -->
-<script src="{{ url_for('static', filename='js/modules/nexora.js') }}?v=1"></script>
+  <!-- ── App Entry Point ── -->
+  <script src="{{ url_for('static', filename='js/main.js') }}?v=10"></script>
 
-    <script>
-        // Show dashboard by default
-        document.getElementById('dashboard').style.display = 'block';
-    </script>
+  <!-- ── Life OS Shell (search, quick actions, mobile tab bar) ── -->
+  <script src="{{ url_for('static', filename='js/modules/nexora.js') }}?v=1"></script>
+
+  <script>
+    // Show dashboard by default
+    document.getElementById('dashboard').style.display = 'block';
+  </script>
 </body>
+
 </html>

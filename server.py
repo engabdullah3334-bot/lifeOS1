@@ -1,5 +1,12 @@
 import os
+import sys
 import certifi
+
+# Fix Windows console encoding for Arabic & Unicode symbols
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 import logging
 from datetime import datetime

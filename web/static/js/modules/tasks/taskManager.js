@@ -70,6 +70,10 @@ TS.taskMgr = {
 
   // Toggle complete status
   async complete(taskId) {
+    if (window.LifeAction) {
+      return window.LifeAction.instantToggleComplete(taskId);
+    }
+
     const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
     if (!task) return;
     
@@ -91,6 +95,10 @@ TS.taskMgr = {
 
   // Delete a task with undo support
   async delete(taskId) {
+    if (window.LifeAction) {
+      return window.LifeAction.instantDeleteTask(taskId);
+    }
+
     const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
     if (!task) return;
 
@@ -118,13 +126,18 @@ TS.taskMgr = {
   async duplicate(taskId) {
     const task = TS.state.tasks.find(t => String(t.task_id) === String(taskId));
     if (!task) return;
+    const newTask = { ...task };
+    delete newTask.id;
+    delete newTask.task_id;
+    delete newTask._id;
+    newTask.title = task.title + ' (Copy)';
+    newTask.status = 'pending';
+
+    if (window.LifeAction) {
+      return window.LifeAction.instantAddTask(newTask);
+    }
+
     try {
-      const newTask = { ...task };
-      delete newTask.id;
-      delete newTask.task_id;
-      delete newTask._id;
-      newTask.title = task.title + ' (Copy)';
-      newTask.status = 'pending';
       await TS.api.createTask(newTask);
       TS.notify.success(`"${task.title}" duplicated`);
       TS.core.refresh();

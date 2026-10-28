@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,8 +10,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/responsive.css') }}?v=1">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
 </head>
+
 <body class="archive-page">
     {% include 'components/login.html' %}
 
@@ -33,7 +37,8 @@
             <div class="archive-content">
                 <div class="archive-search-wrap">
                     <span class="archive-search-icon">🔍</span>
-                    <input type="text" id="archive-search" class="archive-search-input" placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
+                    <input type="text" id="archive-search" class="archive-search-input"
+                        placeholder="Search archive (tasks, projects, drafts)..." autocomplete="off">
                 </div>
 
                 <div class="archive-two-cols">
@@ -79,4 +84,5 @@
     <script src="{{ url_for('static', filename='js/main.js') }}?v=8"></script>
 
 </body>
+
 </html>
